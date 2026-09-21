@@ -1,7 +1,7 @@
 # ZenFlowAI
 
-> Enterprise-grade ticketing system — clean, fast, AI-ready.
-> Built with Next.js · Express · GraphQL · MySQL · Prisma · Real-time Subscriptions.
+> Phase 1 foundation for a clean, fast, AI-ready ticketing system.
+> Built with Next.js · Express · GraphQL · MySQL · Prisma.
 
 [![Phase](https://img.shields.io/badge/Phase-1%20In%20Progress-blue)](#phases)
 [![Stack](https://img.shields.io/badge/Stack-Next.js%2015%20%2B%20GraphQL%20%2B%20MySQL-6366f1)](#stack)
@@ -31,8 +31,8 @@ ZenFlowAI is a **medium-scale service desk and ticketing platform** — think Ze
 | **Backend** | Express.js, Apollo GraphQL (Apollo Server 4) | GraphQL Subscriptions = real-time built-in |
 | **Database** | MySQL + Prisma ORM | Type-safe, schema-first, easy migrations |
 | **Auth** | JWT (15min) + Refresh Token (7d, HTTP-only cookie) | Short-lived access tokens + secure refresh |
-| **Real-time** | GraphQL Subscriptions via `graphql-ws` | No Socket.io — pure GraphQL |
-| **Background Jobs** | `node-cron` | SLA breach detection, auto-close, CSAT expiry |
+| **Real-time** | Planned for Phase 3 | Not implemented in Phase 1 |
+| **Background Jobs** | Planned for Phase 4 | Not implemented in Phase 1 |
 | **Monorepo** | pnpm workspaces + Turborepo | `apps/backend` + `apps/frontend` + `packages/shared` |
 | **Token Saving** | Apollo APQ + Token Savior MCP | -60–80% tokens per AI session |
 
@@ -48,7 +48,7 @@ Each role sees a different layout, different data, different actions. Nothing le
 
 ---
 
-## Security — 10 Layers
+## Security — Phase 1 foundation
 
 ```
 Request → [L1 Helmet] → [L2 Rate Limit] → [L3 IP Blocklist] → [L4 Bot Detection]
@@ -56,61 +56,51 @@ Request → [L1 Helmet] → [L2 Rate Limit] → [L3 IP Blocklist] → [L4 Bot De
         → [L8 Input Validation] → [L9 Spam Detection] → [L10 Audit Log] → Response
 ```
 
-Each layer has one job. Simple. Clear-cut.
+Phase 1 includes the security modules and initial HTTP middleware. Ticket-level
+spam/quota enforcement and complete production hardening will be wired into the
+ticket engine in Phase 2.
 
 ---
 
-## Project Structure
+## Project Structure — actual Phase 1
 
 ```
 ZenFlowAI/
 ├── apps/
 │   ├── backend/
 │   │   ├── prisma/
-│   │   │   ├── schema.prisma        # Single source of truth — all 30+ models
-│   │   │   └── seed.ts              # Demo data (5 roles, routing rules, tickets)
+│   │   │   ├── schema.prisma        # MySQL schema and security models
+│   │   │   └── seed.ts              # Five roles, teams, categories, SLA, rules
 │   │   └── src/
 │   │       ├── graphql/
 │   │       │   ├── schemas/         # TypeDefs split by domain
 │   │       │   └── resolvers/       # One resolver file per domain
-│   │       ├── services/            # Business logic (pure, testable)
-│   │       │   ├── auth.service.ts
-│   │       │   ├── ticket.service.ts
-│   │       │   ├── routing.service.ts
-│   │       │   ├── sla.service.ts
-│   │       │   └── ai/              # AI adapter (rule-based → swap for OpenAI/Groq)
+│   │       ├── services/
+│   │       │   └── auth.service.ts  # Login, register, refresh, logout
 │   │       ├── security/
 │   │       │   ├── rbac.ts          # Permission map + requirePermission()
 │   │       │   ├── audit.ts         # Immutable audit logger
 │   │       │   ├── spamDetector.ts  # Heuristic spam/bot scoring
 │   │       │   ├── fairUsage.ts     # Quota + random cooldown
 │   │       │   └── httpSecurity.ts  # Middleware stack (Helmet, rate-limit, etc.)
-│   │       ├── jobs/
-│   │       │   └── slaChecker.ts    # node-cron: SLA breach + auto-close
 │   │       ├── middleware/
 │   │       │   └── auth.ts          # JWT → DB session verify → buildContext()
+│   │       ├── types/
+│   │       │   └── context.ts       # GraphQL request context
 │   │       └── utils/
-│   │           ├── prisma.ts        # Singleton client
-│   │           └── pubsub.ts        # GraphQL PubSub singleton
+│   │           └── prisma.ts        # Singleton client
 │   │
 │   └── frontend/
 │       └── src/
 │           ├── app/
 │           │   ├── (auth)/          # Login, Register, Forgot Password
-│           │   ├── (customer)/      # Dashboard, My Tickets, Create, Conversation
-│           │   ├── (agent)/         # Queue, Ticket Workspace (3-col hero)
-│           │   ├── (supervisor)/    # Dashboard, Analytics
-│           │   └── (admin)/         # Users, Teams, Routing, SLA, Security
-│           ├── modules/             # Micro-frontend feature modules
-│           │   ├── tickets/         # components/ hooks/ queries/ types.ts
-│           │   ├── messages/
-│           │   ├── auth/
-│           │   ├── sla/
-│           │   ├── routing/
-│           │   └── analytics/
-│           ├── components/ui/       # Shared shadcn/ui wrappers
+│           │   ├── (customer)/      # Customer dashboard placeholder
+│           │   ├── (agent)/         # Agent queue placeholder
+│           │   └── (admin)/         # Admin users placeholder
+│           ├── modules/auth/        # Auth components, hooks, GraphQL queries
+│           ├── components/layout/  # AppShell and role-aware Sidebar
 │           ├── lib/                 # Apollo client, utils, constants
-│           └── store/               # Zustand (auth only)
+│           └── store/               # Persisted Zustand auth state
 │
 ├── packages/
 │   └── shared/                      # Shared TypeScript types
@@ -189,7 +179,7 @@ This project is built in 5 phases. Each phase = a working push to GitHub.
 
 | Phase | What's built | Status |
 |-------|-------------|--------|
-| **1 — Foundation & Auth** | Auth screens, JWT + refresh tokens, role-aware layout, security stack | 🔵 In progress |
+| **1 — Foundation & Auth** | Auth screens, JWT auth service, role-aware layout, RBAC and security modules | ✅ Implemented on `phase/1-foundation` |
 | **2 — Ticket Engine** | Create ticket, routing engine, SLA start, ticket list + conversation | 🔲 Planned |
 | **3 — Workspace & Real-time** | 3-column agent workspace, GraphQL Subscriptions, live SLA timer | 🔲 Planned |
 | **4 — Automation & Admin** | SLA cron, CSAT, admin routing UI, Knowledge Base | 🔲 Planned |
@@ -199,17 +189,24 @@ See [`PLAN.md`](./PLAN.md) for the full architecture blueprint.
 
 ---
 
-## Auto-Ticket Lifecycle
+## Phase 1 capabilities
 
 ```
-Submit → Validate → Spam Check → #ZEN-XXXX assigned
-→ Routing Engine (Category/Keyword/Priority rules) → Team assigned
-→ SLA timer starts → Notifications sent
-→ Agent picks up → IN_PROGRESS → SLA response clock stops
-→ [Cron: every 2min] SLA 80% → warning | SLA breached → escalate
-→ Agent resolves → RESOLVED → CSAT survey sent
-→ 48h later → AUTO-CLOSED
+Login / Register
+      ↓
+JWT access token issued
+      ↓
+Role-aware route and sidebar
+      ↓
+Explicit RBAC permission checks
+      ↓
+DB-backed account, session, and security checks
+      ↓
+Audit logging for authentication and moderation actions
 ```
+
+Ticket creation, routing, SLA timers, messages, subscriptions, and analytics
+are planned for later phases and are intentionally not advertised as complete.
 
 ---
 
@@ -224,28 +221,18 @@ mutation Login($email: String!, $password: String!) {
   }
 }
 
-# Tickets (paginated, filtered, role-scoped)
-query GetTickets($filter: TicketFilter, $page: Int) {
-  tickets(filter: $filter, page: $page, pageSize: 20) {
-    tickets { id ticketNumber title status priority slaResolutionDueAt isBookmarked }
-    total totalPages
-  }
+query CurrentUser {
+  me { id email name role }
 }
 
-# Real-time: new message
-subscription OnMessageAdded($ticketId: Int!) {
-  messageAdded(ticketId: $ticketId) {
-    id body type sender { name } createdAt
-  }
-}
-
-# Bookmark a node
-mutation BookmarkTicket($nodeId: Int!) {
-  bookmarkNode(input: { nodeType: "Ticket", nodeId: $nodeId, label: "Priority bug" }) {
-    id label color
-  }
+# Admin and Super Admin only
+query Users {
+  users { id email name role isActive isBanned }
 }
 ```
+
+Ticket and subscription examples will be added when those features are
+implemented in Phases 2 and 3.
 
 ---
 
@@ -256,7 +243,7 @@ This project is set up to minimise AI token usage across every session.
 | Method | Saving | Setup |
 |--------|--------|-------|
 | **Token Savior MCP** | ~80% active tokens | See `.cursor/mcp.json` — restart Cursor |
-| **Apollo APQ** | ~60% query bandwidth | Auto — configured in `apollo-client.ts` |
+| **Apollo APQ** | Query bandwidth reduction | Client link exists; server-side persisted-query cache is planned |
 | **Cursor Rules** | Prevents full-file reads | Auto — `.cursor/rules/` |
 
 ```bash
@@ -267,6 +254,18 @@ ts init --agent cursor --yes
 ```
 
 ---
+
+## Not implemented yet
+
+- Ticket CRUD and conversation messages
+- Database-driven routing service
+- SLA timer and cron worker
+- GraphQL WebSocket subscriptions
+- CSAT, analytics, webhooks, and knowledge base
+- Production refresh-token HTTP-only cookie transport
+
+These are intentionally reserved for Phases 2–5. The README is updated after
+each phase so it describes the code that actually exists.
 
 ## Roadmap (post Phase 5)
 
