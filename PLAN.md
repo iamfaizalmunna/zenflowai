@@ -880,46 +880,49 @@ Each phase ends with a working, deployable product. Nothing is half-done at push
 **Push when:** Customer can submit a ticket, agent can see the queue, and Help Center search works on owned articles.
 
 #### Backend
-- [ ] Ticket service: `createTicket`, `getTicket`, `listTickets`, `updateTicket`
-- [ ] Routing engine: `RoutingEngine.evaluate()` (pure service, tested)
-- [ ] SLA service: `calculateDueAt()`, store `slaResponseDueAt` + `slaResolutionDueAt`
-- [ ] Ticket resolvers: `createTicket`, `tickets`, `ticket`, `updateTicket`, `assignTicket`, `resolveTicket`
-- [ ] Message resolvers: `addMessage`, `messages` (REPLY + INTERNAL_NOTE + SYSTEM_EVENT)
-- [ ] Ticket number generator: `#ZEN-0001` format
-- [ ] Spam detection on `createTicket` (block/flag before saving)
-- [ ] Fair usage quotas on ticket creation (per role)
-- [ ] Category, Tag, Team resolvers (read-only)
-- [ ] Routing decision logged to `RoutingDecision` table
-- [ ] Knowledge article schema: Article, ArticleChunk, ArticleVersion, ArticleFeedback
-- [ ] Knowledge resolvers: `articles`, `article`, `searchKnowledge`
-- [ ] MySQL FULLTEXT search on title, summary, and chunks
-- [ ] Seed 25–40 owned articles (public FAQ + internal agent guides)
-- [ ] Visibility filter: PUBLIC for customers, INTERNAL only for Agent+
+- [x] Ticket service: `createTicket`, `getTicket`, `listTickets`, `updateTicket`
+- [x] Routing engine: `matchRoutingRule()` / `evaluateRouting()` (pure matcher tested)
+- [x] SLA service: `calculateDueAt()`, store `slaResponseDueAt` + `slaResolutionDueAt`
+- [x] Ticket resolvers: `createTicket`, `tickets`, `ticket`, `updateTicket` (assign/resolve via `updateTicket`)
+- [x] Message resolvers: `addMessage` (REPLY + INTERNAL_NOTE)
+- [x] Ticket number generator: `#ZEN-0001` format
+- [x] Spam detection on `createTicket` (block/flag before saving)
+- [x] Fair usage quotas on ticket creation (per role)
+- [x] Category resolver (read-only). Tag/Team GraphQL deferred.
+- [x] Routing decision logged to `RoutingDecision` table
+- [x] Knowledge article model + owned articles (chunk/version CRUD deferred to Phase 4)
+- [x] Knowledge resolvers: `knowledgeArticles`, `knowledgeArticle` (`contains` search; FULLTEXT later)
+- [ ] MySQL FULLTEXT search on title, summary, and chunks — Phase 3/4
+- [x] Seed owned articles (6 public FAQ + internal guides; not 25–40)
+- [x] Visibility filter: PUBLIC for customers, INTERNAL only for Agent+
 
 #### Frontend
-- [ ] Customer: Create Ticket screen (form + Zod validation)
-- [ ] Customer: My Tickets list (own tickets only)
-- [ ] Customer: Ticket Conversation view (messages, status badge, SLA display)
-- [ ] Customer: Dashboard (open/waiting/resolved counts + recent tickets)
-- [ ] Customer: Help Center search + article page
-- [ ] Agent: Queue screen (all team tickets, filters: status/priority)
-- [ ] Agent: Internal Guides search
-- [ ] Shared: `TicketCard`, `StatusBadge`, `PriorityBadge`, `TicketNumber` components
-- [ ] Shared: `useTicket`, `useTicketList`, `useCreateTicket`, `useKnowledgeSearch` hooks
+- [x] Customer: Create Ticket screen
+- [x] Customer: My Tickets list (own tickets only)
+- [x] Customer: Ticket Conversation view
+- [x] Customer: Dashboard (counts + recent tickets)
+- [x] Customer: Help Center search + article page
+- [x] Agent: Queue screen
+- [x] Agent: Internal Guides search
+- [x] Shared: `TicketCard` (status/priority on the card; extra badge components later)
+- [x] Shared: ticket GraphQL documents in `modules/tickets/queries/` (dedicated hooks later)
 
 #### Deliverable at push
 ```
 ✅ Customer submits ticket → #ZEN-XXXX assigned
-✅ Routing engine assigns correct team
-✅ SLA due dates stored correctly
+✅ Routing engine assigns a team (keyword / category / priority / fallback)
+✅ SLA due dates stored
 ✅ Agent sees ticket in queue
 ✅ Customer sees their own tickets only
 ✅ Spam detection blocks obvious spam
 ✅ Help Center returns owned public articles
 ✅ Internal guides hidden from customers
+✅ Unit tests for RBAC, spam bands, ticket number, routing, SLA
 ```
 
-**Git push:** `git push origin phase/2-ticket-engine` → PR → merge → `main`
+**Git push:** `git push origin phase/2-ticket-engine` (local + GitHub only; no cloud host)
+
+**MVP out of scope (later phases):** crawler, GraphQL subscriptions, LLM, SLA cron, 3-column workspace.
 
 ---
 
@@ -1078,7 +1081,7 @@ git push origin phase/2-ticket-engine
 | Phase | Status | Branch | PR |
 |-------|--------|--------|----|
 | Phase 1 — Foundation & Auth | ✅ Implemented | `phase/1-foundation` | pending merge |
-| Phase 2 — Ticket Engine + KB Foundation | 🔲 Not started | `phase/2-ticket-engine` | — |
+| Phase 2 — Ticket Engine + KB Foundation | ✅ Implemented (light MVP) | `phase/2-ticket-engine` | GitHub only |
 | Phase 3 — Workspace, Real-Time, KB in Tickets | 🔲 Not started | `phase/3-workspace-realtime` | — |
 | Phase 4 — Automation, Legal Ingest, Optional AI | 🔲 Not started | `phase/4-automation-admin` | — |
 | Phase 5 — Analytics & Polish | 🔲 Not started | `phase/5-analytics-polish` | — |
@@ -1209,5 +1212,5 @@ Never commit scraped corpora to the repo.
 
 ---
 
-*Last updated: after Phase 1 — KB, ingest, and AI plan locked.*
-*Next: merge `phase/1-foundation`, then start Phase 2.*
+*Last updated: after Phase 2 light MVP — tickets, routing, SLA dates, messages, owned Help Center, unit tests.*
+*Next: Phase 3 workspace + GraphQL subscriptions. Keep local + GitHub; no cloud host.*

@@ -1,9 +1,10 @@
 # ZenFlowAI
 
-> Phase 1 foundation for a clean, fast, AI-ready ticketing system.
+> Phase 2 ticket engine for a clean, fast, AI-ready ticketing system.
 > Built with Next.js · Express · GraphQL · MySQL · Prisma.
+> Local + GitHub only — no cloud host is wired.
 
-[![Phase](https://img.shields.io/badge/Phase-1%20In%20Progress-blue)](#phases)
+[![Phase](https://img.shields.io/badge/Phase-2%20Ticket%20Engine-blue)](#phases)
 [![Stack](https://img.shields.io/badge/Stack-Next.js%2015%20%2B%20GraphQL%20%2B%20MySQL-6366f1)](#stack)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
@@ -31,8 +32,8 @@ ZenFlowAI is a **medium-scale service desk and ticketing platform** — think Ze
 | **Backend** | Express.js, Apollo GraphQL (Apollo Server 4) | GraphQL Subscriptions = real-time built-in |
 | **Database** | MySQL + Prisma ORM | Type-safe, schema-first, easy migrations |
 | **Auth** | JWT (15min) + Refresh Token (7d, HTTP-only cookie) | Short-lived access tokens + secure refresh |
-| **Real-time** | Planned for Phase 3 | Not implemented in Phase 1 |
-| **Background Jobs** | Planned for Phase 4 | Not implemented in Phase 1 |
+| **Real-time** | Planned for Phase 3 | Not implemented |
+| **Background Jobs** | Planned for Phase 4 | Not implemented |
 | **Monorepo** | pnpm workspaces + Turborepo | `apps/backend` + `apps/frontend` + `packages/shared` |
 | **Token Saving** | Apollo APQ + Token Savior MCP | -60–80% tokens per AI session |
 
@@ -48,7 +49,7 @@ Each role sees a different layout, different data, different actions. Nothing le
 
 ---
 
-## Security — Phase 1 foundation
+## Security — layers in use
 
 ```
 Request → [L1 Helmet] → [L2 Rate Limit] → [L3 IP Blocklist] → [L4 Bot Detection]
@@ -56,13 +57,12 @@ Request → [L1 Helmet] → [L2 Rate Limit] → [L3 IP Blocklist] → [L4 Bot De
         → [L8 Input Validation] → [L9 Spam Detection] → [L10 Audit Log] → Response
 ```
 
-Phase 1 includes the security modules and initial HTTP middleware. Ticket-level
-spam/quota enforcement and complete production hardening will be wired into the
-ticket engine in Phase 2.
+HTTP middleware is on from Phase 1. Ticket create also runs spam scoring, role
+quotas, and cooldowns before a `#ZEN-XXXX` ticket is saved.
 
 ---
 
-## Project Structure — actual Phase 1
+## Project Structure — actual Phase 2
 
 ```
 ZenFlowAI/
@@ -76,7 +76,12 @@ ZenFlowAI/
 │   │       │   ├── schemas/         # TypeDefs split by domain
 │   │       │   └── resolvers/       # One resolver file per domain
 │   │       ├── services/
-│   │       │   └── auth.service.ts  # Login, register, refresh, logout
+│   │       │   ├── auth.service.ts      # Login, register, refresh, logout
+│   │       │   ├── ticket.service.ts    # Create, list, get, update, counts
+│   │       │   ├── message.service.ts   # Thread replies and internal notes
+│   │       │   ├── routing.service.ts   # Keyword / category / priority / fallback
+│   │       │   ├── sla.service.ts       # First-response and resolve due dates
+│   │       │   └── knowledge.service.ts # Owned Help Center articles
 │   │       ├── security/
 │   │       │   ├── rbac.ts          # Permission map + requirePermission()
 │   │       │   ├── audit.ts         # Immutable audit logger
@@ -88,16 +93,18 @@ ZenFlowAI/
 │   │       ├── types/
 │   │       │   └── context.ts       # GraphQL request context
 │   │       └── utils/
-│   │           └── prisma.ts        # Singleton client
+│   │           ├── prisma.ts            # Singleton client
+│   │           └── ticketNumber.ts      # #ZEN-XXXX generator
 │   │
 │   └── frontend/
 │       └── src/
 │           ├── app/
 │           │   ├── (auth)/          # Login, Register, Forgot Password
-│           │   ├── (customer)/      # Customer dashboard placeholder
-│           │   ├── (agent)/         # Agent queue placeholder
+│           │   ├── (customer)/      # Dashboard, tickets, Help Center
+│           │   ├── (agent)/         # Queue, internal guides
 │           │   └── (admin)/         # Admin users placeholder
 │           ├── modules/auth/        # Auth components, hooks, GraphQL queries
+│           ├── modules/tickets/     # TicketCard + ticket GraphQL documents
 │           ├── components/layout/  # AppShell and role-aware Sidebar
 │           ├── lib/                 # Apollo client, utils, constants
 │           └── store/               # Persisted Zustand auth state
@@ -148,6 +155,7 @@ cp apps/frontend/.env.local.example apps/frontend/.env.local
 pnpm db:generate   # generate Prisma client
 pnpm db:migrate    # run migrations
 pnpm db:seed       # seed demo data
+pnpm test          # Phase 1 + Phase 2 unit tests
 ```
 
 ### 4. Run
@@ -180,7 +188,7 @@ This project is built in 5 phases. Each phase = a working push to GitHub.
 | Phase | What's built | Status |
 |-------|-------------|--------|
 | **1 — Foundation & Auth** | Auth screens, JWT auth service, role-aware layout, RBAC and security modules | ✅ Implemented on `phase/1-foundation` |
-| **2 — Ticket Engine** | Create ticket, routing engine, SLA start, ticket list + conversation | 🔲 Planned |
+| **2 — Ticket Engine + Help Center** | Tickets, routing, SLA dates, messages, owned KB, unit tests | ✅ Implemented on `phase/2-ticket-engine` (local + GitHub) |
 | **3 — Workspace & Real-time** | 3-column agent workspace, GraphQL Subscriptions, live SLA timer | 🔲 Planned |
 | **4 — Automation & Admin** | SLA cron, CSAT, admin routing UI, Knowledge Base | 🔲 Planned |
 | **5 — Analytics & Polish** | Analytics dashboard, security dashboard, mobile, demo data | 🔲 Planned |
@@ -189,24 +197,27 @@ See [`PLAN.md`](./PLAN.md) for the full architecture blueprint.
 
 ---
 
-## Phase 1 capabilities
+## Phase 2 capabilities
 
 ```
-Login / Register
+Login (Phase 1)
       ↓
-JWT access token issued
+Customer creates a ticket
       ↓
-Role-aware route and sidebar
+Spam + quota checks, then #ZEN-XXXX
       ↓
-Explicit RBAC permission checks
+Routing rule picks a team (and least-busy agent when possible)
       ↓
-DB-backed account, session, and security checks
+SLA first-response and resolve due dates stored
       ↓
-Audit logging for authentication and moderation actions
+Customer sees own tickets; agent sees the team queue
+      ↓
+Thread messages (reply / internal note)
+      ↓
+Help Center: public articles for customers, internal guides for staff
 ```
 
-Ticket creation, routing, SLA timers, messages, subscriptions, and analytics
-are planned for later phases and are intentionally not advertised as complete.
+This is the light MVP: no crawler, no GraphQL subscriptions, no LLM, no cloud deploy.
 
 ---
 
@@ -229,10 +240,27 @@ query CurrentUser {
 query Users {
   users { id email name role isActive isBanned }
 }
-```
 
-Ticket and subscription examples will be added when those features are
-implemented in Phases 2 and 3.
+# Tickets
+mutation CreateTicket($input: CreateTicketInput!) {
+  createTicket(input: $input) {
+    ticketNumber title status priority slaResponseDueAt slaResolutionDueAt
+  }
+}
+
+query Tickets($status: TicketStatus) {
+  tickets(status: $status) { items { ticketNumber title status } total }
+}
+
+mutation AddMessage($input: AddMessageInput!) {
+  addMessage(input: $input) { id body type }
+}
+
+# Help Center
+query Knowledge($search: String) {
+  knowledgeArticles(search: $search) { id title visibility }
+}
+```
 
 ---
 
@@ -257,15 +285,16 @@ ts init --agent cursor --yes
 
 ## Not implemented yet
 
-- Ticket CRUD and conversation messages
-- Database-driven routing service
-- SLA timer and cron worker
-- GraphQL WebSocket subscriptions
-- CSAT, analytics, webhooks, and knowledge base
+- GraphQL WebSocket subscriptions and live queue
+- SLA cron (warnings, breach, auto-close)
+- 3-column agent workspace, CSAT, analytics, webhooks
+- KB crawler / ingest (Phase 4)
+- LLM / `askKnowledgeBase`
 - Production refresh-token HTTP-only cookie transport
+- Cloud hosting (this repo is local + GitHub only)
 
-These are intentionally reserved for Phases 2–5. The README is updated after
-each phase so it describes the code that actually exists.
+These are reserved for Phases 3–5. The README is updated after each phase so it
+describes the code that actually exists.
 
 ## Roadmap (post Phase 5)
 
@@ -279,4 +308,4 @@ each phase so it describes the code that actually exists.
 
 ---
 
-*README updates with every phase. Last updated: Phase 1 — Foundation & Auth.*
+*README updates with every phase. Last updated: Phase 2 — Ticket Engine + Help Center.*
