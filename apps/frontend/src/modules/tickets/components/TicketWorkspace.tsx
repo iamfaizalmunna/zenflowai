@@ -15,6 +15,7 @@ import {
 import { STATUS_COLOR, STATUS_LABEL, PRIORITY_COLOR, PRIORITY_LABEL } from '@/lib/constants';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import { useCountdown } from '@/modules/tickets/hooks/useCountdown';
+import { useUiSound } from '@/hooks/useUiSound';
 
 const STAFF = new Set(['AGENT', 'SUPERVISOR', 'ADMIN', 'SUPER_ADMIN']);
 
@@ -34,6 +35,7 @@ interface RelatedArticle {
 }
 
 export function TicketWorkspace({ id, role }: { id: number; role: string | undefined }) {
+  const { play } = useUiSound();
   const isStaff = STAFF.has(role ?? '');
   const [body, setBody] = useState('');
   const [internal, setInternal] = useState(false);
@@ -41,7 +43,11 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
   const { data, loading, refetch } = useQuery(GET_TICKET, { variables: { id }, skip: !id });
   const { data: relatedData } = useQuery(RELATED_ARTICLES, { variables: { ticketId: id }, skip: !id });
   const [addMessage, { loading: sending }] = useMutation(ADD_MESSAGE, {
-    onCompleted: () => { setBody(''); refetch(); },
+    onCompleted: () => {
+      void play('success');
+      setBody('');
+      void refetch();
+    },
   });
   const [updateTicket] = useMutation(UPDATE_TICKET, { onCompleted: () => refetch() });
   const [fetchSuggest, { loading: suggesting }] = useLazyQuery(SUGGEST_REPLY);
@@ -124,7 +130,7 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
         <button
           type="submit"
           disabled={sending || !body.trim()}
-          className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium disabled:opacity-50"
+          className="w-full min-h-12 py-2 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
         >
           {sending ? 'Sending…' : 'Send'}
         </button>
@@ -169,7 +175,7 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
   }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)_280px] items-start">
+    <div className="grid gap-4 app:grid-cols-[240px_minmax(0,1fr)_260px] items-start">
       <aside className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
         <p className="text-xs font-mono text-slate-400">{ticket.ticketNumber}</p>
         <h1 className="text-lg font-semibold leading-snug">{ticket.title}</h1>

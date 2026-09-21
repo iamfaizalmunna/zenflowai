@@ -3,16 +3,23 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { PENDING_CSATS, SUBMIT_CSAT } from '@/modules/admin/queries/admin.queries';
+import { useUiSound } from '@/hooks/useUiSound';
 
 export function CsatBanner() {
   const { data, refetch } = useQuery(PENDING_CSATS);
-  const [submit] = useMutation(SUBMIT_CSAT, { onCompleted: () => refetch() });
+  const { play } = useUiSound();
+  const [submit] = useMutation(SUBMIT_CSAT, {
+    onCompleted: () => {
+      void play('success');
+      void refetch();
+    },
+  });
   const [rating, setRating] = useState(5);
   const survey = data?.pendingCsats?.[0];
   if (!survey) return null;
 
   return (
-    <div className="rounded-xl border border-indigo-200 bg-indigo-50 dark:bg-indigo-950/40 p-4 text-sm space-y-2">
+    <div className="rounded-2xl border border-iris/25 bg-iris/10 p-4 text-sm space-y-2">
       <p className="font-medium">How was {survey.ticket.ticketNumber}?</p>
       <p className="text-slate-500 text-xs">{survey.ticket.title}</p>
       <form

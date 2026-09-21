@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { STATUS_COLOR, STATUS_LABEL, PRIORITY_COLOR, PRIORITY_LABEL } from '@/lib/constants';
 import { cn, formatRelativeTime } from '@/lib/utils';
+import { useUiSound } from '@/hooks/useUiSound';
 
 export interface TicketListItem {
   id: number;
@@ -17,15 +18,16 @@ export interface TicketListItem {
 }
 
 export function TicketCard({ ticket, href }: { ticket: TicketListItem; href: string }) {
+  const { play } = useUiSound();
   return (
-    <Link href={href} className="block">
-      <article className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+    <Link href={href} className="block" onClick={() => void play('tap')}>
+      <article className="rounded-2xl border border-white/40 dark:border-white/10 bg-card/80 backdrop-blur-sm p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-[0.99]">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-mono text-slate-400">{ticket.ticketNumber}</p>
+            <p className="text-xs font-mono text-muted-foreground">{ticket.ticketNumber}</p>
             <h3 className="font-medium text-sm mt-0.5 truncate">{ticket.title}</h3>
           </div>
-          <span className="text-xs text-slate-400 whitespace-nowrap">{formatRelativeTime(ticket.createdAt)}</span>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">{formatRelativeTime(ticket.createdAt)}</span>
         </div>
         <div className="flex flex-wrap gap-1.5 mt-3">
           <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', STATUS_COLOR[ticket.status])}>
@@ -40,7 +42,7 @@ export function TicketCard({ ticket, href }: { ticket: TicketListItem; href: str
             </span>
           )}
           {ticket.assignedTo && (
-            <span className="text-xs text-slate-500 px-1 py-0.5">Assigned: {ticket.assignedTo.name}</span>
+            <span className="text-xs text-muted-foreground px-1 py-0.5">Assigned: {ticket.assignedTo.name}</span>
           )}
         </div>
       </article>

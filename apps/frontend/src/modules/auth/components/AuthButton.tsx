@@ -11,11 +11,12 @@ export function AuthButton({ loading, children, className, disabled, ...props }:
     <button
       disabled={loading || disabled}
       className={cn(
-        'w-full py-2.5 px-4 rounded-xl text-sm font-medium transition-opacity',
-        'bg-slate-900 dark:bg-white text-white dark:text-slate-900',
-        'hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed',
+        'w-full min-h-12 py-3 px-4 rounded-2xl text-sm font-medium',
+        'bg-primary text-primary-foreground shadow-lg shadow-iris/25',
+        'hover:brightness-110 active:scale-[0.98] transition duration-200',
+        'disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100',
         'flex items-center justify-center gap-2',
-        className
+        className,
       )}
       {...props}
     >

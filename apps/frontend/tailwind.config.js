@@ -7,10 +7,24 @@ module.exports = {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
     './src/modules/**/*.{js,ts,jsx,tsx,mdx}',
     './src/lib/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/hooks/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
+    screens: {
+      sm: '640px',
+      md: '768px',
+      lg: '1025px',
+      app: '1025px',
+      xl: '1280px',
+      '2xl': '1536px',
+    },
     extend: {
+      fontFamily: {
+        sans: ['var(--font-outfit)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-fraunces)', 'Georgia', 'serif'],
+      },
       colors: {
+        iris: 'hsl(var(--iris))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {

@@ -6,11 +6,13 @@ import { AuthCard } from '@/modules/auth/components/AuthCard';
 import { AuthInput } from '@/modules/auth/components/AuthInput';
 import { AuthButton } from '@/modules/auth/components/AuthButton';
 import { useLogin } from '@/modules/auth/hooks/useAuth';
+import { useUiSound } from '@/hooks/useUiSound';
 
 export default function LoginPage() {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const { login, loading, error } = useLogin();
+  const { play } = useUiSound();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +60,12 @@ export default function LoginPage() {
           />
         </div>
 
-        <AuthButton loading={loading} type="submit">
+        <AuthButton
+          loading={loading}
+          type="submit"
+          onMouseEnter={() => void play('hover')}
+          onClick={() => void play('tap')}
+        >
           Sign in
         </AuthButton>
       </form>

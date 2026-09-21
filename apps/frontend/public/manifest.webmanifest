@@ -1,0 +1,19 @@
+{
+  "name": "ZenFlowAI",
+  "short_name": "ZenFlow",
+  "description": "Support tickets and Help Center — installable workspace",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0814",
+  "theme_color": "#f6f1ff",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

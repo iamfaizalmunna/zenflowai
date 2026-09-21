@@ -26,19 +26,19 @@ export default function CustomerDashboardPage() {
         <div className="space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Welcome back, {user?.name?.split(' ')[0]}</h1>
-              <p className="text-slate-500 mt-1 text-sm">Your recent support tickets.</p>
+              <h1 className="font-display text-2xl app:text-3xl tracking-tight">Welcome back, {user?.name?.split(' ')[0]}</h1>
+              <p className="text-muted-foreground mt-1 text-sm">Your recent support tickets.</p>
             </div>
-            <Link href="/tickets/new" className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium">
+            <Link href="/tickets/new" className="hidden app:inline-flex px-4 py-2.5 rounded-2xl bg-primary text-primary-foreground text-sm font-medium min-h-11 items-center">
               New ticket
             </Link>
           </div>
 
           <CsatBanner />
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {stats.map((stat) => (
-              <div key={stat.label} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
+              <div key={stat.label} className="bg-card/80 backdrop-blur-sm border border-white/40 dark:border-white/10 rounded-2xl p-5">
                 <p className="text-sm text-slate-500">{stat.label}</p>
                 <p className={`text-3xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>
               </div>
