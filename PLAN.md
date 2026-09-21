@@ -834,53 +834,248 @@ Abstract repeated patterns into shared utilities before implementing.
 
 ---
 
-## 19. Build Order (5 Days)
+## 19. Phase-Based Build Plan (5 Phases → 5 GitHub Pushes)
 
-### Day 1 — Foundation
-- [ ] Token Savior MCP setup
-- [ ] Update Prisma schema (full schema from Section 5)
-- [ ] DB migration + seed (5 users, routing rules, SLA policies, sample tickets)
-- [ ] Auth screens: Login, Register, Forgot Password (3 screens)
-- [ ] JWT + Refresh Token system
-- [ ] Layout + navigation (role-aware sidebar)
-- [ ] Role guard (redirect unauthorized routes)
+Each phase ends with a working, deployable product. Nothing is half-done at push time.
 
-### Day 2 — Ticket Engine
-- [ ] Create Ticket (with routing engine)
-- [ ] Ticket list (Customer: own only | Agent: team queue)
-- [ ] SLA timer set on creation
-- [ ] Ticket detail / conversation
-- [ ] Reply + internal notes
-- [ ] Ticket status changes
-- [ ] Assignment
+---
 
-### Day 3 — Agent + Real-time
-- [ ] 3-column Ticket Workspace (hero screen)
-- [ ] GraphQL Subscriptions (messageAdded, ticketUpdated)
-- [ ] Agent queue with live updates
-- [ ] SLA countdown timer (live)
-- [ ] Supervisor dashboard
-- [ ] Notification system (in-app)
+### PHASE 1 — Foundation & Auth
+**Branch:** `phase/1-foundation`
+**Push when:** Login works end-to-end. Role-based layout renders correctly.
 
-### Day 4 — Automation + Admin
-- [ ] SLA cron job (breach detection + escalation)
-- [ ] Auto-close cron
-- [ ] CSAT survey flow
-- [ ] Admin: Users & Teams management
-- [ ] Admin: Routing rules UI (CRUD)
-- [ ] Admin: SLA policies UI
-- [ ] Knowledge Base (public + internal)
-- [ ] AI adapter (rule-based, interface ready)
+#### Backend
+- [ ] Prisma schema — full rewrite (all tables from Section 5)
+- [ ] DB migration + seed (5 users across all roles, SLA policies, routing rules, categories)
+- [ ] JWT auth service: login, register, refresh token, logout
+- [ ] Auth resolvers: `login`, `register`, `me`, `refreshToken`, `logout`
+- [ ] GraphQL schema: User, AuthPayload, basic types
+- [ ] Security stack wired: Helmet, rate limiter, bot detection, IP blocklist, audit log
+- [ ] `requirePermission()` guard on every protected resolver
 
-### Day 5 — Polish + Analytics
-- [ ] Analytics dashboard (all 6 metrics)
-- [ ] Security dashboard (audit log, blocked IPs)
-- [ ] Webhooks (events + delivery log)
-- [ ] Demo data (realistic seed)
-- [ ] Mobile responsiveness
-- [ ] Error states + loading skeletons
-- [ ] Empty states
-- [ ] Final security check
+#### Frontend
+- [ ] App Router layout: root layout, font, theme provider
+- [ ] Role-aware sidebar (collapses per role — customer sees 4 items, agent sees 8, etc.)
+- [ ] Auth module: Login screen, Register screen, Forgot Password screen
+- [ ] JWT + refresh token flow (15min access, 7d refresh cookie)
+- [ ] Role guard: `AuthGuard`, `RoleGuard` components
+- [ ] Route protection (redirect unauthorized users)
+- [ ] Zustand auth store (token + user only)
+
+#### Deliverable at push
+```
+✅ Login / Register / Forgot Password (all 3 auth screens)
+✅ Redirects work per role after login
+✅ Security headers present (check devtools)
+✅ JWT refresh works (auto-renews on expiry)
+✅ Audit log records LOGIN_SUCCESS / LOGIN_FAILED
+```
+
+**Git push:** `git push origin phase/1-foundation` → PR → merge → `main`
+
+---
+
+### PHASE 2 — Ticket Engine
+**Branch:** `phase/2-ticket-engine`
+**Push when:** Customer can submit a ticket and see it. Agent can see their queue.
+
+#### Backend
+- [ ] Ticket service: `createTicket`, `getTicket`, `listTickets`, `updateTicket`
+- [ ] Routing engine: `RoutingEngine.evaluate()` (pure service, tested)
+- [ ] SLA service: `calculateDueAt()`, store `slaResponseDueAt` + `slaResolutionDueAt`
+- [ ] Ticket resolvers: `createTicket`, `tickets`, `ticket`, `updateTicket`, `assignTicket`, `resolveTicket`
+- [ ] Message resolvers: `addMessage`, `messages` (REPLY + INTERNAL_NOTE + SYSTEM_EVENT)
+- [ ] Ticket number generator: `#ZEN-0001` format
+- [ ] Spam detection on `createTicket` (block/flag before saving)
+- [ ] Fair usage quotas on ticket creation (per role)
+- [ ] Category, Tag, Team resolvers (read-only)
+- [ ] Routing decision logged to `RoutingDecision` table
+
+#### Frontend
+- [ ] Customer: Create Ticket screen (form + Zod validation)
+- [ ] Customer: My Tickets list (own tickets only)
+- [ ] Customer: Ticket Conversation view (messages, status badge, SLA display)
+- [ ] Customer: Dashboard (open/waiting/resolved counts + recent tickets)
+- [ ] Agent: Queue screen (all team tickets, filters: status/priority)
+- [ ] Shared: `TicketCard`, `StatusBadge`, `PriorityBadge`, `TicketNumber` components
+- [ ] Shared: `useTicket`, `useTicketList`, `useCreateTicket` hooks
+
+#### Deliverable at push
+```
+✅ Customer submits ticket → #ZEN-XXXX assigned
+✅ Routing engine assigns correct team
+✅ SLA due dates stored correctly
+✅ Agent sees ticket in queue
+✅ Customer sees their own tickets only
+✅ Spam detection blocks obvious spam
+```
+
+**Git push:** `git push origin phase/2-ticket-engine` → PR → merge → `main`
+
+---
+
+### PHASE 3 — Agent Workspace & Real-Time
+**Branch:** `phase/3-workspace-realtime`
+**Push when:** The 3-column workspace works live. Messages appear in real time.
+
+#### Backend
+- [ ] GraphQL Subscriptions setup (`graphql-ws`, PubSub singleton)
+- [ ] `messageAdded(ticketId)` subscription
+- [ ] `ticketUpdated(ticketId)` subscription
+- [ ] `ticketCreated` subscription (for agent queue)
+- [ ] `slaAlert` subscription (for supervisor)
+- [ ] Notification service: create notification on ticket events
+- [ ] Notification resolvers: `notifications`, `markRead`, `markAllRead`
+
+#### Frontend
+- [ ] **3-column Ticket Workspace** (hero screen — agent view)
+  - Left: ticket info, customer, SLA countdown, activity log
+  - Center: message thread (REPLY visible to all, INTERNAL_NOTE hidden from customer)
+  - Right: action panel (status, priority, assign, escalate, resolve)
+- [ ] Live SLA countdown timer (`useCountdown` hook)
+- [ ] Real-time messages via `messageAdded` subscription
+- [ ] Real-time ticket updates via `ticketUpdated` subscription
+- [ ] Agent queue: live `ticketCreated` subscription (new ticket appears without refresh)
+- [ ] Supervisor Dashboard: SLA alerts via `slaAlert` subscription
+- [ ] Notification bell (in header, shows unread count, live updates)
+- [ ] AI Assist buttons: Summarise + Suggest Reply (rule-based fallback, no key needed)
+
+#### Deliverable at push
+```
+✅ 3-column workspace renders, all panels functional
+✅ Agent sends reply → customer sees it instantly (no refresh)
+✅ Internal notes hidden from customer view
+✅ SLA timer counts down live, turns yellow/red at thresholds
+✅ New ticket appears in agent queue in real time
+✅ Notification bell shows live unread count
+✅ AI assist returns rule-based suggestion
+```
+
+**Git push:** `git push origin phase/3-workspace-realtime` → PR → merge → `main`
+
+---
+
+### PHASE 4 — Automation, Admin & Knowledge Base
+**Branch:** `phase/4-automation-admin`
+**Push when:** SLA escalation fires automatically. Admin can configure routing from the UI.
+
+#### Backend
+- [ ] SLA cron job (`node-cron`, every 2 min):
+  - SLA 80% → warning notification to agent + supervisor
+  - SLA breached → escalation notification + `slaResolutionBreached = true`
+  - RESOLVED tickets > 48h → auto-close
+- [ ] CSAT service: create survey on resolve, expire after 7d
+- [ ] CSAT resolvers: `submitCsat`, `myCsatSurveys`
+- [ ] Webhook service: emit events + HMAC signing + retry logic
+- [ ] Admin resolvers: `createUser`, `updateUser`, `banUser`, `createTeam`, `addTeamMember`
+- [ ] Routing admin resolvers: `createRoutingRule`, `updateRoutingRule`, `deleteRoutingRule`, `reorderRules`
+- [ ] SLA admin resolvers: `updateSlaPolicy`
+- [ ] Knowledge Base resolvers: `createArticle`, `updateArticle`, `articles`, `article`
+
+#### Frontend
+- [ ] Admin: Users & Teams screen (list, create, edit, ban, role change)
+- [ ] Admin: Routing Rules UI (rule list + drag-to-reorder + create/edit form)
+- [ ] Admin: SLA Policies UI (edit response/resolution times per priority)
+- [ ] Customer: CSAT survey banner + rating modal (1–5 stars + comment)
+- [ ] Knowledge Base — Public FAQ (customer-facing, searchable)
+- [ ] Knowledge Base — Internal Guides (agent-facing, markdown rendered)
+- [ ] Supervisor: CSAT analytics card (avg rating by agent/team)
+
+#### Deliverable at push
+```
+✅ Cron fires: SLA breach → supervisor gets notification automatically
+✅ Ticket auto-closes 48h after resolution
+✅ CSAT survey appears for customer after ticket resolved
+✅ Admin can add/reorder/delete routing rules in UI
+✅ Admin can edit SLA times per priority
+✅ Knowledge Base articles searchable by customer and agent
+✅ Webhooks emit on ticket events (check delivery log)
+```
+
+**Git push:** `git push origin phase/4-automation-admin` → PR → merge → `main`
+
+---
+
+### PHASE 5 — Analytics, Security Dashboard & Polish
+**Branch:** `phase/5-analytics-polish`
+**Push when:** Full demo flow works. App looks production-ready. All 16 screens complete.
+
+#### Backend
+- [ ] Analytics resolvers:
+  - `ticketVolumeByDay(period)` — line chart data
+  - `slaComplianceRate` — % breached vs total
+  - `avgResolutionTime(groupBy: team|agent)` — bar chart
+  - `agentPerformance` — tickets resolved, avg CSAT, avg response time
+  - `csatDistribution` — count per star rating + avg
+  - `ticketsByCategory` — donut chart
+- [ ] Security dashboard resolvers: `auditLogs`, `blockedIps`, `blockIp`, `unblockIp`, `spamReports`
+- [ ] Realistic demo seed: 50+ tickets across all statuses/priorities/teams, realistic message threads
+
+#### Frontend
+- [ ] Analytics dashboard (Recharts):
+  - Ticket volume line chart
+  - SLA compliance gauge
+  - Avg resolution time bar chart
+  - Agent performance leaderboard
+  - CSAT star distribution
+  - Category breakdown donut
+- [ ] Security dashboard (Admin):
+  - Audit log table (filterable by category/severity)
+  - Blocked IPs list + block/unblock action
+  - Spam reports queue
+- [ ] Loading skeletons on every data-fetching screen
+- [ ] Empty states (no tickets, no notifications, etc.)
+- [ ] Error boundaries (graceful error UI)
+- [ ] Mobile responsiveness (customer screens mobile-first, agent workspace tabbed on mobile)
+- [ ] Dark mode polish (everything works in both themes)
+- [ ] Final security pass (check all permission guards, audit logs)
+
+#### Deliverable at push
+```
+✅ All 16 screens complete and functional
+✅ Analytics charts populated with realistic demo data
+✅ Audit log shows every security event
+✅ App works on mobile (customer side)
+✅ Dark/light mode fully consistent
+✅ All roles see correct data (nothing leaks cross-role)
+✅ Full demo flow: Customer → Agent → Supervisor → Admin
+```
+
+**Git push:** `git push origin phase/5-analytics-polish` → PR → merge → `main`
+
+---
+
+### Branch Strategy Summary
+
+```
+main                    ← always stable, always deployable
+  └── phase/1-foundation        ← PR when phase complete
+  └── phase/2-ticket-engine     ← PR when phase complete
+  └── phase/3-workspace-realtime
+  └── phase/4-automation-admin
+  └── phase/5-analytics-polish
+```
+
+Each phase branch is created fresh from `main`:
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b phase/2-ticket-engine
+# ... build ...
+git push origin phase/2-ticket-engine
+# Open PR → review → merge to main
+```
+
+### Progress Tracker
+
+| Phase | Status | Branch | PR |
+|-------|--------|--------|----|
+| Phase 1 — Foundation & Auth | 🔲 Not started | `phase/1-foundation` | — |
+| Phase 2 — Ticket Engine | 🔲 Not started | `phase/2-ticket-engine` | — |
+| Phase 3 — Workspace & Real-Time | 🔲 Not started | `phase/3-workspace-realtime` | — |
+| Phase 4 — Automation & Admin | 🔲 Not started | `phase/4-automation-admin` | — |
+| Phase 5 — Analytics & Polish | 🔲 Not started | `phase/5-analytics-polish` | — |
 
 ---
 
