@@ -12,7 +12,7 @@
     "db:generate": "prisma generate",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit",
-    "test": "tsx --test src/**/*.test.ts ../frontend/src/lib/constants.test.ts"
+    "test": "tsx --test src/security/*.test.ts src/utils/*.test.ts src/services/*.test.ts ../frontend/src/lib/constants.test.ts"
   },
   "dependencies": {
     "@apollo/server": "^4.11.0",
