@@ -12,6 +12,7 @@ export const knowledgeTypeDefs = gql`
     body: String!
     visibility: ArticleVisibility!
     viewCount: Int!
+    isPublished: Boolean!
     updatedAt: DateTime!
     category: Category
   }

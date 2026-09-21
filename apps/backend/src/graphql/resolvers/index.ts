@@ -4,6 +4,8 @@ import { userResolvers } from './user.resolver';
 import { ticketResolvers } from './ticket.resolver';
 import { knowledgeResolvers } from './knowledge.resolver';
 import { subscriptionResolvers } from './subscription.resolver';
+import { adminResolvers } from './admin.resolver';
+import { csatResolvers } from './csat.resolver';
 
 export const resolvers = {
   DateTime: DateTimeResolver,
@@ -14,12 +16,16 @@ export const resolvers = {
     ...userResolvers.Query,
     ...ticketResolvers.Query,
     ...knowledgeResolvers.Query,
+    ...adminResolvers.Query,
+    ...csatResolvers.Query,
   },
 
   Mutation: {
     ...authResolvers.Mutation,
     ...userResolvers.Mutation,
     ...ticketResolvers.Mutation,
+    ...adminResolvers.Mutation,
+    ...csatResolvers.Mutation,
   },
 
   Subscription: {

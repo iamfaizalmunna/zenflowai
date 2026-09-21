@@ -10,6 +10,7 @@ import { analyzeContent, sanitizeContent } from '../security/spamDetector';
 import { audit } from '../security/audit';
 import { Context } from '../types/context';
 import { pubsub, TICKET_CREATED_TOPIC, ticketUpdatedTopic } from '../utils/pubsub';
+import { openCsatForTicket } from './csat.service';
 
 const createSchema = z.object({
   title: z.string().min(4).max(180),
@@ -225,6 +226,10 @@ export async function updateTicket(
     data,
     include: TICKET_INCLUDE,
   });
+
+  if (input.status === 'RESOLVED') {
+    await openCsatForTicket(ticket.id, ticket.customerId);
+  }
 
   await audit({
     action: 'TICKET_UPDATED',

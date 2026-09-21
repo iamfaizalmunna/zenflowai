@@ -143,6 +143,7 @@ async function main() {
       'How to create a support ticket',
       'When to escalate a ticket',
       'Writing a clear first response',
+      'Draft: new refund FAQ',
     ] } },
   });
 
@@ -196,11 +197,19 @@ async function main() {
         categoryId: generalCat.id,
         body: 'Acknowledge the issue, confirm the ticket number, set the next step, and give a time window. Do not promise refunds unless Billing policy allows it.',
       },
+      {
+        title: 'Draft: new refund FAQ',
+        visibility: 'PUBLIC',
+        isPublished: false,
+        authorId: agentUser.id,
+        categoryId: billingCat.id,
+        body: 'Draft: explain when refunds apply. Review before publishing.',
+      },
     ],
   });
 
   console.log(`✅ Sample tickets: ${sample1.ticketNumber} and #ZEN-0002`);
-  console.log('✅ Knowledge articles: 4 public, 2 internal');
+  console.log('✅ Knowledge articles: 4 public, 2 internal, 1 draft');
 
   console.log(`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

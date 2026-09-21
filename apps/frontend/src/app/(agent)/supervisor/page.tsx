@@ -4,6 +4,7 @@ import { useQuery } from '@apollo/client';
 import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { GET_TICKETS } from '@/modules/tickets/queries/ticket.queries';
+import { CSAT_SUMMARY } from '@/modules/admin/queries/admin.queries';
 import { TicketCard } from '@/modules/tickets/components/TicketCard';
 import { remainingMs } from '@/lib/countdown';
 
@@ -11,6 +12,7 @@ export default function SupervisorHome() {
   const { data, loading } = useQuery(GET_TICKETS, {
     variables: { page: 1, pageSize: 50 },
   });
+  const { data: csat } = useQuery(CSAT_SUMMARY);
 
   const dueSoon = (data?.tickets?.tickets ?? []).filter(
     (ticket: { slaResolutionDueAt?: string | null; status: string }) => {
@@ -27,6 +29,11 @@ export default function SupervisorHome() {
         <div className="space-y-4">
           <h1 className="text-2xl font-bold tracking-tight">SLA watch</h1>
           <p className="text-sm text-slate-500">Open tickets due within 8 hours (or already overdue).</p>
+          {csat?.csatSummary && (
+            <p className="text-sm text-slate-600">
+              CSAT submitted {csat.csatSummary.submitted} · avg {csat.csatSummary.averageRating.toFixed(1)} · pending {csat.csatSummary.pending}
+            </p>
+          )}
           {loading && <p className="text-sm text-slate-400">Loading…</p>}
           <div className="space-y-2">
             {dueSoon.map((ticket: Parameters<typeof TicketCard>[0]['ticket']) => (

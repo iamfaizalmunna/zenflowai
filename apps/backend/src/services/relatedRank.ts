@@ -29,10 +29,18 @@ export function rankRelatedArticles<T extends { title: string; body: string; cat
   ticketCategoryId?: number | null,
   limit = 5
 ): T[] {
+  return rankRelatedWithScores(ticketText, articles, ticketCategoryId, limit).map((row) => row.article);
+}
+
+export function rankRelatedWithScores<T extends { title: string; body: string; categoryId?: number | null }>(
+  ticketText: string,
+  articles: T[],
+  ticketCategoryId?: number | null,
+  limit = 5
+): Array<{ article: T; score: number }> {
   return [...articles]
     .map((article) => ({ article, score: articleRelevanceScore(ticketText, article, ticketCategoryId) }))
     .filter((row) => row.score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map((row) => row.article);
+    .slice(0, limit);
 }

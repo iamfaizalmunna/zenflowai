@@ -6,6 +6,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { TICKET_COUNTS, GET_TICKETS } from '@/modules/tickets/queries/ticket.queries';
 import { TicketCard } from '@/modules/tickets/components/TicketCard';
+import { CsatBanner } from '@/modules/tickets/components/CsatBanner';
 import { useAuthStore } from '@/store/auth.store';
 
 export default function CustomerDashboardPage() {
@@ -32,6 +33,8 @@ export default function CustomerDashboardPage() {
               New ticket
             </Link>
           </div>
+
+          <CsatBanner />
 
           <div className="grid grid-cols-3 gap-4">
             {stats.map((stat) => (

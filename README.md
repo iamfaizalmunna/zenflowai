@@ -189,13 +189,29 @@ This project is built in 5 phases. Each phase = a working push to GitHub.
 |-------|-------------|--------|
 | **1 — Foundation & Auth** | Auth screens, JWT auth service, role-aware layout, RBAC and security modules | ✅ Implemented on `phase/1-foundation` |
 | **2 — Ticket Engine + Help Center** | Tickets, routing, SLA dates, messages, owned KB, unit tests | ✅ Merged to `main` |
-| **3 — Workspace & Real-time** | 3-column workspace, graphql-ws, related articles, template replies | ✅ Implemented on `phase/3-workspace-realtime` |
-| **4 — Automation & Admin** | SLA cron, CSAT, admin routing UI, Knowledge Base | 🔲 Planned |
+| **3 — Workspace & Real-time** | 3-column workspace, graphql-ws, related articles, template replies | ✅ Merged to `main` |
+| **4 — Automation & Admin** | SLA cron, CSAT, admin UI, rule-based Help Center Q&A | ✅ Implemented on `phase/4-automation-admin` |
 | **5 — Analytics & Polish** | Analytics dashboard, security dashboard, mobile, demo data | 🔲 Planned |
 
 See [`PLAN.md`](./PLAN.md) for the full architecture blueprint.
 
 ---
+
+## Phase 4 capabilities
+
+```
+Ticket hits SLA warning / breach
+      ↓
+Cron notifies staff and flags the ticket
+      ↓
+Resolved tickets auto-close after 48h
+      ↓
+Customer rates CSAT (7-day window)
+      ↓
+Admin edits users, teams, routing, SLA hours, KB drafts
+      ↓
+Help Center Q&A cites owned articles (no API key)
+```
 
 ## Phase 3 capabilities
 
@@ -309,13 +325,13 @@ ts init --agent cursor --yes
 
 ## Not implemented yet
 
-- SLA cron (warnings, breach, auto-close)
-- Notification bell, CSAT, analytics, webhooks
-- KB crawler / ingest and LLM / `askKnowledgeBase`
+- Crawler / Firecrawl ingest and optional OpenAI/Ollama
+- Webhooks + HMAC retry
+- Analytics and security dashboards
 - Production refresh-token HTTP-only cookie transport
 - Cloud hosting (this repo is local + GitHub only)
 
-These are reserved for Phases 4–5. The README is updated after each phase so it
+These are reserved for Phase 5. The README is updated after each phase so it
 describes the code that actually exists.
 
 ## Roadmap (post Phase 5)
@@ -330,4 +346,4 @@ describes the code that actually exists.
 
 ---
 
-*README updates with every phase. Last updated: Phase 3 — Workspace & Real-time.*
+*README updates with every phase. Last updated: Phase 4 — Automation & Admin.*

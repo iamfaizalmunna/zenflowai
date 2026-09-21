@@ -28,6 +28,8 @@ import {
   GRAPHQL_BODY_LIMIT,
 } from './security/httpSecurity';
 
+import { startSlaCron } from './jobs/slaCron';
+
 const PORT = process.env.PORT || 4000;
 const IS_PROD = process.env.NODE_ENV === 'production';
 
@@ -197,6 +199,7 @@ async function bootstrap() {
 
   // ─── Start ──────────────────────────────────────────────────────────────────
   await new Promise<void>((resolve) => httpServer.listen({ port: PORT }, resolve));
+  startSlaCron();
 
   console.log(`
   🚀 ZenFlowAI Backend ready!

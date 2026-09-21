@@ -975,47 +975,39 @@ Each phase ends with a working, deployable product. Nothing is half-done at push
 **Push when:** SLA escalation fires, admins can manage routing/KB, and local ingest can import approved sources.
 
 #### Backend / Jobs
-- [ ] SLA cron job (`node-cron`, every 2 min): warning, breach, auto-close
-- [ ] CSAT service: create survey on resolve, expire after 7d
-- [ ] Webhook service: emit events + HMAC signing + retry
-- [ ] Admin resolvers: users, teams, routing rules, SLA policies
-- [ ] Knowledge admin: create/update/publish/archive articles
-- [ ] `askKnowledgeBase(question, ticketId?)` with confidence + citations
-- [ ] Optional AI adapters: `openai` and `ollama` behind `AI_PROVIDER`
-- [ ] AI must only receive retrieved chunks, never the whole KB
-- [ ] Low-confidence answers fall back to related articles or ticket creation
+- [x] SLA cron job (`node-cron`, every 2 min): warning, breach, auto-close 48h after resolve
+- [x] CSAT service: create survey on resolve, expire after 7d
+- [ ] Webhook service — Phase 5
+- [x] Admin resolvers: users, teams, routing rules, SLA policies
+- [x] Knowledge admin: create/update/publish drafts (owned articles, no crawler)
+- [x] `askKnowledgeBase(question)` rule-based citations (no LLM)
+- [ ] Optional AI adapters openai/ollama — later
+- [x] Low-confidence answers say they do not know
 
 #### Local ingest tool (`tools/kb-ingest`)
-- [ ] Source allowlist YAML (approved domains only)
-- [ ] Crawl4AI default fetcher, `check_robots_txt=true`, rate limits, custom UA
-- [ ] Extract → Markdown → hash → chunk → import to MySQL as DRAFT
-- [ ] Human approval required before PUBLISHED
-- [ ] Store source URL, license note, last crawled at
-- [ ] `.gitignore` raw crawl cache; never commit scraped content
-- [ ] Optional Firecrawl adapter later (`FETCHER=firecrawl`) — not required
-- [ ] Do not enable Scrapling stealth / CAPTCHA / Cloudflare bypass
+- [ ] Deferred — not in this light slice
 
 #### Frontend
-- [ ] Admin: Users & Teams
-- [ ] Admin: Routing Rules UI
-- [ ] Admin: SLA Policies UI
-- [ ] Admin: Knowledge review queue (approve/reject ingested drafts)
-- [ ] Customer: CSAT survey banner + rating modal
-- [ ] Customer: Help Center Q&A box (`askKnowledgeBase`)
-- [ ] Agent: Internal Q&A in workspace
-- [ ] Supervisor: CSAT analytics card
+- [x] Admin: Users
+- [x] Admin: Teams
+- [x] Admin: Routing Rules UI
+- [x] Admin: SLA Policies UI
+- [x] Admin: Knowledge drafts publish/unpublish
+- [x] Customer: CSAT banner
+- [x] Customer: Help Center Q&A box
+- [ ] Agent workspace Q&A — use Help Center for now
+- [x] Supervisor: CSAT counts on SLA watch
 
 #### Deliverable at push
 ```
-✅ Cron fires: SLA breach → supervisor notified
-✅ Ticket auto-closes 48h after resolution
-✅ Admin can manage routing, SLA, users, and KB drafts
-✅ Local ingest imports only allowlisted public pages as DRAFT
-✅ Q&A returns cited answers, or says it does not know
-✅ Optional Ollama/OpenAI works without breaking rule-based mode
+✅ Cron: SLA warning/breach notifications + auto-close after 48h resolved
+✅ Admin can manage users, teams, routing, SLA hours, and KB drafts
+✅ CSAT on resolve, 7-day window, supervisor sees counts
+✅ Q&A returns cited owned articles or says it does not know
+✅ Unit tests for SLA math, CSAT rules, Q&A confidence
 ```
 
-**Git push:** `git push origin phase/4-automation-admin` → PR → merge → `main`
+**Git push:** `git push origin phase/4-automation-admin` (local + GitHub only; no crawler, no LLM)
 
 ---
 
@@ -1079,7 +1071,7 @@ git push origin phase/2-ticket-engine
 | Phase 1 — Foundation & Auth | ✅ Implemented | `phase/1-foundation` | merged with Phase 2 |
 | Phase 2 — Ticket Engine + KB Foundation | ✅ Merged | `phase/2-ticket-engine` | #1 merged |
 | Phase 3 — Workspace, Real-Time, KB in Tickets | ✅ Implemented (light) | `phase/3-workspace-realtime` | GitHub only |
-| Phase 4 — Automation, Legal Ingest, Optional AI | 🔲 Not started | `phase/4-automation-admin` | — |
+| Phase 4 — Automation, Legal Ingest, Optional AI | ✅ Implemented (light, no crawler/LLM) | `phase/4-automation-admin` | GitHub |
 | Phase 5 — Analytics & Polish | 🔲 Not started | `phase/5-analytics-polish` | — |
 
 ---
@@ -1208,5 +1200,5 @@ Never commit scraped corpora to the repo.
 
 ---
 
-*Last updated: after Phase 3 light workspace — graphql-ws, 3-column ticket view, related articles, template replies, tests.*
-*Next: Phase 4 automation/admin/ingest. Keep local + GitHub; no cloud host.*
+*Last updated: after Phase 4 light automation — SLA cron, CSAT, admin UI, rule-based Q&A, tests.*
+*Next: Phase 5 analytics and polish. Keep local + GitHub; no crawler/LLM unless you ask.*
