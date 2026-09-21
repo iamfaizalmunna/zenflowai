@@ -1,7 +1,7 @@
 import { baseTypeDefs } from './base.schema';
 import { authTypeDefs } from './auth.schema';
 import { userTypeDefs } from './user.schema';
+import { ticketTypeDefs } from './ticket.schema';
+import { knowledgeTypeDefs } from './knowledge.schema';
 
-// Phase 1: base + auth + user
-// Phase 2+: add ticket, message, routing, sla schemas
-export const typeDefs = [baseTypeDefs, authTypeDefs, userTypeDefs];
+export const typeDefs = [baseTypeDefs, authTypeDefs, userTypeDefs, ticketTypeDefs, knowledgeTypeDefs];

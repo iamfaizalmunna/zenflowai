@@ -875,9 +875,9 @@ Each phase ends with a working, deployable product. Nothing is half-done at push
 
 ---
 
-### PHASE 2 — Ticket Engine
+### PHASE 2 — Ticket Engine + KB Foundation
 **Branch:** `phase/2-ticket-engine`
-**Push when:** Customer can submit a ticket and see it. Agent can see their queue.
+**Push when:** Customer can submit a ticket, agent can see the queue, and Help Center search works on owned articles.
 
 #### Backend
 - [ ] Ticket service: `createTicket`, `getTicket`, `listTickets`, `updateTicket`
@@ -890,15 +890,22 @@ Each phase ends with a working, deployable product. Nothing is half-done at push
 - [ ] Fair usage quotas on ticket creation (per role)
 - [ ] Category, Tag, Team resolvers (read-only)
 - [ ] Routing decision logged to `RoutingDecision` table
+- [ ] Knowledge article schema: Article, ArticleChunk, ArticleVersion, ArticleFeedback
+- [ ] Knowledge resolvers: `articles`, `article`, `searchKnowledge`
+- [ ] MySQL FULLTEXT search on title, summary, and chunks
+- [ ] Seed 25–40 owned articles (public FAQ + internal agent guides)
+- [ ] Visibility filter: PUBLIC for customers, INTERNAL only for Agent+
 
 #### Frontend
 - [ ] Customer: Create Ticket screen (form + Zod validation)
 - [ ] Customer: My Tickets list (own tickets only)
 - [ ] Customer: Ticket Conversation view (messages, status badge, SLA display)
 - [ ] Customer: Dashboard (open/waiting/resolved counts + recent tickets)
+- [ ] Customer: Help Center search + article page
 - [ ] Agent: Queue screen (all team tickets, filters: status/priority)
+- [ ] Agent: Internal Guides search
 - [ ] Shared: `TicketCard`, `StatusBadge`, `PriorityBadge`, `TicketNumber` components
-- [ ] Shared: `useTicket`, `useTicketList`, `useCreateTicket` hooks
+- [ ] Shared: `useTicket`, `useTicketList`, `useCreateTicket`, `useKnowledgeSearch` hooks
 
 #### Deliverable at push
 ```
@@ -908,15 +915,17 @@ Each phase ends with a working, deployable product. Nothing is half-done at push
 ✅ Agent sees ticket in queue
 ✅ Customer sees their own tickets only
 ✅ Spam detection blocks obvious spam
+✅ Help Center returns owned public articles
+✅ Internal guides hidden from customers
 ```
 
 **Git push:** `git push origin phase/2-ticket-engine` → PR → merge → `main`
 
 ---
 
-### PHASE 3 — Agent Workspace & Real-Time
+### PHASE 3 — Workspace, Real-Time, KB in Tickets
 **Branch:** `phase/3-workspace-realtime`
-**Push when:** The 3-column workspace works live. Messages appear in real time.
+**Push when:** The 3-column workspace works live, and related KB articles appear beside a ticket.
 
 #### Backend
 - [ ] GraphQL Subscriptions setup (`graphql-ws`, PubSub singleton)
@@ -926,70 +935,85 @@ Each phase ends with a working, deployable product. Nothing is half-done at push
 - [ ] `slaAlert` subscription (for supervisor)
 - [ ] Notification service: create notification on ticket events
 - [ ] Notification resolvers: `notifications`, `markRead`, `markAllRead`
+- [ ] `relatedArticles(ticketId)` using title + description + category
+- [ ] `insertArticleIntoReply(articleId)` returns cited snippet, not full dump
+- [ ] AI adapter interface + RuleBasedAdapter:
+  - `classifyTicket()` keyword fallback
+  - `suggestReply()` category templates
+  - `findSimilarTickets()` LIKE search
+  - `askKnowledgeBase()` top chunks + citations
 
 #### Frontend
 - [ ] **3-column Ticket Workspace** (hero screen — agent view)
   - Left: ticket info, customer, SLA countdown, activity log
   - Center: message thread (REPLY visible to all, INTERNAL_NOTE hidden from customer)
   - Right: action panel (status, priority, assign, escalate, resolve)
+  - Right also: Related articles + Suggest Reply + Summarise
 - [ ] Live SLA countdown timer (`useCountdown` hook)
 - [ ] Real-time messages via `messageAdded` subscription
 - [ ] Real-time ticket updates via `ticketUpdated` subscription
-- [ ] Agent queue: live `ticketCreated` subscription (new ticket appears without refresh)
+- [ ] Agent queue: live `ticketCreated` subscription
 - [ ] Supervisor Dashboard: SLA alerts via `slaAlert` subscription
 - [ ] Notification bell (in header, shows unread count, live updates)
-- [ ] AI Assist buttons: Summarise + Suggest Reply (rule-based fallback, no key needed)
+- [ ] Create Ticket: related public articles before submit (deflection)
 
 #### Deliverable at push
 ```
 ✅ 3-column workspace renders, all panels functional
-✅ Agent sends reply → customer sees it instantly (no refresh)
+✅ Agent sends reply → customer sees it instantly
 ✅ Internal notes hidden from customer view
-✅ SLA timer counts down live, turns yellow/red at thresholds
+✅ Related KB articles appear beside the ticket
+✅ Suggest Reply uses KB + templates, no API key required
 ✅ New ticket appears in agent queue in real time
-✅ Notification bell shows live unread count
-✅ AI assist returns rule-based suggestion
 ```
 
 **Git push:** `git push origin phase/3-workspace-realtime` → PR → merge → `main`
 
 ---
 
-### PHASE 4 — Automation, Admin & Knowledge Base
+### PHASE 4 — Automation, Admin, Legal Ingest, Optional AI
 **Branch:** `phase/4-automation-admin`
-**Push when:** SLA escalation fires automatically. Admin can configure routing from the UI.
+**Push when:** SLA escalation fires, admins can manage routing/KB, and local ingest can import approved sources.
 
-#### Backend
-- [ ] SLA cron job (`node-cron`, every 2 min):
-  - SLA 80% → warning notification to agent + supervisor
-  - SLA breached → escalation notification + `slaResolutionBreached = true`
-  - RESOLVED tickets > 48h → auto-close
+#### Backend / Jobs
+- [ ] SLA cron job (`node-cron`, every 2 min): warning, breach, auto-close
 - [ ] CSAT service: create survey on resolve, expire after 7d
-- [ ] CSAT resolvers: `submitCsat`, `myCsatSurveys`
-- [ ] Webhook service: emit events + HMAC signing + retry logic
-- [ ] Admin resolvers: `createUser`, `updateUser`, `banUser`, `createTeam`, `addTeamMember`
-- [ ] Routing admin resolvers: `createRoutingRule`, `updateRoutingRule`, `deleteRoutingRule`, `reorderRules`
-- [ ] SLA admin resolvers: `updateSlaPolicy`
-- [ ] Knowledge Base resolvers: `createArticle`, `updateArticle`, `articles`, `article`
+- [ ] Webhook service: emit events + HMAC signing + retry
+- [ ] Admin resolvers: users, teams, routing rules, SLA policies
+- [ ] Knowledge admin: create/update/publish/archive articles
+- [ ] `askKnowledgeBase(question, ticketId?)` with confidence + citations
+- [ ] Optional AI adapters: `openai` and `ollama` behind `AI_PROVIDER`
+- [ ] AI must only receive retrieved chunks, never the whole KB
+- [ ] Low-confidence answers fall back to related articles or ticket creation
+
+#### Local ingest tool (`tools/kb-ingest`)
+- [ ] Source allowlist YAML (approved domains only)
+- [ ] Crawl4AI default fetcher, `check_robots_txt=true`, rate limits, custom UA
+- [ ] Extract → Markdown → hash → chunk → import to MySQL as DRAFT
+- [ ] Human approval required before PUBLISHED
+- [ ] Store source URL, license note, last crawled at
+- [ ] `.gitignore` raw crawl cache; never commit scraped content
+- [ ] Optional Firecrawl adapter later (`FETCHER=firecrawl`) — not required
+- [ ] Do not enable Scrapling stealth / CAPTCHA / Cloudflare bypass
 
 #### Frontend
-- [ ] Admin: Users & Teams screen (list, create, edit, ban, role change)
-- [ ] Admin: Routing Rules UI (rule list + drag-to-reorder + create/edit form)
-- [ ] Admin: SLA Policies UI (edit response/resolution times per priority)
-- [ ] Customer: CSAT survey banner + rating modal (1–5 stars + comment)
-- [ ] Knowledge Base — Public FAQ (customer-facing, searchable)
-- [ ] Knowledge Base — Internal Guides (agent-facing, markdown rendered)
-- [ ] Supervisor: CSAT analytics card (avg rating by agent/team)
+- [ ] Admin: Users & Teams
+- [ ] Admin: Routing Rules UI
+- [ ] Admin: SLA Policies UI
+- [ ] Admin: Knowledge review queue (approve/reject ingested drafts)
+- [ ] Customer: CSAT survey banner + rating modal
+- [ ] Customer: Help Center Q&A box (`askKnowledgeBase`)
+- [ ] Agent: Internal Q&A in workspace
+- [ ] Supervisor: CSAT analytics card
 
 #### Deliverable at push
 ```
-✅ Cron fires: SLA breach → supervisor gets notification automatically
+✅ Cron fires: SLA breach → supervisor notified
 ✅ Ticket auto-closes 48h after resolution
-✅ CSAT survey appears for customer after ticket resolved
-✅ Admin can add/reorder/delete routing rules in UI
-✅ Admin can edit SLA times per priority
-✅ Knowledge Base articles searchable by customer and agent
-✅ Webhooks emit on ticket events (check delivery log)
+✅ Admin can manage routing, SLA, users, and KB drafts
+✅ Local ingest imports only allowlisted public pages as DRAFT
+✅ Q&A returns cited answers, or says it does not know
+✅ Optional Ollama/OpenAI works without breaking rule-based mode
 ```
 
 **Git push:** `git push origin phase/4-automation-admin` → PR → merge → `main`
@@ -1001,43 +1025,25 @@ Each phase ends with a working, deployable product. Nothing is half-done at push
 **Push when:** Full demo flow works. App looks production-ready. All 16 screens complete.
 
 #### Backend
-- [ ] Analytics resolvers:
-  - `ticketVolumeByDay(period)` — line chart data
-  - `slaComplianceRate` — % breached vs total
-  - `avgResolutionTime(groupBy: team|agent)` — bar chart
-  - `agentPerformance` — tickets resolved, avg CSAT, avg response time
-  - `csatDistribution` — count per star rating + avg
-  - `ticketsByCategory` — donut chart
+- [ ] Analytics resolvers: volume, SLA, resolution time, agent performance, CSAT, category
+- [ ] KB analytics: unanswered questions, helpful/unhelpful, deflection rate
 - [ ] Security dashboard resolvers: `auditLogs`, `blockedIps`, `blockIp`, `unblockIp`, `spamReports`
-- [ ] Realistic demo seed: 50+ tickets across all statuses/priorities/teams, realistic message threads
+- [ ] Realistic demo seed: 50+ tickets, message threads, 25+ published articles
 
 #### Frontend
-- [ ] Analytics dashboard (Recharts):
-  - Ticket volume line chart
-  - SLA compliance gauge
-  - Avg resolution time bar chart
-  - Agent performance leaderboard
-  - CSAT star distribution
-  - Category breakdown donut
-- [ ] Security dashboard (Admin):
-  - Audit log table (filterable by category/severity)
-  - Blocked IPs list + block/unblock action
-  - Spam reports queue
-- [ ] Loading skeletons on every data-fetching screen
-- [ ] Empty states (no tickets, no notifications, etc.)
-- [ ] Error boundaries (graceful error UI)
-- [ ] Mobile responsiveness (customer screens mobile-first, agent workspace tabbed on mobile)
-- [ ] Dark mode polish (everything works in both themes)
-- [ ] Final security pass (check all permission guards, audit logs)
+- [ ] Analytics dashboard (Recharts) including KB usefulness
+- [ ] Security dashboard (audit log, blocked IPs, spam reports)
+- [ ] Loading skeletons, empty states, error boundaries
+- [ ] Mobile: customer screens first; agent workspace tabs on small screens
+- [ ] Dark mode polish
+- [ ] Final security pass (permission guards, internal KB leak checks, audit logs)
 
 #### Deliverable at push
 ```
 ✅ All 16 screens complete and functional
 ✅ Analytics charts populated with realistic demo data
+✅ KB Q&A is cited, role-scoped, and works without an AI key
 ✅ Audit log shows every security event
-✅ App works on mobile (customer side)
-✅ Dark/light mode fully consistent
-✅ All roles see correct data (nothing leaks cross-role)
 ✅ Full demo flow: Customer → Agent → Supervisor → Admin
 ```
 
@@ -1049,8 +1055,8 @@ Each phase ends with a working, deployable product. Nothing is half-done at push
 
 ```
 main                    ← always stable, always deployable
-  └── phase/1-foundation        ← PR when phase complete
-  └── phase/2-ticket-engine     ← PR when phase complete
+  └── phase/1-foundation
+  └── phase/2-ticket-engine
   └── phase/3-workspace-realtime
   └── phase/4-automation-admin
   └── phase/5-analytics-polish
@@ -1071,10 +1077,10 @@ git push origin phase/2-ticket-engine
 
 | Phase | Status | Branch | PR |
 |-------|--------|--------|----|
-| Phase 1 — Foundation & Auth | 🔲 Not started | `phase/1-foundation` | — |
-| Phase 2 — Ticket Engine | 🔲 Not started | `phase/2-ticket-engine` | — |
-| Phase 3 — Workspace & Real-Time | 🔲 Not started | `phase/3-workspace-realtime` | — |
-| Phase 4 — Automation & Admin | 🔲 Not started | `phase/4-automation-admin` | — |
+| Phase 1 — Foundation & Auth | ✅ Implemented | `phase/1-foundation` | pending merge |
+| Phase 2 — Ticket Engine + KB Foundation | 🔲 Not started | `phase/2-ticket-engine` | — |
+| Phase 3 — Workspace, Real-Time, KB in Tickets | 🔲 Not started | `phase/3-workspace-realtime` | — |
+| Phase 4 — Automation, Legal Ingest, Optional AI | 🔲 Not started | `phase/4-automation-admin` | — |
 | Phase 5 — Analytics & Polish | 🔲 Not started | `phase/5-analytics-polish` | — |
 
 ---
@@ -1096,16 +1102,24 @@ NODE_ENV=development
 ALLOWED_ORIGINS="http://localhost:3000"
 
 # File Storage
-UPLOAD_DIR="./uploads"    # local for MVP
+UPLOAD_DIR="./uploads"
 MAX_FILE_SIZE_MB=10
 
 # SLA Cron
-SLA_CHECK_INTERVAL_CRON="*/2 * * * *"   # every 2 minutes
+SLA_CHECK_INTERVAL_CRON="*/2 * * * *"
 
 # AI (optional, defaults to rule-based)
-AI_PROVIDER=rule_based    # options: rule_based | openai | groq
-OPENAI_API_KEY=           # leave empty for rule-based
-GROQ_API_KEY=             # leave empty for rule-based
+AI_PROVIDER=rule_based    # rule_based | openai | groq | ollama
+OPENAI_API_KEY=
+GROQ_API_KEY=
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.1
+
+# KB ingest (local tool only)
+KB_FETCHER=crawl4ai       # crawl4ai | firecrawl (optional later)
+FIRECRAWL_API_KEY=
+KB_ALLOWLIST_PATH=./tools/kb-ingest/sources/allowlist.yml
+KB_DATA_DIR=./data/kb     # gitignored
 
 # Frontend
 NEXT_PUBLIC_GRAPHQL_URL=http://localhost:4000/graphql
@@ -1115,5 +1129,85 @@ NEXT_PUBLIC_APP_NAME=ZenFlowAI
 
 ---
 
-*Last updated: Day 0 — Pre-build planning complete.*
-*Next: Day 1 — Token Savior setup → Prisma schema → Auth screens*
+## 21. Knowledge Base, Legal Ingest, and AI
+
+### Crawler choice: do not use both as the default
+
+| Tool | License | Best for | Use in ZenFlowAI |
+|------|---------|----------|------------------|
+| **Crawl4AI** | Apache 2.0 | Local crawl → clean Markdown, `robots.txt` | **Default ingest fetcher** |
+| **Firecrawl** | AGPL-3.0 self-host / hosted API | Production scrape API, JS pages, PDFs | Optional later adapter if we have a key |
+| **Scrapling** | BSD-3-Clause | Adaptive selectors, spiders | Not default. Do **not** use StealthyFetcher |
+
+Firecrawl is nicer as a hosted scrape API, but self-hosting AGPL-3.0 inside our app is a license risk. Scrapling is powerful, but its stealth / Cloudflare-bypass features are the wrong default for a legal KB pipeline.
+
+Decision:
+
+```text
+FetcherAdapter
+  ├── Crawl4AI  (default, local, robots.txt, rate-limited)
+  └── Firecrawl (optional, approved sources only)
+```
+
+Never enable CAPTCHA solving, login bypass, paywall bypass, or stealth fingerprinting.
+
+### What we scrape — and what we do not
+
+**Useful:**
+
+- Our own help docs and product pages
+- Our own internal playbooks, written by us
+- Official vendor docs we are allowed to reuse, with source URL and license note
+- Public RFC / standard docs when license allows
+
+**Not useful / not allowed:**
+
+- Random internet dumps
+- Other companies' full help centers copied wholesale
+- Login-only, paywalled, or CAPTCHA-blocked pages
+- Scraped customer tickets from other products
+- Anything we cannot cite and remove later
+
+A solid KB is mostly **owned content**. Scraping is a refresh pipeline, not the source of truth.
+
+### Why this helps AI / local AI
+
+AI is only useful here if it answers from **retrieved, permitted chunks**.
+
+```text
+Question or ticket
+        ↓
+Search MySQL FULLTEXT on published chunks
+        ↓
+Keep 3–8 chunks, role-filtered
+        ↓
+Rule-based extract  OR  local Ollama / optional OpenAI
+        ↓
+Answer + article citations + confidence
+```
+
+That is helpful because:
+
+- Local Ollama can run with no paid key
+- The model never sees the whole KB, so tokens stay small
+- Answers can be audited and unpublished
+- The product still works if AI is offline
+
+Unstructured scraped HTML dumped into GitHub is **not** helpful for AI.
+
+### Storage
+
+```text
+data/kb/                gitignored
+MySQL KnowledgeArticle  published content
+MySQL KnowledgeChunk    search/retrieval units
+sourceUrl + contentHash + licenseNote
+DRAFT → REVIEW → PUBLISHED
+```
+
+Never commit scraped corpora to the repo.
+
+---
+
+*Last updated: after Phase 1 — KB, ingest, and AI plan locked.*
+*Next: merge `phase/1-foundation`, then start Phase 2.*

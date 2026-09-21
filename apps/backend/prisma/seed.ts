@@ -88,6 +88,120 @@ async function main() {
   });
   console.log('✅ Routing rules: 11 created');
 
+  const [, , , agentUser, customerUser] = users;
+  const sla = await prisma.slaPolicy.findUnique({ where: { priority: 'HIGH' } });
+  const now = new Date();
+
+  await prisma.ticket.deleteMany({ where: { ticketNumber: { in: ['#ZEN-0001', '#ZEN-0002'] } } });
+
+  const sample1 = await prisma.ticket.create({
+    data: {
+      ticketNumber: '#ZEN-0001',
+      title: 'Cannot sign in on Safari',
+      description: 'Login fails with a 500 error on Safari 17. Happens every time after entering the password.',
+      status: 'OPEN',
+      priority: 'HIGH',
+      type: 'BUG',
+      customerId: customerUser.id,
+      assignedToId: agentUser.id,
+      teamId: itTeam.id,
+      categoryId: techCat.id,
+      slaResponseDueAt: new Date(now.getTime() + (sla?.responseTimeHours ?? 2) * 3600_000),
+      slaResolutionDueAt: new Date(now.getTime() + (sla?.resolutionTimeHours ?? 8) * 3600_000),
+      messages: {
+        create: [
+          { senderId: customerUser.id, body: 'Login fails with a 500 error on Safari 17.', type: 'REPLY' },
+          { senderId: agentUser.id, body: 'Thanks — I can reproduce this. Looking into it.', type: 'REPLY' },
+        ],
+      },
+    },
+  });
+
+  await prisma.ticket.create({
+    data: {
+      ticketNumber: '#ZEN-0002',
+      title: 'Charged twice for last invoice',
+      description: 'I was billed twice for the same month. Please reverse the duplicate charge.',
+      status: 'NEW',
+      priority: 'HIGH',
+      type: 'QUESTION',
+      customerId: customerUser.id,
+      teamId: billingTeam.id,
+      categoryId: billingCat.id,
+      assignedToId: agentUser.id,
+      messages: {
+        create: [{ senderId: customerUser.id, body: 'I was billed twice for the same month.', type: 'REPLY' }],
+      },
+    },
+  });
+
+  await prisma.knowledgeArticle.deleteMany({
+    where: { title: { in: [
+      'How to reset your password',
+      'Cannot log in',
+      'Duplicate charge or refund request',
+      'How to create a support ticket',
+      'When to escalate a ticket',
+      'Writing a clear first response',
+    ] } },
+  });
+
+  await prisma.knowledgeArticle.createMany({
+    data: [
+      {
+        title: 'How to reset your password',
+        visibility: 'PUBLIC',
+        isPublished: true,
+        authorId: agentUser.id,
+        categoryId: generalCat.id,
+        body: '1. Open the login page.\n2. Select Forgot password.\n3. Enter your email.\n4. Open the reset link and choose a new password (8+ characters).',
+      },
+      {
+        title: 'Cannot log in',
+        visibility: 'PUBLIC',
+        isPublished: true,
+        authorId: agentUser.id,
+        categoryId: techCat.id,
+        body: 'Try another browser, clear cache, and confirm Caps Lock is off. If the account is locked after failed attempts, wait 15 minutes or contact support.',
+      },
+      {
+        title: 'Duplicate charge or refund request',
+        visibility: 'PUBLIC',
+        isPublished: true,
+        authorId: agentUser.id,
+        categoryId: billingCat.id,
+        body: 'If you were billed twice, create a Billing ticket with the invoice date and amount. Finance reviews duplicate charges within one business day.',
+      },
+      {
+        title: 'How to create a support ticket',
+        visibility: 'PUBLIC',
+        isPublished: true,
+        authorId: agentUser.id,
+        categoryId: generalCat.id,
+        body: 'Go to New Ticket, add a short title, describe what you expected vs what happened, pick a category, then submit. You will receive a #ZEN-XXXX number.',
+      },
+      {
+        title: 'When to escalate a ticket',
+        visibility: 'INTERNAL',
+        isPublished: true,
+        authorId: agentUser.id,
+        categoryId: incidentCat.id,
+        body: 'Escalate to Tier-2 when there is an outage, a security concern, or SLA is past 80%. Add an internal note with impact and the last customer update.',
+      },
+      {
+        title: 'Writing a clear first response',
+        visibility: 'INTERNAL',
+        isPublished: true,
+        authorId: agentUser.id,
+        categoryId: generalCat.id,
+        body: 'Acknowledge the issue, confirm the ticket number, set the next step, and give a time window. Do not promise refunds unless Billing policy allows it.',
+      },
+    ],
+  });
+
+  console.log(`✅ Sample tickets: ${sample1.ticketNumber} and #ZEN-0002`);
+  console.log('✅ Knowledge articles: 4 public, 2 internal');
+
   console.log(`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ Seed complete! Demo credentials:

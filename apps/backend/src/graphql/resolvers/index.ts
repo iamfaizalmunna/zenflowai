@@ -1,6 +1,8 @@
 import { DateTimeResolver, JSONResolver } from 'graphql-scalars';
 import { authResolvers } from './auth.resolver';
 import { userResolvers } from './user.resolver';
+import { ticketResolvers } from './ticket.resolver';
+import { knowledgeResolvers } from './knowledge.resolver';
 
 export const resolvers = {
   DateTime: DateTimeResolver,
@@ -9,10 +11,13 @@ export const resolvers = {
   Query: {
     ...authResolvers.Query,
     ...userResolvers.Query,
+    ...ticketResolvers.Query,
+    ...knowledgeResolvers.Query,
   },
 
   Mutation: {
     ...authResolvers.Mutation,
     ...userResolvers.Mutation,
+    ...ticketResolvers.Mutation,
   },
 };
