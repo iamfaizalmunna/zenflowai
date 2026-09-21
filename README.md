@@ -14,13 +14,14 @@
 
 ZenFlowAI is a **medium-scale service desk and ticketing platform** — think Zendesk × Linear, simplified for real teams.
 
-- Customers submit tickets via web (or voice, coming Phase 3)
-- Agents work tickets in a **3-column workspace** with live chat
-- Supervisors monitor SLA timers and escalations in real time
-- Admins configure routing rules, teams, and SLA policies from the UI
-- Every action is audit-logged. Every role sees only what they should.
+- Customers submit tickets on the web, browse the Help Center, and rate CSAT after resolve
+- Agents work tickets in a **3-column workspace** with graphql-ws live updates
+- Supervisors watch SLA due times; admins edit users, teams, routing, SLA hours, and KB drafts
+- Signed-in users personalize the UI at **Appearance** (`/settings`); prefs persist in MySQL
+- Mobile-first app chrome at ≤1024px, plus a PWA manifest
+- Every sensitive write is audit-logged. Every role sees only what they should.
 
-**AI is optional infrastructure, not the foundation.** The system works fully without any AI key. The AI adapter is plugged in when ready — the architecture doesn't change.
+**AI is optional infrastructure, not the foundation.** Help Center Q&A and Suggest Reply are rule-based. No crawler or LLM key is required.
 
 ---
 
@@ -31,9 +32,10 @@ ZenFlowAI is a **medium-scale service desk and ticketing platform** — think Ze
 | **Frontend** | Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Framer Motion | Micro-frontend structure — each role is an isolated module |
 | **Backend** | Express.js, Apollo GraphQL (Apollo Server 4) | GraphQL Subscriptions = real-time built-in |
 | **Database** | MySQL + Prisma ORM | Type-safe, schema-first, easy migrations |
-| **Auth** | JWT (15min) + Refresh Token (7d, HTTP-only cookie) | Short-lived access tokens + secure refresh |
+| **Auth** | JWT access (15m) in `localStorage` + refresh token mutation (7d) | HTTP-only cookie transport is not wired yet |
 | **Real-time** | GraphQL Subscriptions via graphql-ws | `messageAdded`, `ticketUpdated`, `ticketCreated` |
-| **Background Jobs** | node-cron (SLA sweep) | Phase 4 |
+| **Background Jobs** | node-cron SLA sweep | Warnings, breaches, auto-close 48h after resolve |
+| **PWA** | `manifest.webmanifest` + `sw.js` | Installable; app chrome at ≤1024px |
 | **Monorepo** | pnpm workspaces + Turborepo | `apps/backend` + `apps/frontend` + `packages/shared` |
 | **Token Saving** | Apollo APQ + Token Savior MCP | -60–80% tokens per AI session |
 
@@ -62,61 +64,44 @@ quotas, and cooldowns before a `#ZEN-XXXX` ticket is saved.
 
 ---
 
-## Project Structure — actual Phase 2
+## Project Structure — actual (through Phase 5)
 
 ```
 ZenFlowAI/
 ├── apps/
 │   ├── backend/
 │   │   ├── prisma/
-│   │   │   ├── schema.prisma        # MySQL schema and security models
+│   │   │   ├── schema.prisma        # Includes UiPreference (ui_preferences)
 │   │   │   └── seed.ts              # Five roles, teams, categories, SLA, rules
 │   │   └── src/
-│   │       ├── graphql/
-│   │       │   ├── schemas/         # TypeDefs split by domain
-│   │       │   └── resolvers/       # One resolver file per domain
-│   │       ├── services/
-│   │       │   ├── auth.service.ts      # Login, register, refresh, logout
-│   │       │   ├── ticket.service.ts    # Create, list, get, update, counts
-│   │       │   ├── message.service.ts   # Thread replies and internal notes
-│   │       │   ├── routing.service.ts   # Keyword / category / priority / fallback
-│   │       │   ├── sla.service.ts       # First-response and resolve due dates
-│   │       │   └── knowledge.service.ts # Owned Help Center articles
-│   │       ├── security/
-│   │       │   ├── rbac.ts          # Permission map + requirePermission()
-│   │       │   ├── audit.ts         # Immutable audit logger
-│   │       │   ├── spamDetector.ts  # Heuristic spam/bot scoring
-│   │       │   ├── fairUsage.ts     # Quota + random cooldown
-│   │       │   └── httpSecurity.ts  # Middleware stack (Helmet, rate-limit, etc.)
-│   │       ├── middleware/
-│   │       │   └── auth.ts          # JWT → DB session verify → buildContext()
-│   │       ├── types/
-│   │       │   └── context.ts       # GraphQL request context
-│   │       └── utils/
-│   │           ├── prisma.ts            # Singleton client
-│   │           └── ticketNumber.ts      # #ZEN-XXXX generator
+│   │       ├── graphql/schemas/     # auth, user, ticket, knowledge, admin, csat, appearance
+│   │       ├── graphql/resolvers/
+│   │       ├── services/            # tickets, routing, SLA, CSAT, Q&A, appearance, …
+│   │       ├── jobs/slaCron.ts      # node-cron SLA sweep
+│   │       ├── security/            # RBAC, audit, spam, fair usage, HTTP stack
+│   │       ├── middleware/auth.ts
+│   │       └── utils/               # prisma, pubsub, #ZEN-XXXX
 │   │
 │   └── frontend/
 │       └── src/
 │           ├── app/
-│           │   ├── (auth)/          # Login, Register, Forgot Password
-│           │   ├── (customer)/      # Dashboard, tickets, Help Center
-│           │   ├── (agent)/         # Queue, internal guides
-│           │   └── (admin)/         # Admin users placeholder
-│           ├── modules/auth/        # Auth components, hooks, GraphQL queries
-│           ├── modules/tickets/     # TicketCard + ticket GraphQL documents
-│           ├── components/layout/  # AppShell and role-aware Sidebar
-│           ├── lib/                 # Apollo client, utils, constants
-│           └── store/               # Persisted Zustand auth state
+│           │   ├── (auth)/          # /login, /register, /forgot-password
+│           │   ├── (customer)/      # /dashboard, /tickets, /tickets/new, /knowledge
+│           │   ├── (agent)/         # /queue, /knowledge/internal, /supervisor
+│           │   ├── (admin)/admin/   # /admin/users, teams, routing, sla, knowledge
+│           │   └── settings/        # Appearance studio
+│           ├── modules/auth/
+│           ├── modules/tickets/
+│           ├── modules/admin/
+│           ├── modules/appearance/  # myAppearance / saveAppearance GraphQL
+│           ├── components/layout/   # AppShell, Sidebar, MobileChrome, PWA
+│           ├── components/ui/       # Field, Select, shared control styles
+│           ├── hooks/               # useAppearance, useUiSound
+│           ├── lib/                 # Apollo, appearance tokens, sounds, nav
+│           └── store/               # Zustand auth only
 │
-├── packages/
-│   └── shared/                      # Shared TypeScript types
-│
-├── .cursor/
-│   ├── mcp.json                     # Token Savior MCP config
-│   └── rules/                       # Architecture + token-saving rules
-│
-├── PLAN.md                          # Master build plan (read before coding)
+├── packages/shared/                 # Placeholder types (app code does not rely on these)
+├── PLAN.md
 └── turbo.json
 ```
 
@@ -153,9 +138,9 @@ cp apps/frontend/.env.local.example apps/frontend/.env.local
 
 ```bash
 pnpm db:generate   # generate Prisma client
-pnpm db:migrate    # run migrations
 pnpm db:seed       # seed demo data
-pnpm test          # unit tests including Phase 5 appearance tokens
+pnpm test          # unit tests (tsx --test), including Phase 5 appearance tokens
+# prisma/migrations is gitignored; apply schema locally with `pnpm --filter backend exec prisma db push`
 ```
 
 ### 4. Run
@@ -177,7 +162,9 @@ pnpm dev
 | Admin | admin@zenflowai.com | password123 |
 | Supervisor | supervisor@zenflowai.com | password123 |
 | Agent | agent@zenflowai.com | password123 |
-After login, Appearance is at `/settings` (theme, sounds, accent, type, ticket views). Prefs persist in MySQL.
+| Customer | customer@zenflowai.com | password123 |
+
+After login, **Appearance** is `/settings`: sounds, system/light/dark, accent + shade, matte/glossy/glass, font family/size, density, logo, default ticket view. Saved in `ui_preferences` via `myAppearance` / `saveAppearance`. Ticket queues also sort, filter (status + priority), and switch list / compact / card / icon views.
 
 ---
 
@@ -191,7 +178,7 @@ This project is built in 6 phases. Each phase = a working push to GitHub.
 | **2 — Ticket Engine + Help Center** | Tickets, routing, SLA dates, messages, owned KB, unit tests | ✅ Merged to `main` |
 | **3 — Workspace & Real-time** | 3-column workspace, graphql-ws, related articles, template replies | ✅ Merged to `main` |
 | **4 — Automation & Admin** | SLA cron, CSAT, admin screens, rule-based Help Center Q&A | ✅ Merged to `main` |
-| **5 — UI Customization** | Appearance (theme, color, type, sounds, logo), ticket views — prefs in DB | ✅ Merged to `main` |
+| **5 — UI Customization** | Appearance studio, DB prefs, ticket sort/filter/views, click-only sounds | ✅ Merged to `main` |
 | **6 — Analytics & Polish** | Analytics + security dashboards, demo data (moved from old Phase 5) | 🔲 Planned |
 
 See [`PLAN.md`](./PLAN.md) for the full architecture blueprint.
@@ -264,7 +251,7 @@ Thread messages (reply / internal note)
 Help Center: public articles for customers, internal guides for staff
 ```
 
-This is the light MVP plus live workspace: graphql-ws, related articles, template Suggest Reply. No crawler, no LLM, no cloud host.
+This is the light MVP through Phase 5: live workspace, SLA cron, CSAT, admin screens, rule-based Q&A, Appearance prefs in MySQL, PWA/mobile chrome. No crawler, no LLM, no cloud host.
 
 ---
 
@@ -315,6 +302,18 @@ query Related($ticketId: Int!) {
 subscription OnMessage($ticketId: Int!) {
   messageAdded(ticketId: $ticketId) { id body type }
 }
+
+# Appearance (signed-in)
+query MyAppearance {
+  myAppearance {
+    colorMode accentHex shade finish fontFamily fontSize
+    density ticketView ticketSort soundsMuted logoDataUrl
+  }
+}
+
+mutation SaveAppearance($input: AppearanceInput!) {
+  saveAppearance(input: $input) { accentHex finish ticketView }
+}
 ```
 
 ---
@@ -361,4 +360,4 @@ describes the code that actually exists.
 
 ---
 
-*README updates with every phase. Last updated: Phase 5 — UI customization merged to `main`; analytics is Phase 6.*
+*README updates with every phase. Last updated: Phase 5 UI customization merged to `main`.*

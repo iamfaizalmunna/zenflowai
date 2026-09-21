@@ -148,7 +148,8 @@ Response
 
 **JWT Strategy:**
 - Short-lived access token: 15 minutes
-- Refresh token: 7 days (HTTP-only cookie, not in localStorage)
+- Access token: 15 minutes (JWT, frontend `localStorage` today)
+- Refresh token: 7 days (stored hashed in MySQL; HTTP-only cookie not wired)
 - Token contains: `{ userId, role, sessionId }`
 - Session validated against DB on every request (catches banned/deleted users instantly)
 - Role is always read from DB, never trusted from JWT alone
@@ -354,6 +355,19 @@ SpamReport
 PermissionOverride
   id, userId, permission, granted (bool)
   grantedById, reason, expiresAt, createdAt
+
+// ── UI CUSTOMIZATION (Phase 5) ───────────────────────────────────
+
+UiPreference          // one row per user — table ui_preferences
+  userId (unique, FK → User)
+  colorMode (SYSTEM|LIGHT|DARK)
+  accentHex, shade (−24…24)
+  finish (MATTE|GLOSSY|GLASS)
+  fontFamily, fontSize (S|M|L), density
+  ticketView (LIST|COMPACT|CARD|ICON)
+  ticketSort (UPDATED|CREATED|SLA|PRIORITY)
+  soundsMuted, logoDataUrl
+  createdAt, updatedAt
 ```
 
 ---
@@ -502,153 +516,47 @@ interface AIAdapter {
 
 ---
 
-## 10. Micro-Frontend Structure
+## 10. Frontend structure (as shipped)
 
-Each route group is a self-contained module with its own components, hooks, and types.
+Each route group is a module. Shared UI lives in `components/`. Shared logic in `lib/` or `hooks/`.
 
 ```
 apps/frontend/src/
-│
-├── app/                          ← Next.js App Router
-│   ├── (auth)/                   ← Auth module (login, register, reset)
-│   │   ├── login/page.tsx
-│   │   ├── register/page.tsx
-│   │   └── forgot-password/page.tsx
-│   │
-│   ├── (customer)/               ← Customer module
-│   │   ├── dashboard/page.tsx
-│   │   ├── tickets/page.tsx
-│   │   ├── tickets/[id]/page.tsx
-│   │   ├── tickets/new/page.tsx
-│   │   └── knowledge/page.tsx
-│   │
-│   ├── (agent)/                  ← Agent module
-│   │   ├── queue/page.tsx
-│   │   ├── tickets/[id]/page.tsx ← 3-column workspace
-│   │   └── knowledge/page.tsx    ← internal guides
-│   │
-│   ├── (supervisor)/             ← Supervisor module
-│   │   ├── dashboard/page.tsx
-│   │   └── analytics/page.tsx
-│   │
-│   └── (admin)/                  ← Admin module
-│       ├── users/page.tsx
-│       ├── teams/page.tsx
-│       ├── routing/page.tsx
-│       ├── sla/page.tsx
-│       └── security/page.tsx
-│
-├── modules/                      ← Feature modules (micro-frontend units)
-│   ├── tickets/
-│   │   ├── components/           ← TicketCard, TicketStatus, SLATimer
-│   │   ├── hooks/                ← useTicket, useTicketList, useCreateTicket
-│   │   ├── queries/              ← gql fragments + operations
-│   │   └── types.ts
-│   │
-│   ├── messages/
-│   │   ├── components/           ← MessageBubble, ReplyBox, InternalNote
-│   │   ├── hooks/                ← useMessages, useSendMessage
-│   │   └── queries/
-│   │
-│   ├── auth/
-│   │   ├── components/           ← LoginForm, RegisterForm
-│   │   ├── hooks/                ← useAuth, useSession
-│   │   └── guards/               ← RoleGuard, AuthGuard
-│   │
-│   ├── routing/
-│   │   ├── engine/               ← routingEngine.ts (pure function)
-│   │   └── components/           ← RoutingRuleList, RuleEditor
-│   │
-│   ├── sla/
-│   │   ├── SLATimer.tsx          ← live countdown
-│   │   ├── hooks/useCountdown.ts
-│   │   └── slaPolicy.ts          ← pure helpers
-│   │
-│   ├── ai/
-│   │   └── hooks/useAiAssist.ts  ← wraps AI adapter calls
-│   │
-│   ├── analytics/
-│   │   ├── components/           ← Charts, MetricCard
-│   │   └── hooks/useAnalytics.ts
-│   │
-│   └── notifications/
-│       ├── NotificationBell.tsx
-│       └── hooks/useNotifications.ts
-│
-├── components/                   ← Shared UI (shadcn/ui wrappers)
-│   └── ui/                       ← Button, Badge, Card, etc.
-│
-├── lib/                          ← Pure utilities (no side effects)
-│   ├── apollo.ts                 ← Apollo client singleton
-│   ├── utils.ts                  ← cn(), formatDate(), etc.
-│   └── constants.ts              ← STATUS_COLORS, PRIORITY_LABELS, etc.
-│
-├── hooks/                        ← Global hooks (useTheme, useUser)
-└── store/                        ← Zustand (auth only)
+├── app/
+│   ├── (auth)/login|register|forgot-password
+│   ├── (customer)/dashboard, tickets, tickets/new, tickets/[id], knowledge
+│   ├── (agent)/queue, knowledge/internal, supervisor
+│   ├── (admin)/admin/users|teams|routing|sla|knowledge
+│   └── settings/page.tsx              ← Appearance studio
+├── modules/auth, tickets, admin, appearance
+├── components/layout (AppShell, Sidebar, MobileChrome, PWA)
+├── components/ui (Field, Select, controlStyles)
+├── hooks/useAppearance, useUiSound
+├── lib/appearance, appearanceCore, uiSound, nav, apollo-client
+└── store/auth.store.ts                ← Zustand auth only
 ```
+
+**Shipped:** PWA + mobile chrome ≤1024px. **Not shipped:** `(supervisor)/analytics`, `(admin)/security`, dedicated notification bell.
 
 **Rule:** No module imports from another module's internals. Only through shared `lib/` or `components/`.
 
 ---
 
-## 11. Backend Structure (Modular, DRY)
+## 11. Backend Structure (as shipped)
 
 ```
 apps/backend/src/
-│
-├── graphql/
-│   ├── schemas/                  ← typeDefs split by domain
-│   │   ├── ticket.schema.ts
-│   │   ├── user.schema.ts
-│   │   ├── message.schema.ts
-│   │   ├── routing.schema.ts
-│   │   ├── sla.schema.ts
-│   │   ├── analytics.schema.ts
-│   │   └── index.ts              ← merge all
-│   │
-│   └── resolvers/                ← one resolver per domain
-│       ├── ticket.resolver.ts
-│       ├── user.resolver.ts
-│       ├── message.resolver.ts
-│       ├── routing.resolver.ts
-│       ├── sla.resolver.ts
-│       ├── analytics.resolver.ts
-│       ├── subscription.resolver.ts
-│       └── index.ts
-│
-├── services/                     ← Business logic (pure, testable)
-│   ├── ticket.service.ts
-│   ├── routing.service.ts        ← RoutingEngine
-│   ├── sla.service.ts            ← SLA calculator + breach checker
-│   ├── notification.service.ts
-│   ├── webhook.service.ts
-│   ├── csat.service.ts
-│   └── ai/
-│       ├── adapter.interface.ts
-│       ├── ruleBasedAdapter.ts
-│       └── index.ts
-│
-├── security/
-│   ├── rbac.ts                   ← permissions map + requirePermission()
-│   ├── audit.ts                  ← audit() helper
-│   ├── spamDetector.ts           ← analyzeContent()
-│   ├── fairUsage.ts              ← checkQuota() + checkCooldown()
-│   └── httpSecurity.ts           ← middleware stack
-│
-├── jobs/                         ← Background workers
-│   └── slaChecker.ts             ← node-cron, runs every 2 min
-│
-├── middleware/
-│   └── auth.ts                   ← buildContext() → JWT → session check
-│
-├── utils/
-│   ├── prisma.ts                 ← singleton
-│   ├── pubsub.ts                 ← GraphQL PubSub singleton
-│   └── ticket.ts                 ← generateTicketNumber()
-│
-└── types/
-    └── context.ts                ← Context interface
+├── graphql/schemas/     auth, user, ticket, knowledge, admin, csat, appearance, base
+├── graphql/resolvers/   matching files + subscription
+├── services/            ticket, message, routing, sla, csat, qa, appearance, admin, knowledge
+├── jobs/slaCron.ts
+├── security/            rbac, audit, spam, fairUsage, httpSecurity
+├── middleware/auth.ts
+├── utils/               prisma, pubsub, ticketNumber
+└── types/context.ts
 ```
+
+**Not in this tree yet:** analytics resolvers, webhook.service, AI adapter process.
 
 **Rule:** Resolvers only call services. Services only call Prisma and other services. Zero business logic in resolvers.
 
@@ -762,26 +670,20 @@ Retry: 3 attempts with exponential backoff. Stored in `WebhookDelivery` for debu
 
 ---
 
-## 16. 16 Screens
+## 16. Screens (shipped vs planned)
 
-| # | Screen | Module | Role |
-|---|--------|--------|------|
-| 1 | Login | auth | All |
-| 2 | Register | auth | All |
-| 3 | Forgot/Reset Password | auth | All |
-| 4 | Customer Dashboard | customer | Customer |
-| 5 | Create Ticket | customer | Customer |
-| 6 | My Tickets | customer | Customer |
-| 7 | Ticket Conversation | customer | Customer |
-| 8 | Public Knowledge Base | customer | Customer |
-| 9 | Agent Queue | agent | Agent+ |
-| 10 | **Ticket Workspace (3-col)** | agent | Agent+ |
-| 11 | Internal Knowledge Base | agent | Agent+ |
-| 12 | Supervisor Dashboard | supervisor | Supervisor+ |
-| 13 | Analytics | supervisor | Supervisor+ |
-| 14 | Users & Teams | admin | Admin+ |
-| 15 | Routing Rules + SLA Config | admin | Admin+ |
-| 16 | Security Dashboard | admin | Admin+ |
+| Screen | Route | Status |
+|--------|--------|--------|
+| Login / Register / Forgot password | `/login`, `/register`, `/forgot-password` | Shipped |
+| Customer home, tickets, new ticket, conversation | `/dashboard`, `/tickets`, `/tickets/new`, `/tickets/[id]` | Shipped |
+| Public Help Center | `/knowledge` | Shipped |
+| Agent queue + 3-col workspace | `/queue`, `/tickets/[id]` | Shipped |
+| Internal guides | `/knowledge/internal` | Shipped |
+| Supervisor SLA watch | `/supervisor` | Shipped (counts, not charts) |
+| Admin users, teams, routing, SLA, KB drafts | `/admin/…` | Shipped |
+| Appearance | `/settings` | Shipped (Phase 5) |
+| Analytics dashboard | — | Phase 6 |
+| Security dashboard | — | Phase 6 |
 
 ---
 
@@ -793,20 +695,18 @@ Test only what TypeScript can't: pure business logic functions.
 
 ```
 What to test:
-  ✅ routingEngine.evaluate()     — pure function, critical path
-  ✅ slaService.calculateDueAt()  — pure function, date math
-  ✅ spamDetector.analyzeContent()— pure function, scoring
-  ✅ rbac.hasPermission()         — pure function, security critical
-  ✅ generateTicketNumber()       — pure function, format validation
+  ✅ routing, SLA math, spam verdicts, RBAC, ticket numbers
+  ✅ related-article rank, suggest-reply templates, CSAT rules, Q&A confidence
+  ✅ SLA sweep, PWA/nav contracts, UI sound policy
+  ✅ appearance token merge, contrast, ticket view/sort enums
 
 What NOT to test:
-  ❌ GraphQL resolvers (integration test territory)
-  ❌ Express middleware (covered by security layer e2e)
-  ❌ UI components (TypeScript + manual testing sufficient for MVP)
-  ❌ Prisma queries (covered by DB constraints + types)
+  ❌ GraphQL resolvers (keep thin)
+  ❌ Prisma queries
+  ❌ Full UI e2e for MVP
 ```
 
-Framework: **Vitest** (same config as Vite, zero setup, ESM-native).
+Runner: **`tsx --test`** from the backend package (`pnpm test`), including `apps/frontend/src/lib/*.test.ts`. Not Vitest.
 
 ---
 
@@ -834,7 +734,7 @@ Abstract repeated patterns into shared utilities before implementing.
 
 ---
 
-## 19. Phase-Based Build Plan (5 Phases → 5 GitHub Pushes)
+## 19. Phase-Based Build Plan (6 Phases → 6 GitHub Pushes)
 
 Each phase ends with a working, deployable product. Nothing is half-done at push time.
 
@@ -1120,7 +1020,7 @@ git push origin phase/2-ticket-engine
 | Phase 2 — Ticket Engine + KB Foundation | ✅ Merged | `phase/2-ticket-engine` | #1 merged |
 | Phase 3 — Workspace, Real-Time, KB in Tickets | ✅ Implemented (light) | `phase/3-workspace-realtime` | GitHub only |
 | Phase 4 — Automation, Legal Ingest, Optional AI | ✅ Implemented (light, no crawler/LLM) | `phase/4-automation-admin` | GitHub |
-| Phase 5 — UI Customization | ✅ Implemented (Appearance studio + ticket views) | `phase/5-ui-customization` | GitHub |
+| Phase 5 — UI Customization | ✅ Merged to `main` (Appearance + ticket views) | `phase/5-ui-customization` | GitHub |
 | Phase 6 — Analytics, Security Dashboard & Polish | 🔲 Planned (was Phase 5) | `phase/6-analytics-polish` | — |
 
 ---
@@ -1249,5 +1149,5 @@ Never commit scraped corpora to the repo.
 
 ---
 
-*Last updated: Phase 5 UI customization merged to `main` — Appearance studio, DB prefs, ticket views.*
+*Last updated: Phase 5 UI customization merged to `main` — Appearance `/settings`, `ui_preferences`, ticket views. Docs match shipped code.*
 *Next: Phase 6 analytics. Keep local + GitHub; no crawler/LLM unless you ask.*
