@@ -12,10 +12,15 @@ datasource db {
 
 // ─── Enums ──────────────────────────────────────────────────────────────────
 
+// ─── Role Hierarchy (highest → lowest privilege) ─────────────────────────────
+// SUPER_ADMIN > ADMIN > MODERATOR > AGENT > CUSTOMER > GUEST
 enum Role {
-  ADMIN
-  AGENT
-  CUSTOMER
+  SUPER_ADMIN   // Platform owner — unrestricted, manages other admins
+  ADMIN         // Full org control, can manage users/settings
+  MODERATOR     // Can review, flag, suspend — cannot delete admins
+  AGENT         // Handle tickets, respond, change status
+  CUSTOMER      // Submit tickets, comment on own tickets
+  GUEST         // Read-only, extremely limited
 }
 
 enum TicketStatus {
@@ -50,6 +55,46 @@ model User {
   password  String
   role      Role     @default(CUSTOMER)
   avatar    String?
+
+  // ─── Account Security Fields ───────────────────────────────────────────────
+  isActive          Boolean  @default(true)
+  isBanned          Boolean  @default(false)
+  banReason         String?
+  bannedAt          DateTime?
+  bannedById        Int?
+
+  // Suspicious / AI-flagged
+  isSuspicious      Boolean  @default(false)
+  suspicionScore    Float    @default(0)   // 0–100, auto-computed by AI layer
+  suspicionReason   String?
+
+  // Account lockout (brute-force protection)
+  failedLoginCount  Int      @default(0)
+  lockedUntil       DateTime?
+
+  // Email verification
+  emailVerified     Boolean  @default(false)
+  emailVerifyToken  String?
+
+  // Password reset
+  passwordResetToken    String?
+  passwordResetExpires  DateTime?
+
+  // 2FA
+  twoFactorEnabled  Boolean  @default(false)
+  twoFactorSecret   String?
+
+  // Fair-usage / cooldown
+  ticketQuota       Int      @default(10)   // max tickets per window
+  ticketWindowStart DateTime @default(now())
+  ticketCount       Int      @default(0)    // tickets created in current window
+
+  // Metadata
+  lastLoginAt   DateTime?
+  lastLoginIp   String?
+  registeredIp  String?
+  userAgent     String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -58,8 +103,13 @@ model User {
   assignedTickets Ticket[]       @relation("AssignedToUser")
   comments        Comment[]
   notifications   Notification[]
-  savedQueries    SavedQuery[]   // GraphQL persisted/saved queries
+  savedQueries    SavedQuery[]
+  auditLogs       AuditLog[]     @relation("AuditActor")
+  sessions        UserSession[]
 
+  @@index([email])
+  @@index([isBanned])
+  @@index([isSuspicious])
   @@map("users")
 }
 
@@ -235,10 +285,209 @@ model BookmarkedNode {
   color       String?  @default("#6366f1")
   createdAt   DateTime @default(now())
 
-  // Polymorphic: userId who bookmarked it
   userId      Int
 
   @@unique([userId, nodeType, nodeId])
   @@index([userId])
   @@map("bookmarked_nodes")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ENTERPRISE SECURITY LAYER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+// Immutable record of every security-relevant action
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  action      String   // e.g. "LOGIN_SUCCESS", "TICKET_CREATE_BLOCKED", "USER_BANNED"
+  category    AuditCategory
+  severity    AuditSeverity @default(INFO)
+
+  actorId     Int?     // who did it (null = anonymous/system)
+  actorIp     String?
+  actorAgent  String?
+
+  targetType  String?  // "User", "Ticket", etc.
+  targetId    Int?
+
+  metadata    Json?    // extra context
+  message     String   @db.Text
+
+  createdAt   DateTime @default(now())
+
+  actor       User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([category])
+  @@index([severity])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+enum AuditCategory {
+  AUTH           // login, logout, register, password reset
+  ACCESS         // permission denied, role change
+  TICKET         // ticket CRUD
+  MODERATION     // ban, flag, suspend
+  SECURITY       // rate limit, bot detected, spam
+  ADMIN          // system config changes
+  FAIR_USAGE     // quota hit, cooldown triggered
+}
+
+enum AuditSeverity {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  CRITICAL
+}
+
+// ─── User Sessions ────────────────────────────────────────────────────────────
+// Track all active sessions — enables remote session invalidation
+model UserSession {
+  id          String   @id @default(uuid())
+  userId      Int
+  token       String   @unique @db.VarChar(512)
+  ip          String
+  userAgent   String?  @db.Text
+  isRevoked   Boolean  @default(false)
+  revokedAt   DateTime?
+  revokedReason String?
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("user_sessions")
+}
+
+// ─── IP Blocklist ─────────────────────────────────────────────────────────────
+model BlockedIp {
+  id          Int      @id @default(autoincrement())
+  ip          String   @unique
+  reason      String
+  blockedById Int?
+  expiresAt   DateTime?   // null = permanent
+  createdAt   DateTime @default(now())
+
+  @@index([ip])
+  @@map("blocked_ips")
+}
+
+// ─── Rate Limit Violations Log ────────────────────────────────────────────────
+model RateLimitViolation {
+  id          Int      @id @default(autoincrement())
+  ip          String
+  userId      Int?
+  endpoint    String
+  violationType String  // "RATE_LIMIT", "COOLDOWN", "QUOTA_EXCEEDED", "BOT_DETECTED"
+  requestCount Int
+  windowStart DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([ip])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("rate_limit_violations")
+}
+
+// ─── Spam / Scam Detection Reports ───────────────────────────────────────────
+model SpamReport {
+  id            Int      @id @default(autoincrement())
+  targetType    String   // "Ticket", "Comment", "User"
+  targetId      Int
+  reportedById  Int?
+  reason        SpamReason
+  aiScore       Float    @default(0)   // 0–1 confidence from AI detection
+  aiFlags       Json?    // array of triggered flags
+  status        SpamStatus @default(PENDING)
+  reviewedById  Int?
+  reviewedAt    DateTime?
+  reviewNote    String?
+  createdAt     DateTime @default(now())
+
+  @@index([targetType, targetId])
+  @@index([status])
+  @@map("spam_reports")
+}
+
+enum SpamReason {
+  SPAM_CONTENT       // repetitive/advertising content
+  SCAM               // phishing, fraud
+  BOT_BEHAVIOR       // automated submission pattern
+  ABUSE              // harassment, hate
+  DUPLICATE          // mass duplicate tickets
+  FAKE_ACCOUNT       // suspicious registration
+  OTHER
+}
+
+enum SpamStatus {
+  PENDING    // awaiting review
+  CONFIRMED  // confirmed spam/scam → action taken
+  DISMISSED  // false positive
+  AUTO_BLOCKED // auto-blocked by AI
+}
+
+// ─── Cooldown Periods ─────────────────────────────────────────────────────────
+// Tracks per-user random cooldowns (anti-burst / fair usage)
+model CooldownPeriod {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  action      String   // "CREATE_TICKET", "POST_COMMENT", etc.
+  cooldownMs  Int      // actual cooldown in ms (randomized within role's range)
+  endsAt      DateTime
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, action])
+  @@index([endsAt])
+  @@map("cooldown_periods")
+}
+
+// ─── Fair Usage Quotas ────────────────────────────────────────────────────────
+model UsageQuota {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  // Ticket creation
+  ticketsCreatedToday     Int @default(0)
+  ticketsCreatedThisHour  Int @default(0)
+  // Comments
+  commentsCreatedToday    Int @default(0)
+  commentsCreatedThisHour Int @default(0)
+  // API calls
+  apiCallsThisMinute      Int @default(0)
+  apiCallsToday           Int @default(0)
+  // Reset timestamps
+  hourWindowStart   DateTime @default(now())
+  dayWindowStart    DateTime @default(now())
+  minuteWindowStart DateTime @default(now())
+  // Violation tracking
+  quotaViolations   Int @default(0)
+  lastViolationAt   DateTime?
+
+  updatedAt DateTime @updatedAt
+
+  @@map("usage_quotas")
+}
+
+// ─── Permission Overrides ─────────────────────────────────────────────────────
+// Allows granting/revoking specific permissions beyond the role baseline
+model PermissionOverride {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  permission  String   // e.g. "ticket:delete", "user:ban"
+  granted     Boolean  // true = grant, false = revoke
+  grantedById Int?
+  reason      String?
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, permission])
+  @@index([userId])
+  @@map("permission_overrides")
 }

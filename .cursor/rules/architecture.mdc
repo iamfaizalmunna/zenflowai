@@ -1,0 +1,54 @@
+---
+description: ZenFlowAI architecture conventions — enforced on every edit
+alwaysApply: true
+---
+
+# ZenFlowAI Architecture Rules
+
+## Stack
+- Frontend: Next.js 15, TypeScript strict, Tailwind, shadcn/ui, Framer Motion, Zustand (auth only), Apollo Client
+- Backend: Express, Apollo GraphQL, Prisma, MySQL, node-cron
+- Auth: JWT (15min access) + Refresh Token (7d, HTTP-only cookie)
+- Real-time: GraphQL Subscriptions via graphql-ws (NOT Socket.io)
+
+## Role Hierarchy (never change)
+CUSTOMER → AGENT → SUPERVISOR → ADMIN → SUPER_ADMIN
+
+## Security Layers (always enforced, in order)
+L1 Helmet → L2 Rate Limit → L3 IP Blocklist → L4 Bot Detection →
+L5 JWT Auth → L6 RBAC → L7 Data Scoping → L8 Input Validation →
+L9 Spam Detection → L10 Audit Log
+
+## Backend Rules
+- Resolvers: auth check + permission check + call service. Nothing else.
+- Services: business logic + Prisma. Pure when possible.
+- requirePermission(ctx.role, 'resource:action') on every protected resolver
+- Every write action calls audit() from security/audit.ts
+- All user input goes through Zod schema validation before touching DB
+
+## Frontend Rules
+- Each route group (auth/customer/agent/supervisor/admin) is its own module
+- Module structure: components/ hooks/ queries/ types.ts
+- No module imports from another module's internals
+- Shared UI → components/ui/
+- Shared logic → lib/ (pure) or hooks/ (with side effects)
+- Apollo queries live in modules/[feature]/queries/ as gql`` tagged templates
+- Zustand only for auth state. Everything else = Apollo cache.
+
+## Ticket Number Format
+Generated as #ZEN-XXXX (4-digit minimum, padded)
+e.g. #ZEN-0001, #ZEN-1042
+
+## File Naming
+- Components: PascalCase (TicketCard.tsx)
+- Hooks: camelCase with use prefix (useTicket.ts)
+- Services/utils: camelCase (ticketService.ts)
+- Constants: SCREAMING_SNAKE_CASE in constants.ts
+
+## Do Not
+- Never put business logic in GraphQL resolvers
+- Never put DB queries outside of services/
+- Never import Prisma directly in resolvers
+- Never trust JWT role — always verify from DB
+- Never skip audit() on sensitive mutations
+- Never use `any` type

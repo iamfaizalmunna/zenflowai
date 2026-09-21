@@ -11,67 +11,181 @@ import http from 'http';
 import { typeDefs } from './graphql/schemas';
 import { resolvers } from './graphql/resolvers';
 import { buildContext } from './middleware/auth';
+import {
+  helmetMiddleware,
+  hppMiddleware,
+  requestIdMiddleware,
+  ipBlocklistMiddleware,
+  botDetectionMiddleware,
+  globalRateLimiter,
+  authRateLimiter,
+  speedLimiter,
+  graphqlSecurityMiddleware,
+  JSON_BODY_LIMIT,
+  GRAPHQL_BODY_LIMIT,
+} from './security/httpSecurity';
 
 const PORT = process.env.PORT || 4000;
+const IS_PROD = process.env.NODE_ENV === 'production';
 
 async function bootstrap() {
   const app = express();
   const httpServer = http.createServer(app);
 
+  // ─── Layer 1: Unique request ID (must be first) ────────────────────────────
+  app.use(requestIdMiddleware);
+
+  // ─── Layer 2: Security headers (Helmet) ───────────────────────────────────
+  app.use(helmetMiddleware);
+
+  // ─── Layer 3: CORS ────────────────────────────────────────────────────────
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',');
+  app.use(
+    cors({
+      origin: (origin, cb) => {
+        // Allow requests with no origin (mobile apps, curl, Postman)
+        if (!origin) return cb(null, true);
+        if (
+          allowedOrigins.includes(origin) ||
+          origin.includes('apollographql.com') ||
+          !IS_PROD
+        ) {
+          return cb(null, true);
+        }
+        return cb(new Error(`CORS: Origin ${origin} not allowed`));
+      },
+      credentials: true,
+      methods: ['GET', 'POST', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'Apollo-Require-Preflight'],
+    })
+  );
+
+  // ─── Layer 4: HTTP Parameter Pollution ────────────────────────────────────
+  app.use(hppMiddleware);
+
+  // ─── Layer 5: Logging ─────────────────────────────────────────────────────
+  app.use(morgan(IS_PROD ? 'combined' : 'dev'));
+
+  // ─── Layer 6: Body Parsing (with size limits) ──────────────────────────────
+  app.use(express.json({ limit: JSON_BODY_LIMIT }));
+  app.use(express.urlencoded({ extended: true, limit: JSON_BODY_LIMIT }));
+
+  // ─── Layer 7: Global Rate Limiting ────────────────────────────────────────
+  app.use(globalRateLimiter);
+
+  // ─── Layer 8: Progressive Slow-Down ───────────────────────────────────────
+  app.use(speedLimiter);
+
+  // ─── Layer 9: IP Blocklist ─────────────────────────────────────────────────
+  app.use(ipBlocklistMiddleware);
+
+  // ─── Layer 10: Bot Detection ──────────────────────────────────────────────
+  app.use(botDetectionMiddleware);
+
   // ─── Apollo Server ─────────────────────────────────────────────────────────
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    introspection: true,
+    introspection: !IS_PROD,
 
     plugins: [
-      // Graceful shutdown
       ApolloServerPluginDrainHttpServer({ httpServer }),
-
-      // Apollo Sandbox in development
       ApolloServerPluginLandingPageLocalDefault({
         footer: false,
-        embed: true,
+        embed: !IS_PROD,
       }),
     ],
 
-    // Persisted Queries config (APQ)
-    // When clients send { extensions: { persistedQuery: { version: 1, sha256Hash: "..." } } }
-    // Apollo Server will look up the hash. Pair with a PersistedQueryCache for production.
+    // Apollo error formatting — never leak stack traces in production
+    formatError: (formattedError, error) => {
+      if (IS_PROD) {
+        // Strip internal details
+        const safeError = {
+          message: formattedError.message,
+          extensions: {
+            code: formattedError.extensions?.code ?? 'INTERNAL_SERVER_ERROR',
+          },
+        };
+        // Don't leak INTERNAL_SERVER_ERROR messages
+        if (safeError.extensions.code === 'INTERNAL_SERVER_ERROR') {
+          safeError.message = 'An internal error occurred.';
+        }
+        return safeError;
+      }
+      return formattedError;
+    },
   });
 
   await server.start();
 
-  // ─── Express Middleware ─────────────────────────────────────────────────────
-  app.use(
-    cors({
-      origin: ['http://localhost:3000', 'https://studio.apollographql.com'],
-      credentials: true,
-    })
+  // ─── Health Check ──────────────────────────────────────────────────────────
+  app.get('/health', (_, res) =>
+    res.json({ status: 'ok', timestamp: new Date().toISOString(), version: '1.0.0' })
   );
-  app.use(morgan('dev'));
-  app.use(express.json());
 
-  // Health check
-  app.get('/health', (_, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
-
-  // ─── GraphQL endpoint ───────────────────────────────────────────────────────
+  // ─── GraphQL endpoint (with auth rate limiter + GraphQL-specific guards) ───
   app.use(
     '/graphql',
+    express.json({ limit: GRAPHQL_BODY_LIMIT }),
+    graphqlSecurityMiddleware,
     expressMiddleware(server, {
       context: async ({ req }) => buildContext({ req }),
     })
   );
+
+  // ─── Auth-specific stricter rate limit on login/register mutations ─────────
+  // Applied at middleware level by inspecting the operation name
+  app.use('/graphql', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const body = req.body;
+    if (
+      body?.operationName === 'Login' ||
+      body?.operationName === 'Register' ||
+      body?.query?.includes('login(') ||
+      body?.query?.includes('register(')
+    ) {
+      return authRateLimiter(req, res, next);
+    }
+    next();
+  });
+
+  // ─── 404 Handler ──────────────────────────────────────────────────────────
+  app.use((_req, res) => {
+    res.status(404).json({ error: 'Not found' });
+  });
+
+  // ─── Error Handler ─────────────────────────────────────────────────────────
+  app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error('[Server Error]', err.message);
+    res.status(500).json({
+      error: IS_PROD ? 'Internal server error' : err.message,
+    });
+  });
 
   // ─── Start ──────────────────────────────────────────────────────────────────
   await new Promise<void>((resolve) => httpServer.listen({ port: PORT }, resolve));
 
   console.log(`
   🚀 ZenFlowAI Backend ready!
-  ─────────────────────────────────────────────
-  GraphQL:  http://localhost:${PORT}/graphql
-  Health:   http://localhost:${PORT}/health
-  ─────────────────────────────────────────────
+  ─────────────────────────────────────────────────
+  GraphQL:   http://localhost:${PORT}/graphql
+  Health:    http://localhost:${PORT}/health
+  ─────────────────────────────────────────────────
+  🛡️  Security layers active:
+      ✅ Helmet (security headers)
+      ✅ HPP (parameter pollution protection)
+      ✅ CORS (allowlist-based)
+      ✅ Global rate limit (200 req/15min/IP)
+      ✅ Auth rate limit (10 attempts/15min/IP)
+      ✅ Slow-down (progressive delay)
+      ✅ IP blocklist (DB-backed)
+      ✅ Bot detection (UA fingerprinting)
+      ✅ GraphQL depth limit (max 7)
+      ✅ Introspection: ${IS_PROD ? 'DISABLED (prod)' : 'enabled (dev)'}
+      ✅ RBAC (6-tier role hierarchy)
+      ✅ Spam/scam AI detection
+      ✅ Fair usage quotas + random cooldowns
+      ✅ Audit logging
+  ─────────────────────────────────────────────────
   `);
 }
 

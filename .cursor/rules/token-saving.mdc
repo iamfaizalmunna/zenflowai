@@ -1,0 +1,28 @@
+---
+description: Token saving rules — maximize AI efficiency, minimize context waste
+alwaysApply: true
+---
+
+# Token Saving Rules
+
+## Navigation
+- ALWAYS use `get_function` or `find_symbol` (Token Savior MCP) instead of reading whole files
+- Read only the specific lines needed, never entire files unless absolutely required
+- Use `search_codebase` for finding patterns instead of reading multiple files
+
+## Code Generation
+- Show only changed sections in edits, not full file rewrites
+- Abstract repeated patterns before implementing — DRY is also token-DRY
+- Prefer targeted StrReplace edits over Write (full file) when possible
+
+## Context Management
+- Do not re-read files that were just written — trust what was written
+- Reference previously discussed decisions without re-explaining them
+- Keep responses minimal: code + one-line explanation, no essays
+
+## Architecture Rules (ZenFlowAI)
+- Resolvers call services only. Services call Prisma only. No business logic in resolvers.
+- One module = one responsibility. No cross-module internal imports.
+- All shared utilities live in lib/ (frontend) or utils/ (backend)
+- Types are always explicit. No `any`. No implicit returns.
+- Every new function must be pure if possible (no side effects = easy to test)

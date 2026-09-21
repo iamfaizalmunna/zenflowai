@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "token-savior": {
+      "command": "uvx",
+      "args": ["token-savior"],
+      "env": {
+        "WORKSPACE_ROOTS": "/Users/faizal.sabreen/Documents/test/ZenFlowAI",
+        "TOKEN_SAVIOR_CLIENT": "cursor",
+        "TOKEN_SAVIOR_PROFILE": "optimized"
+      }
+    }
+  }
+}
