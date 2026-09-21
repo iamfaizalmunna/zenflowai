@@ -71,6 +71,7 @@ export const ticketTypeDefs = gql`
 
   type TicketMessage {
     id: Int!
+    ticketId: Int!
     body: String!
     type: MessageType!
     createdAt: DateTime!
@@ -128,5 +129,11 @@ export const ticketTypeDefs = gql`
     createTicket(input: CreateTicketInput!): Ticket!
     updateTicket(id: Int!, input: UpdateTicketInput!): Ticket!
     addMessage(input: AddMessageInput!): TicketMessage!
+  }
+
+  extend type Subscription {
+    messageAdded(ticketId: Int!): TicketMessage!
+    ticketUpdated(ticketId: Int!): Ticket!
+    ticketCreated: Ticket!
   }
 `;

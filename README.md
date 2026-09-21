@@ -32,7 +32,7 @@ ZenFlowAI is a **medium-scale service desk and ticketing platform** — think Ze
 | **Backend** | Express.js, Apollo GraphQL (Apollo Server 4) | GraphQL Subscriptions = real-time built-in |
 | **Database** | MySQL + Prisma ORM | Type-safe, schema-first, easy migrations |
 | **Auth** | JWT (15min) + Refresh Token (7d, HTTP-only cookie) | Short-lived access tokens + secure refresh |
-| **Real-time** | Planned for Phase 3 | Not implemented |
+| **Real-time** | GraphQL Subscriptions via graphql-ws | `messageAdded`, `ticketUpdated`, `ticketCreated` |
 | **Background Jobs** | Planned for Phase 4 | Not implemented |
 | **Monorepo** | pnpm workspaces + Turborepo | `apps/backend` + `apps/frontend` + `packages/shared` |
 | **Token Saving** | Apollo APQ + Token Savior MCP | -60–80% tokens per AI session |
@@ -188,8 +188,8 @@ This project is built in 5 phases. Each phase = a working push to GitHub.
 | Phase | What's built | Status |
 |-------|-------------|--------|
 | **1 — Foundation & Auth** | Auth screens, JWT auth service, role-aware layout, RBAC and security modules | ✅ Implemented on `phase/1-foundation` |
-| **2 — Ticket Engine + Help Center** | Tickets, routing, SLA dates, messages, owned KB, unit tests | ✅ Implemented on `phase/2-ticket-engine` (local + GitHub) |
-| **3 — Workspace & Real-time** | 3-column agent workspace, GraphQL Subscriptions, live SLA timer | 🔲 Planned |
+| **2 — Ticket Engine + Help Center** | Tickets, routing, SLA dates, messages, owned KB, unit tests | ✅ Merged to `main` |
+| **3 — Workspace & Real-time** | 3-column workspace, graphql-ws, related articles, template replies | ✅ Implemented on `phase/3-workspace-realtime` |
 | **4 — Automation & Admin** | SLA cron, CSAT, admin routing UI, Knowledge Base | 🔲 Planned |
 | **5 — Analytics & Polish** | Analytics dashboard, security dashboard, mobile, demo data | 🔲 Planned |
 
@@ -197,7 +197,23 @@ See [`PLAN.md`](./PLAN.md) for the full architecture blueprint.
 
 ---
 
-## Phase 2 capabilities
+## Phase 3 capabilities
+
+```
+Agent opens a ticket
+      ↓
+3-column workspace (info | thread | actions + related KB)
+      ↓
+SLA countdown from stored due dates
+      ↓
+Suggest Reply (category templates, no API key)
+      ↓
+graphql-ws: messageAdded / ticketUpdated / ticketCreated
+      ↓
+Customer create-ticket shows related Help Center hits
+```
+
+## Phase 2 capabilities (still in place)
 
 ```
 Login (Phase 1)
@@ -217,7 +233,7 @@ Thread messages (reply / internal note)
 Help Center: public articles for customers, internal guides for staff
 ```
 
-This is the light MVP: no crawler, no GraphQL subscriptions, no LLM, no cloud deploy.
+This is the light MVP plus live workspace: graphql-ws, related articles, template Suggest Reply. No crawler, no LLM, no cloud host.
 
 ---
 
@@ -248,8 +264,8 @@ mutation CreateTicket($input: CreateTicketInput!) {
   }
 }
 
-query Tickets($status: TicketStatus) {
-  tickets(status: $status) { items { ticketNumber title status } total }
+query Tickets($filter: TicketFilter) {
+  tickets(filter: $filter) { tickets { ticketNumber title status } total }
 }
 
 mutation AddMessage($input: AddMessageInput!) {
@@ -259,6 +275,14 @@ mutation AddMessage($input: AddMessageInput!) {
 # Help Center
 query Knowledge($search: String) {
   knowledgeArticles(search: $search) { id title visibility }
+}
+
+query Related($ticketId: Int!) {
+  relatedArticles(ticketId: $ticketId) { id title }
+}
+
+subscription OnMessage($ticketId: Int!) {
+  messageAdded(ticketId: $ticketId) { id body type }
 }
 ```
 
@@ -285,15 +309,13 @@ ts init --agent cursor --yes
 
 ## Not implemented yet
 
-- GraphQL WebSocket subscriptions and live queue
 - SLA cron (warnings, breach, auto-close)
-- 3-column agent workspace, CSAT, analytics, webhooks
-- KB crawler / ingest (Phase 4)
-- LLM / `askKnowledgeBase`
+- Notification bell, CSAT, analytics, webhooks
+- KB crawler / ingest and LLM / `askKnowledgeBase`
 - Production refresh-token HTTP-only cookie transport
 - Cloud hosting (this repo is local + GitHub only)
 
-These are reserved for Phases 3–5. The README is updated after each phase so it
+These are reserved for Phases 4–5. The README is updated after each phase so it
 describes the code that actually exists.
 
 ## Roadmap (post Phase 5)
@@ -308,4 +330,4 @@ describes the code that actually exists.
 
 ---
 
-*README updates with every phase. Last updated: Phase 2 — Ticket Engine + Help Center.*
+*README updates with every phase. Last updated: Phase 3 — Workspace & Real-time.*

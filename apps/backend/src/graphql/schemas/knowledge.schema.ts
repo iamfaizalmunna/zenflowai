@@ -19,5 +19,8 @@ export const knowledgeTypeDefs = gql`
   extend type Query {
     knowledgeArticles(search: String, internal: Boolean): [KnowledgeArticle!]!
     knowledgeArticle(id: Int!): KnowledgeArticle!
+    relatedArticles(ticketId: Int!): [KnowledgeArticle!]!
+    suggestReply(ticketId: Int!): String!
+    articleSnippet(articleId: Int!): String!
   }
 `;

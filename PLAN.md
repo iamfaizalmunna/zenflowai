@@ -931,46 +931,42 @@ Each phase ends with a working, deployable product. Nothing is half-done at push
 **Push when:** The 3-column workspace works live, and related KB articles appear beside a ticket.
 
 #### Backend
-- [ ] GraphQL Subscriptions setup (`graphql-ws`, PubSub singleton)
-- [ ] `messageAdded(ticketId)` subscription
-- [ ] `ticketUpdated(ticketId)` subscription
-- [ ] `ticketCreated` subscription (for agent queue)
-- [ ] `slaAlert` subscription (for supervisor)
-- [ ] Notification service: create notification on ticket events
-- [ ] Notification resolvers: `notifications`, `markRead`, `markAllRead`
-- [ ] `relatedArticles(ticketId)` using title + description + category
-- [ ] `insertArticleIntoReply(articleId)` returns cited snippet, not full dump
-- [ ] AI adapter interface + RuleBasedAdapter:
-  - `classifyTicket()` keyword fallback
-  - `suggestReply()` category templates
-  - `findSimilarTickets()` LIKE search
-  - `askKnowledgeBase()` top chunks + citations
+- [x] GraphQL Subscriptions setup (`graphql-ws`, in-process PubSub)
+- [x] `messageAdded(ticketId)` subscription
+- [x] `ticketUpdated(ticketId)` subscription
+- [x] `ticketCreated` subscription (for agent queue)
+- [ ] `slaAlert` subscription — Phase 4 (needs cron)
+- [ ] Notification resolvers: `notifications`, `markRead`, `markAllRead` — later
+- [x] `relatedArticles(ticketId)` using title + description + category
+- [x] `articleSnippet(articleId)` cited snippet, not full dump
+- [x] Rule-based `suggestReply()` category templates (no API key)
+- [ ] Full AI adapter / `askKnowledgeBase` / `findSimilarTickets` — Phase 4
 
 #### Frontend
-- [ ] **3-column Ticket Workspace** (hero screen — agent view)
-  - Left: ticket info, customer, SLA countdown, activity log
-  - Center: message thread (REPLY visible to all, INTERNAL_NOTE hidden from customer)
-  - Right: action panel (status, priority, assign, escalate, resolve)
-  - Right also: Related articles + Suggest Reply + Summarise
-- [ ] Live SLA countdown timer (`useCountdown` hook)
-- [ ] Real-time messages via `messageAdded` subscription
-- [ ] Real-time ticket updates via `ticketUpdated` subscription
-- [ ] Agent queue: live `ticketCreated` subscription
-- [ ] Supervisor Dashboard: SLA alerts via `slaAlert` subscription
-- [ ] Notification bell (in header, shows unread count, live updates)
-- [ ] Create Ticket: related public articles before submit (deflection)
+- [x] **3-column Ticket Workspace** (agent view)
+  - Left: ticket info, customer, SLA countdown
+  - Center: message thread (INTERNAL_NOTE hidden from customer on the API)
+  - Right: status actions, related articles, Suggest Reply
+- [x] Live SLA countdown (`useCountdown`)
+- [x] Real-time messages via `messageAdded`
+- [x] Real-time ticket updates via `ticketUpdated`
+- [x] Agent queue: live `ticketCreated`
+- [x] Supervisor: due-soon list from stored SLA dates (no `slaAlert` sub)
+- [ ] Notification bell — later
+- [x] Create Ticket: related public articles before submit (deflection)
 
 #### Deliverable at push
 ```
 ✅ 3-column workspace renders, all panels functional
-✅ Agent sends reply → customer sees it instantly
+✅ Agent sends reply → customer sees it over graphql-ws (or refetch)
 ✅ Internal notes hidden from customer view
 ✅ Related KB articles appear beside the ticket
-✅ Suggest Reply uses KB + templates, no API key required
+✅ Suggest Reply uses category templates, no API key required
 ✅ New ticket appears in agent queue in real time
+✅ Unit tests for related ranking, templates, countdown
 ```
 
-**Git push:** `git push origin phase/3-workspace-realtime` → PR → merge → `main`
+**Git push:** `git push origin phase/3-workspace-realtime` (local + GitHub only)
 
 ---
 
@@ -1080,9 +1076,9 @@ git push origin phase/2-ticket-engine
 
 | Phase | Status | Branch | PR |
 |-------|--------|--------|----|
-| Phase 1 — Foundation & Auth | ✅ Implemented | `phase/1-foundation` | pending merge |
-| Phase 2 — Ticket Engine + KB Foundation | ✅ Implemented (light MVP) | `phase/2-ticket-engine` | GitHub only |
-| Phase 3 — Workspace, Real-Time, KB in Tickets | 🔲 Not started | `phase/3-workspace-realtime` | — |
+| Phase 1 — Foundation & Auth | ✅ Implemented | `phase/1-foundation` | merged with Phase 2 |
+| Phase 2 — Ticket Engine + KB Foundation | ✅ Merged | `phase/2-ticket-engine` | #1 merged |
+| Phase 3 — Workspace, Real-Time, KB in Tickets | ✅ Implemented (light) | `phase/3-workspace-realtime` | GitHub only |
 | Phase 4 — Automation, Legal Ingest, Optional AI | 🔲 Not started | `phase/4-automation-admin` | — |
 | Phase 5 — Analytics & Polish | 🔲 Not started | `phase/5-analytics-polish` | — |
 
@@ -1212,5 +1208,5 @@ Never commit scraped corpora to the repo.
 
 ---
 
-*Last updated: after Phase 2 light MVP — tickets, routing, SLA dates, messages, owned Help Center, unit tests.*
-*Next: Phase 3 workspace + GraphQL subscriptions. Keep local + GitHub; no cloud host.*
+*Last updated: after Phase 3 light workspace — graphql-ws, 3-column ticket view, related articles, template replies, tests.*
+*Next: Phase 4 automation/admin/ingest. Keep local + GitHub; no cloud host.*

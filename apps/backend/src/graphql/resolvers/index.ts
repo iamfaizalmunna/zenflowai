@@ -3,6 +3,7 @@ import { authResolvers } from './auth.resolver';
 import { userResolvers } from './user.resolver';
 import { ticketResolvers } from './ticket.resolver';
 import { knowledgeResolvers } from './knowledge.resolver';
+import { subscriptionResolvers } from './subscription.resolver';
 
 export const resolvers = {
   DateTime: DateTimeResolver,
@@ -19,5 +20,9 @@ export const resolvers = {
     ...authResolvers.Mutation,
     ...userResolvers.Mutation,
     ...ticketResolvers.Mutation,
+  },
+
+  Subscription: {
+    ...subscriptionResolvers.Subscription,
   },
 };

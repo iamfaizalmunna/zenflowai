@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
-import { CATEGORIES, CREATE_TICKET } from '@/modules/tickets/queries/ticket.queries';
+import { CATEGORIES, CREATE_TICKET, KNOWLEDGE_ARTICLES } from '@/modules/tickets/queries/ticket.queries';
 
 export default function NewTicketPage() {
   const router = useRouter();
@@ -14,6 +15,16 @@ export default function NewTicketPage() {
     onCompleted: (res) => router.push(`/tickets/${res.createTicket.id}`),
   });
   const [form, setForm] = useState({ title: '', description: '', categoryId: '', priority: 'MEDIUM' });
+  const [search, setSearch] = useState('');
+  const { data: kbData } = useQuery(KNOWLEDGE_ARTICLES, {
+    variables: { search, internal: false },
+    skip: search.length < 4,
+  });
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(form.title.trim()), 400);
+    return () => clearTimeout(t);
+  }, [form.title]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +57,16 @@ export default function NewTicketPage() {
                 className="mt-1 w-full border rounded-xl px-3 py-2 bg-white dark:bg-slate-900"
               />
             </label>
+            {kbData?.knowledgeArticles?.length > 0 && (
+              <div className="rounded-xl border p-3 text-sm space-y-1">
+                <p className="text-xs font-medium text-slate-500">Related help articles</p>
+                {kbData.knowledgeArticles.slice(0, 4).map((a: { id: number; title: string }) => (
+                  <Link key={a.id} href={`/knowledge/${a.id}`} className="block text-indigo-600 hover:underline">
+                    {a.title}
+                  </Link>
+                ))}
+              </div>
+            )}
             <label className="block text-sm font-medium">
               Description
               <textarea

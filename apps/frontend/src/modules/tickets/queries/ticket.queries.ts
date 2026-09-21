@@ -10,6 +10,7 @@ export const TICKET_FIELDS = gql`
     priority
     type
     slaResolutionDueAt
+    slaResponseDueAt
     createdAt
     customer { id name email }
     assignedTo { id name }
@@ -77,11 +78,66 @@ export const ADD_MESSAGE = gql`
   mutation AddMessage($input: AddMessageInput!) {
     addMessage(input: $input) {
       id
+      ticketId
       body
       type
       createdAt
       sender { id name role }
     }
+  }
+`;
+
+export const RELATED_ARTICLES = gql`
+  query RelatedArticles($ticketId: Int!) {
+    relatedArticles(ticketId: $ticketId) {
+      id
+      title
+      body
+      visibility
+      category { id name color }
+    }
+  }
+`;
+
+export const SUGGEST_REPLY = gql`
+  query SuggestReply($ticketId: Int!) {
+    suggestReply(ticketId: $ticketId)
+  }
+`;
+
+export const ARTICLE_SNIPPET = gql`
+  query ArticleSnippet($articleId: Int!) {
+    articleSnippet(articleId: $articleId)
+  }
+`;
+
+export const MESSAGE_ADDED = gql`
+  subscription MessageAdded($ticketId: Int!) {
+    messageAdded(ticketId: $ticketId) {
+      id
+      ticketId
+      body
+      type
+      createdAt
+      sender { id name role }
+    }
+  }
+`;
+
+export const TICKET_UPDATED = gql`
+  ${TICKET_FIELDS}
+  subscription TicketUpdated($ticketId: Int!) {
+    ticketUpdated(ticketId: $ticketId) {
+      ...TicketFields
+      slaResponseDueAt
+    }
+  }
+`;
+
+export const TICKET_CREATED = gql`
+  ${TICKET_FIELDS}
+  subscription TicketCreated {
+    ticketCreated { ...TicketFields }
   }
 `;
 

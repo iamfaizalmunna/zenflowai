@@ -8,6 +8,7 @@ export interface TicketListItem {
   id: number;
   ticketNumber: string;
   title: string;
+  slaResolutionDueAt?: string | null;
   status: string;
   priority: string;
   createdAt: string;

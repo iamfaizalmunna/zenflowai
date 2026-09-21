@@ -1,16 +1,21 @@
 'use client';
 
-import { ApolloClient, InMemoryCache, createHttpLink, from } from '@apollo/client';
+import { ApolloClient, InMemoryCache, createHttpLink, from, split } from '@apollo/client';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
+import { getMainDefinition } from '@apollo/client/utilities';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
 import { createPersistedQueryLink } from '@apollo/client/link/persisted-queries';
+import { createClient } from 'graphql-ws';
 import { sha256 } from 'crypto-hash';
 
+const graphqlHttp = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:4000/graphql';
+const graphqlWs = process.env.NEXT_PUBLIC_GRAPHQL_WS_URL || 'ws://localhost:4000/graphql';
+
 const httpLink = createHttpLink({
-  uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:4000/graphql',
+  uri: graphqlHttp,
 });
 
-// Auth link — attach JWT from localStorage
 const authLink = setContext((_, { headers }) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('zenflow_token') : null;
   return {
@@ -21,7 +26,6 @@ const authLink = setContext((_, { headers }) => {
   };
 });
 
-// Error link — global error handling
 const errorLink = onError(({ graphQLErrors, networkError }) => {
   if (graphQLErrors) {
     graphQLErrors.forEach(({ message, extensions }) => {
@@ -37,24 +41,47 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
   }
 });
 
-// ─── Persisted Queries Link (APQ - saves tokens!) ───────────────────────────
-// Instead of sending full query string each time, sends a SHA-256 hash.
-// Server looks up the hash, returns 200 if found, or asks for the full query.
 const persistedQueriesLink = createPersistedQueryLink({
   sha256,
-  useGETForHashedQueries: true, // Use GET for cache-friendly persisted queries
+  useGETForHashedQueries: true,
 });
 
+const httpChain = from([errorLink, persistedQueriesLink, authLink, httpLink]);
+
+function makeWsLink() {
+  return new GraphQLWsLink(
+    createClient({
+      url: graphqlWs,
+      connectionParams: () => {
+        const token = localStorage.getItem('zenflow_token');
+        return { authorization: token ? `Bearer ${token}` : '' };
+      },
+    })
+  );
+}
+
+const splitLink =
+  typeof window === 'undefined'
+    ? httpChain
+    : split(
+        ({ query }) => {
+          const def = getMainDefinition(query);
+          return def.kind === 'OperationDefinition' && def.operation === 'subscription';
+        },
+        makeWsLink(),
+        httpChain
+      );
+
 export const apolloClient = new ApolloClient({
-  link: from([errorLink, persistedQueriesLink, authLink, httpLink]),
+  link: splitLink,
   cache: new InMemoryCache({
     typePolicies: {
       Query: {
         fields: {
           tickets: {
             keyArgs: ['filter', 'orderBy'],
-            merge(existing, incoming) {
-              return incoming; // Simple replace strategy; use pagination merge for cursor-based
+            merge(_existing, incoming) {
+              return incoming;
             },
           },
         },
@@ -62,11 +89,7 @@ export const apolloClient = new ApolloClient({
     },
   }),
   defaultOptions: {
-    watchQuery: {
-      errorPolicy: 'all',
-    },
-    query: {
-      errorPolicy: 'all',
-    },
+    watchQuery: { errorPolicy: 'all' },
+    query: { errorPolicy: 'all' },
   },
 });

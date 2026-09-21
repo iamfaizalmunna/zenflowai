@@ -11,13 +11,12 @@ interface JwtPayload {
   sessionId?: string;
 }
 
-export async function buildContext({ req }: { req: Request }): Promise<Context> {
-  const ip = getClientIp(req);
-  const userAgent = req.headers['user-agent'] ?? null;
-  const requestId = (req.headers['x-request-id'] as string) ?? null;
-
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+export async function buildContextFromAuthHeader(
+  authorization: string | null | undefined,
+  extras: { ip: string | null; userAgent: string | null; requestId: string | null }
+): Promise<Context> {
+  const { ip, userAgent, requestId } = extras;
+  const token = authorization?.startsWith('Bearer ') ? authorization.slice(7) : authorization || null;
 
   if (!token) {
     return { userId: null, role: null, ip, userAgent, requestId };
@@ -26,7 +25,6 @@ export async function buildContext({ req }: { req: Request }): Promise<Context> 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
 
-    // Validate user is still active & not banned
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: {
@@ -53,7 +51,6 @@ export async function buildContext({ req }: { req: Request }): Promise<Context> 
       return { userId: null, role: null, ip, userAgent, requestId };
     }
 
-    // Load permission overrides for this user
     const overrides = await prisma.permissionOverride.findMany({
       where: {
         userId: decoded.userId,
@@ -64,14 +61,20 @@ export async function buildContext({ req }: { req: Request }): Promise<Context> 
 
     return {
       userId: decoded.userId,
-      role: user.role,  // Always use DB role, not the JWT-embedded one
+      role: user.role,
       ip,
       userAgent,
       requestId,
       permissionOverrides: overrides,
     };
-  } catch (err) {
-    // Invalid / expired token
+  } catch {
     return { userId: null, role: null, ip, userAgent, requestId };
   }
+}
+
+export async function buildContext({ req }: { req: Request }): Promise<Context> {
+  const ip = getClientIp(req);
+  const userAgent = req.headers['user-agent'] ?? null;
+  const requestId = (req.headers['x-request-id'] as string) ?? null;
+  return buildContextFromAuthHeader(req.headers.authorization, { ip, userAgent, requestId });
 }

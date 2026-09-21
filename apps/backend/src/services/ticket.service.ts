@@ -9,6 +9,7 @@ import { checkCooldown, checkQuota } from '../security/fairUsage';
 import { analyzeContent, sanitizeContent } from '../security/spamDetector';
 import { audit } from '../security/audit';
 import { Context } from '../types/context';
+import { pubsub, TICKET_CREATED_TOPIC, ticketUpdatedTopic } from '../utils/pubsub';
 
 const createSchema = z.object({
   title: z.string().min(4).max(180),
@@ -183,6 +184,8 @@ export async function createTicket(ctx: Context, raw: unknown) {
     message: `${ticket.ticketNumber} created`,
   });
 
+  await pubsub.publish(TICKET_CREATED_TOPIC, { ticketCreated: ticket });
+
   return ticket;
 }
 
@@ -232,6 +235,8 @@ export async function updateTicket(
     targetId: id,
     message: `${ticket.ticketNumber} updated`,
   });
+
+  await pubsub.publish(ticketUpdatedTopic(id), { ticketUpdated: ticket });
 
   return ticket;
 }

@@ -7,10 +7,13 @@ import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import http from 'http';
+import { WebSocketServer } from 'ws';
+import { useServer } from 'graphql-ws/use/ws';
+import { makeExecutableSchema } from '@graphql-tools/schema';
 
 import { typeDefs } from './graphql/schemas';
 import { resolvers } from './graphql/resolvers';
-import { buildContext } from './middleware/auth';
+import { buildContext, buildContextFromAuthHeader } from './middleware/auth';
 import {
   helmetMiddleware,
   hppMiddleware,
@@ -83,13 +86,44 @@ async function bootstrap() {
   app.use(botDetectionMiddleware);
 
   // ─── Apollo Server ─────────────────────────────────────────────────────────
+  const schema = makeExecutableSchema({ typeDefs, resolvers });
+
+  const wsServer = new WebSocketServer({
+    server: httpServer,
+    path: '/graphql',
+  });
+
+  const serverCleanup = useServer(
+    {
+      schema,
+      context: async (ctx) => {
+        const params = (ctx.connectionParams ?? {}) as Record<string, string | undefined>;
+        const authorization = params.authorization ?? params.Authorization ?? '';
+        return buildContextFromAuthHeader(authorization, {
+          ip: null,
+          userAgent: null,
+          requestId: null,
+        });
+      },
+    },
+    wsServer
+  );
+
   const server = new ApolloServer({
-    typeDefs,
-    resolvers,
+    schema,
     introspection: !IS_PROD,
 
     plugins: [
       ApolloServerPluginDrainHttpServer({ httpServer }),
+      {
+        async serverWillStart() {
+          return {
+            async drainServer() {
+              await serverCleanup.dispose();
+            },
+          };
+        },
+      },
       ApolloServerPluginLandingPageLocalDefault({
         footer: false,
         embed: !IS_PROD,
@@ -168,6 +202,7 @@ async function bootstrap() {
   🚀 ZenFlowAI Backend ready!
   ─────────────────────────────────────────────────
   GraphQL:   http://localhost:${PORT}/graphql
+  WS:        ws://localhost:${PORT}/graphql
   Health:    http://localhost:${PORT}/health
   ─────────────────────────────────────────────────
   🛡️  Security layers active:
