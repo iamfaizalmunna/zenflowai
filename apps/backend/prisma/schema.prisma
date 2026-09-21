@@ -362,7 +362,6 @@ model Ticket {
   tags             TicketTag[]
   csatSurvey       CsatSurvey?
   routingDecision  RoutingDecision?
-  spamReports      SpamReport[]
 
   @@index([status])
   @@index([priority])

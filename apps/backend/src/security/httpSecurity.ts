@@ -264,7 +264,7 @@ export async function recordFailedLogin(userId: number, ip: string) {
   }
 }
 
-export async function recordSuccessfulLogin(userId: number, ip: string, userAgent?: string) {
+export async function recordSuccessfulLogin(userId: number, ip: string, _userAgent?: string) {
   await prisma.user.update({
     where: { id: userId },
     data: {
@@ -272,7 +272,6 @@ export async function recordSuccessfulLogin(userId: number, ip: string, userAgen
       lockedUntil: null,
       lastLoginAt: new Date(),
       lastLoginIp: ip,
-      userAgent: userAgent ?? null,
     },
   });
 }
