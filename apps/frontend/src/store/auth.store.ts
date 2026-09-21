@@ -1,20 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface User {
+export interface AuthUser {
   id: number;
   email: string;
   name: string;
   role: string;
-  avatar?: string;
 }
 
 interface AuthState {
   token: string | null;
-  user: User | null;
-  setAuth: (token: string, user: User) => void;
-  logout: () => void;
+  user: AuthUser | null;
   isAuthenticated: boolean;
+  setAuth: (token: string, user: AuthUser) => void;
+  logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -25,18 +24,22 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
 
       setAuth: (token, user) => {
-        localStorage.setItem('zenflow_token', token);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('zenflow_token', token);
+        }
         set({ token, user, isAuthenticated: true });
       },
 
       logout: () => {
-        localStorage.removeItem('zenflow_token');
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('zenflow_token');
+        }
         set({ token: null, user: null, isAuthenticated: false });
       },
     }),
     {
       name: 'zenflow-auth',
-      partialize: (state) => ({ token: state.token, user: state.user, isAuthenticated: state.isAuthenticated }),
+      partialize: (s) => ({ token: s.token, user: s.user, isAuthenticated: s.isAuthenticated }),
     }
   )
 );

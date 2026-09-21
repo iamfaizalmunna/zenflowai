@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-
-export default function HomePage() {
-  redirect('/dashboard/tickets');
+// Root redirects to login — AppShell handles post-auth routing
+export default function RootPage() {
+  redirect('/login');
 }
