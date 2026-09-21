@@ -1,4 +1,7 @@
 import { prisma } from './prisma';
+import { formatTicketNumber } from './ticketNumberFormat';
+
+export { formatTicketNumber };
 
 export async function generateTicketNumber(): Promise<string> {
   const last = await prisma.ticket.findFirst({
@@ -6,5 +9,5 @@ export async function generateTicketNumber(): Promise<string> {
     select: { id: true },
   });
   const next = (last?.id ?? 0) + 1;
-  return `#ZEN-${String(next).padStart(4, '0')}`;
+  return formatTicketNumber(next);
 }

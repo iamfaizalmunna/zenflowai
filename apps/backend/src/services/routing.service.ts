@@ -1,5 +1,9 @@
 import { TicketPriority } from '@prisma/client';
 import { prisma } from '../utils/prisma';
+import { matchRoutingRule } from './routingMatch';
+
+export { matchRoutingRule };
+export type { RoutingRuleMatch } from './routingMatch';
 
 export interface RoutingResult {
   teamId: number;
@@ -17,28 +21,12 @@ export async function evaluateRouting(input: {
   categoryId?: number | null;
   priority: TicketPriority;
 }): Promise<RoutingResult> {
-  const haystack = `${input.title} ${input.description}`.toLowerCase();
   const rules = await prisma.routingRule.findMany({
     where: { isActive: true },
     orderBy: { order: 'asc' },
   });
 
-  let matched = rules.find((rule) => {
-    if (rule.type === 'KEYWORD' && rule.keyword) {
-      return haystack.includes(rule.keyword.toLowerCase());
-    }
-    if (rule.type === 'CATEGORY' && input.categoryId && rule.categoryId === input.categoryId) {
-      return true;
-    }
-    if (rule.type === 'PRIORITY' && rule.priority === input.priority) {
-      return true;
-    }
-    return false;
-  });
-
-  if (!matched) {
-    matched = rules.find((rule) => rule.type === 'FALLBACK') ?? null;
-  }
+  const matched = matchRoutingRule(rules, input);
 
   let teamId = matched?.targetTeamId;
   if (!teamId) {
