@@ -12,6 +12,7 @@ export const TICKET_FIELDS = gql`
     slaResolutionDueAt
     slaResponseDueAt
     createdAt
+    updatedAt
     customer { id name email }
     assignedTo { id name }
     team { id name }

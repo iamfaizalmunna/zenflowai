@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { PENDING_CSATS, SUBMIT_CSAT } from '@/modules/admin/queries/admin.queries';
 import { useUiSound } from '@/hooks/useUiSound';
+import { Button } from '@/components/ui/Field';
+import { Select } from '@/components/ui/Select';
 
 export function CsatBanner() {
   const { data, refetch } = useQuery(PENDING_CSATS);
@@ -29,10 +31,14 @@ export function CsatBanner() {
           submit({ variables: { id: survey.id, rating } });
         }}
       >
-        <select value={rating} onChange={(e) => setRating(Number(e.target.value))} className="border rounded-lg px-2 py-1 bg-white dark:bg-slate-900">
-          {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
-        </select>
-        <button type="submit" className="px-3 py-1 rounded-lg bg-slate-900 text-white text-xs dark:bg-white dark:text-slate-900">Submit rating</button>
+        <Select
+          aria-label="CSAT rating"
+          value={String(rating)}
+          onValueChange={(value) => setRating(Number(value))}
+          className="w-28"
+          options={[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: `${n}` }))}
+        />
+        <Button type="submit">Submit rating</Button>
       </form>
     </div>
   );

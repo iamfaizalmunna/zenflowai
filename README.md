@@ -1,10 +1,10 @@
 # ZenFlowAI
 
-> Phase 2 ticket engine for a clean, fast, AI-ready ticketing system.
+> Phase 5 UI customization for a clean, fast, AI-ready ticketing system.
 > Built with Next.js · Express · GraphQL · MySQL · Prisma.
 > Local + GitHub only — no cloud host is wired.
 
-[![Phase](https://img.shields.io/badge/Phase-2%20Ticket%20Engine-blue)](#phases)
+[![Phase](https://img.shields.io/badge/Phase-5%20UI%20Customization-blue)](#phases)
 [![Stack](https://img.shields.io/badge/Stack-Next.js%2015%20%2B%20GraphQL%20%2B%20MySQL-6366f1)](#stack)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
@@ -33,7 +33,7 @@ ZenFlowAI is a **medium-scale service desk and ticketing platform** — think Ze
 | **Database** | MySQL + Prisma ORM | Type-safe, schema-first, easy migrations |
 | **Auth** | JWT (15min) + Refresh Token (7d, HTTP-only cookie) | Short-lived access tokens + secure refresh |
 | **Real-time** | GraphQL Subscriptions via graphql-ws | `messageAdded`, `ticketUpdated`, `ticketCreated` |
-| **Background Jobs** | Planned for Phase 4 | Not implemented |
+| **Background Jobs** | node-cron (SLA sweep) | Phase 4 |
 | **Monorepo** | pnpm workspaces + Turborepo | `apps/backend` + `apps/frontend` + `packages/shared` |
 | **Token Saving** | Apollo APQ + Token Savior MCP | -60–80% tokens per AI session |
 
@@ -155,7 +155,7 @@ cp apps/frontend/.env.local.example apps/frontend/.env.local
 pnpm db:generate   # generate Prisma client
 pnpm db:migrate    # run migrations
 pnpm db:seed       # seed demo data
-pnpm test          # Phase 1 + Phase 2 unit tests
+pnpm test          # unit tests including Phase 5 appearance tokens
 ```
 
 ### 4. Run
@@ -177,25 +177,40 @@ pnpm dev
 | Admin | admin@zenflowai.com | password123 |
 | Supervisor | supervisor@zenflowai.com | password123 |
 | Agent | agent@zenflowai.com | password123 |
-| Customer | customer@zenflowai.com | password123 |
+After login, Appearance is at `/settings` (theme, sounds, accent, type, ticket views). Prefs persist in MySQL.
 
 ---
 
 ## Phases
 
-This project is built in 5 phases. Each phase = a working push to GitHub.
+This project is built in 6 phases. Each phase = a working push to GitHub.
 
 | Phase | What's built | Status |
 |-------|-------------|--------|
 | **1 — Foundation & Auth** | Auth screens, JWT auth service, role-aware layout, RBAC and security modules | ✅ Implemented on `phase/1-foundation` |
 | **2 — Ticket Engine + Help Center** | Tickets, routing, SLA dates, messages, owned KB, unit tests | ✅ Merged to `main` |
 | **3 — Workspace & Real-time** | 3-column workspace, graphql-ws, related articles, template replies | ✅ Merged to `main` |
-| **4 — Automation & Admin** | SLA cron, CSAT, admin UI, rule-based Help Center Q&A | ✅ Implemented on `phase/4-automation-admin` |
-| **5 — Analytics & Polish** | Analytics dashboard, security dashboard, mobile, demo data | 🔲 Planned |
+| **4 — Automation & Admin** | SLA cron, CSAT, admin screens, rule-based Help Center Q&A | ✅ Merged to `main` |
+| **5 — UI Customization** | Appearance (theme, color, type, sounds, logo), ticket views — prefs in DB | ✅ Merged to `main` |
+| **6 — Analytics & Polish** | Analytics + security dashboards, demo data (moved from old Phase 5) | 🔲 Planned |
 
 See [`PLAN.md`](./PLAN.md) for the full architecture blueprint.
 
 ---
+
+## Phase 5 capabilities
+
+```
+Signed-in user opens Appearance (/settings)
+      ↓
+Sounds, light/dark, accent, finish, type, density, logo
+      ↓
+Prefs saved in MySQL (ui_preferences) and restored on login
+      ↓
+Ticket lists: sort, status/priority filter, list/compact/card/icon views
+      ↓
+Defaults stay the current ZenFlow iris look
+```
 
 ## Phase 4 capabilities
 
@@ -327,14 +342,14 @@ ts init --agent cursor --yes
 
 - Crawler / Firecrawl ingest and optional OpenAI/Ollama
 - Webhooks + HMAC retry
-- Analytics and security dashboards
+- Analytics and security dashboards (Phase 6)
 - Production refresh-token HTTP-only cookie transport
 - Cloud hosting (this repo is local + GitHub only)
 
-These are reserved for Phase 5. The README is updated after each phase so it
+These are reserved for Phase 6 and later. The README is updated after each phase so it
 describes the code that actually exists.
 
-## Roadmap (post Phase 5)
+## Roadmap (post Phase 6)
 
 - [ ] Email notifications (SendGrid / Resend)
 - [ ] File attachments (Cloudflare R2)
@@ -346,4 +361,4 @@ describes the code that actually exists.
 
 ---
 
-*README updates with every phase. Last updated: Phase 4 — Automation & Admin.*
+*README updates with every phase. Last updated: Phase 5 — UI customization merged to `main`; analytics is Phase 6.*

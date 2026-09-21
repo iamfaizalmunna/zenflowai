@@ -16,6 +16,8 @@ import { STATUS_COLOR, STATUS_LABEL, PRIORITY_COLOR, PRIORITY_LABEL } from '@/li
 import { cn, formatRelativeTime } from '@/lib/utils';
 import { useCountdown } from '@/modules/tickets/hooks/useCountdown';
 import { useUiSound } from '@/hooks/useUiSound';
+import { Button, Textarea } from '@/components/ui/Field';
+import { Select } from '@/components/ui/Select';
 
 const STAFF = new Set(['AGENT', 'SUPERVISOR', 'ADMIN', 'SUPER_ADMIN']);
 
@@ -114,12 +116,11 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
         ))}
       </div>
       <form onSubmit={send} className="space-y-2 pt-3">
-        <textarea
+        <Textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={4}
           placeholder="Write a reply…"
-          className="w-full border rounded-xl px-3 py-2 bg-white dark:bg-slate-900 text-sm"
         />
         {isStaff && (
           <label className="flex items-center gap-2 text-xs text-slate-500">
@@ -127,13 +128,13 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
             Internal note
           </label>
         )}
-        <button
+        <Button
           type="submit"
           disabled={sending || !body.trim()}
-          className="w-full min-h-12 py-2 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+          className="w-full"
         >
           {sending ? 'Sending…' : 'Send'}
-        </button>
+        </Button>
       </form>
     </>
   );
@@ -193,24 +194,25 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
       <aside className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4">
         <div>
           <p className="text-xs font-medium text-slate-500 mb-2">Actions</p>
-          <select
+          <Select
+            aria-label="Ticket status"
             value={ticket.status}
-            onChange={(e) => updateTicket({ variables: { id, input: { status: e.target.value } } })}
-            className="w-full text-sm border rounded-xl px-3 py-2 bg-white dark:bg-slate-900"
-          >
-            {['NEW', 'OPEN', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'].map((s) => (
-              <option key={s} value={s}>{STATUS_LABEL[s]}</option>
-            ))}
-          </select>
+            onValueChange={(status) => updateTicket({ variables: { id, input: { status } } })}
+            options={['NEW', 'OPEN', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'].map((s) => ({
+              value: s,
+              label: STATUS_LABEL[s],
+            }))}
+          />
         </div>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          className="w-full"
           onClick={() => void applySuggest()}
           disabled={suggesting}
-          className="w-full px-3 py-2 rounded-xl border text-sm"
         >
           {suggesting ? 'Loading…' : 'Suggest reply'}
-        </button>
+        </Button>
         <div>
           <p className="text-xs font-medium text-slate-500 mb-2">Related articles</p>
           <ul className="space-y-2">

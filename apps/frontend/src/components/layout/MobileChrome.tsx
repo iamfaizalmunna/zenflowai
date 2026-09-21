@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
-import { LogOut, Moon, MoreHorizontal, Sun, Volume2, VolumeX, X } from 'lucide-react';
+import { LogOut, Moon, MoreHorizontal, Settings2, Sun, Volume2, VolumeX, X } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useLogout } from '@/modules/auth/hooks/useAuth';
 import { isNavActive, navForRole, splitMobileNav, type AppNavItem } from '@/lib/nav';
@@ -13,26 +13,29 @@ import { cn } from '@/lib/utils';
 import { ZenLogo } from '@/components/brand/ZenLogo';
 import { NAV_ICONS } from '@/components/layout/navIcons';
 import { useUiSound } from '@/hooks/useUiSound';
+import { useAppearance } from '@/hooks/useAppearance';
 
 export function MobileChrome() {
   const pathname = usePathname();
   const { user } = useAuthStore();
   const { logout } = useLogout();
-  const { theme, setTheme } = useTheme();
-  const { play, muted, setMuted } = useUiSound();
+  const { theme } = useTheme();
+  const { play } = useUiSound();
+  const { prefs, update } = useAppearance();
   const [moreOpen, setMoreOpen] = useState(false);
   const items = navForRole(user?.role);
   const { primary, overflow } = splitMobileNav(items);
-  const current = items.find((item) => isNavActive(pathname, item.href));
 
   return (
     <>
-      <header className="app:hidden sticky top-0 z-40 flex items-center justify-between gap-3 px-4 h-14 border-b border-white/10 bg-background/80 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
+      <header className="app:hidden sticky top-0 z-40 flex items-center justify-between gap-3 px-4 h-14 border-b border-white/10 surface pt-[env(safe-area-inset-top)]">
         <ZenLogo size={28} className="[&>span]:text-base" />
-        <p className="text-xs text-muted-foreground truncate max-w-[40%]">{current?.label ?? 'ZenFlow'}</p>
+        <Link href="/settings" className="p-2 min-h-11 min-w-11 rounded-xl text-muted-foreground" aria-label="Appearance settings">
+          <Settings2 className="w-4 h-4 mx-auto" />
+        </Link>
       </header>
 
-      <nav className="app:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/10 bg-card/90 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
+      <nav className="app:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/10 surface pb-[env(safe-area-inset-bottom)]">
         <ul
           className="grid px-1"
           style={{ gridTemplateColumns: `repeat(${primary.length + (overflow.length > 0 ? 1 : 0)}, minmax(0, 1fr))` }}
@@ -97,11 +100,15 @@ export function MobileChrome() {
                   </Link>
                 );
               })}
-              <button type="button" onClick={() => setMuted(!muted)} className="flex w-full items-center gap-3 px-3 py-3 rounded-2xl min-h-12">
-                {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                {muted ? 'Sounds off' : 'Sounds on'}
+              <Link href="/settings" onClick={() => setMoreOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-2xl min-h-12 hover:bg-muted">
+                <Settings2 className="w-4 h-4" />
+                Appearance
+              </Link>
+              <button type="button" onClick={() => update({ soundsMuted: !prefs.soundsMuted })} className="flex w-full items-center gap-3 px-3 py-3 rounded-2xl min-h-12">
+                {prefs.soundsMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                {prefs.soundsMuted ? 'Sounds off' : 'Sounds on'}
               </button>
-              <button type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="flex w-full items-center gap-3 px-3 py-3 rounded-2xl min-h-12">
+              <button type="button" onClick={() => update({ colorMode: prefs.colorMode === 'DARK' ? 'LIGHT' : 'DARK' })} className="flex w-full items-center gap-3 px-3 py-3 rounded-2xl min-h-12">
                 {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 {theme === 'dark' ? 'Light mode' : 'Dark mode'}
               </button>

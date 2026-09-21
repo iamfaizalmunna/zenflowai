@@ -48,6 +48,8 @@ const CUSTOMER_PERMS = new Set([
   'node:bookmark',
   'node:bookmark:read:own',
   'csat:submit',
+  'appearance:read:own',
+  'appearance:update:own',
 ]);
 
 const AGENT_PERMS = new Set([

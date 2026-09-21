@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { TICKET_COUNTS, GET_TICKETS } from '@/modules/tickets/queries/ticket.queries';
-import { TicketCard } from '@/modules/tickets/components/TicketCard';
+import { TicketCard, ticketGridClass } from '@/modules/tickets/components/TicketCard';
 import { CsatBanner } from '@/modules/tickets/components/CsatBanner';
 import { useAuthStore } from '@/store/auth.store';
+import { useAppearance } from '@/hooks/useAppearance';
 
 export default function CustomerDashboardPage() {
   const { user } = useAuthStore();
+  const { prefs } = useAppearance();
   const { data: counts } = useQuery(TICKET_COUNTS);
   const { data, loading } = useQuery(GET_TICKETS, { variables: { page: 1, pageSize: 5 } });
 
@@ -45,10 +47,10 @@ export default function CustomerDashboardPage() {
             ))}
           </div>
 
-          <div className="space-y-2">
-            {loading && <p className="text-sm text-slate-400">Loading tickets…</p>}
+          <div className={ticketGridClass(prefs.ticketView)}>
+            {loading && <p className="text-sm text-muted-foreground">Loading tickets…</p>}
             {data?.tickets?.tickets?.map((ticket: Parameters<typeof TicketCard>[0]['ticket']) => (
-              <TicketCard key={ticket.id} ticket={ticket} href={`/tickets/${ticket.id}`} />
+              <TicketCard key={ticket.id} ticket={ticket} href={`/tickets/${ticket.id}`} view={prefs.ticketView} />
             ))}
             {!loading && data?.tickets?.tickets?.length === 0 && (
               <p className="text-sm text-slate-400 text-center py-10">No tickets yet. Create one to get help.</p>

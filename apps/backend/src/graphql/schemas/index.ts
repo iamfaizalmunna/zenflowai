@@ -5,6 +5,7 @@ import { ticketTypeDefs } from './ticket.schema';
 import { knowledgeTypeDefs } from './knowledge.schema';
 import { adminTypeDefs } from './admin.schema';
 import { csatTypeDefs } from './csat.schema';
+import { appearanceTypeDefs } from './appearance.schema';
 
 export const typeDefs = [
   baseTypeDefs,
@@ -14,4 +15,5 @@ export const typeDefs = [
   knowledgeTypeDefs,
   adminTypeDefs,
   csatTypeDefs,
+  appearanceTypeDefs,
 ];

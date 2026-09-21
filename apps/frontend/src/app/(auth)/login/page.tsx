@@ -63,7 +63,6 @@ export default function LoginPage() {
         <AuthButton
           loading={loading}
           type="submit"
-          onMouseEnter={() => void play('hover')}
           onClick={() => void play('tap')}
         >
           Sign in

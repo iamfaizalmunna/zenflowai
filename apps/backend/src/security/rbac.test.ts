@@ -20,6 +20,7 @@ describe('Phase 1 RBAC', () => {
 
   it('keeps customers off agent-only actions', () => {
     assert.equal(hasPermission('CUSTOMER', 'ticket:create'), true);
+    assert.equal(hasPermission('CUSTOMER', 'appearance:update:own'), true);
     assert.equal(hasPermission('CUSTOMER', 'ticket:read:all'), false);
   });
 

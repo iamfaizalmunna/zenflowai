@@ -977,7 +977,7 @@ Each phase ends with a working, deployable product. Nothing is half-done at push
 #### Backend / Jobs
 - [x] SLA cron job (`node-cron`, every 2 min): warning, breach, auto-close 48h after resolve
 - [x] CSAT service: create survey on resolve, expire after 7d
-- [ ] Webhook service — Phase 5
+- [ ] Webhook service — Phase 6
 - [x] Admin resolvers: users, teams, routing rules, SLA policies
 - [x] Knowledge admin: create/update/publish drafts (owned articles, no crawler)
 - [x] `askKnowledgeBase(question)` rule-based citations (no LLM)
@@ -1011,34 +1011,81 @@ Each phase ends with a working, deployable product. Nothing is half-done at push
 
 ---
 
-### PHASE 5 — Analytics, Security Dashboard & Polish
-**Branch:** `phase/5-analytics-polish`
-**Push when:** Full demo flow works. App looks production-ready. All 16 screens complete.
+### PHASE 5 — UI Customization (Appearance, Sounds, Ticket Views)
+**Branch:** `phase/5-ui-customization`
+**Push when:** Each signed-in user can personalize look, sound, type, and ticket density; prefs persist in MySQL; consultants can demo a branded workspace without a code change.
+
+This phase is **UX product work**, not analytics. Old “Analytics & Polish” moves to **Phase 6**.
+
+#### Product intent
+Give customers, agents, and admins a **solid, convenient** workspace: they choose how the app looks and how tickets are scanned. Defaults stay premium (iris / current theme). Power users and consultants get a **Appearance** studio.
+
+#### Scope — Appearance studio (`/settings`)
+- [x] **Sounds:** on/off in Appearance; cues only on buttons, cancel, checkbox, radio, switch — never hover, typing, or every link
+- [x] **Color mode:** system / light / dark (global)
+- [x] **Accent picker:** presets + custom hex + shade
+- [x] **Surface finish:** matte / glossy / glass
+- [x] **Type:** font family presets + size scale (S / M / L)
+- [x] **Logo:** personal upload
+- [x] **Density:** comfortable / compact
+- [x] Persist `UiPreference` in MySQL, scoped to `userId`
+- [x] GraphQL: `myAppearance`, `saveAppearance` — Zod + `requirePermission` + `audit()` on write
+- [x] Apply tokens at runtime (CSS variables), no `any`
+
+#### Scope — Ticket browsing UX
+- [x] Sortable lists (updated, created, SLA due, priority)
+- [x] Filterable (status, priority)
+- [x] View modes: **list**, **compact row**, **large card**, **icon/grid**
+- [x] Remember last view per user (same appearance row)
+
+#### Out of scope (Phase 6+)
+Analytics dashboards, security dashboard, webhooks, crawler, LLM, cloud host.
+
+#### Architecture notes
+- Resolvers call appearance service; Prisma only in services
+- Tokens: `--background`, `--iris`, `--radius`, `--font-sans` already exist — extend, don’t fork a second design system
+- Accessibility: contrast checks on custom hex; refuse unreadable combos
+- Unit tests: token merge, contrast guard, view-mode enum, sound-target policy
+
+#### Deliverable at push
+```
+✅ Appearance settings: sounds, light/dark, accent, finish, type, logo
+✅ Prefs saved in DB and restored on login
+✅ Ticket queues/lists: sort, filter, 4 view modes
+✅ Defaults remain the current ZenFlow look
+✅ Unit tests for appearance merge + ticket view enum
+```
+
+**Git push:** `git push origin phase/5-ui-customization` (local + GitHub only)
+
+---
+
+### PHASE 6 — Analytics, Security Dashboard & Polish
+**Branch:** `phase/6-analytics-polish`
+**Push when:** Full demo flow works. App looks production-ready. Remaining product screens complete.
 
 #### Backend
 - [ ] Analytics resolvers: volume, SLA, resolution time, agent performance, CSAT, category
 - [ ] KB analytics: unanswered questions, helpful/unhelpful, deflection rate
 - [ ] Security dashboard resolvers: `auditLogs`, `blockedIps`, `blockIp`, `unblockIp`, `spamReports`
+- [ ] Webhooks + HMAC retry
 - [ ] Realistic demo seed: 50+ tickets, message threads, 25+ published articles
 
 #### Frontend
 - [ ] Analytics dashboard (Recharts) including KB usefulness
 - [ ] Security dashboard (audit log, blocked IPs, spam reports)
 - [ ] Loading skeletons, empty states, error boundaries
-- [ ] Mobile: customer screens first; agent workspace tabs on small screens
-- [ ] Dark mode polish
 - [ ] Final security pass (permission guards, internal KB leak checks, audit logs)
 
 #### Deliverable at push
 ```
-✅ All 16 screens complete and functional
 ✅ Analytics charts populated with realistic demo data
 ✅ KB Q&A is cited, role-scoped, and works without an AI key
 ✅ Audit log shows every security event
 ✅ Full demo flow: Customer → Agent → Supervisor → Admin
 ```
 
-**Git push:** `git push origin phase/5-analytics-polish` → PR → merge → `main`
+**Git push:** `git push origin phase/6-analytics-polish` → PR → merge → `main`
 
 ---
 
@@ -1050,7 +1097,8 @@ main                    ← always stable, always deployable
   └── phase/2-ticket-engine
   └── phase/3-workspace-realtime
   └── phase/4-automation-admin
-  └── phase/5-analytics-polish
+  └── phase/5-ui-customization
+  └── phase/6-analytics-polish
 ```
 
 Each phase branch is created fresh from `main`:
@@ -1072,7 +1120,8 @@ git push origin phase/2-ticket-engine
 | Phase 2 — Ticket Engine + KB Foundation | ✅ Merged | `phase/2-ticket-engine` | #1 merged |
 | Phase 3 — Workspace, Real-Time, KB in Tickets | ✅ Implemented (light) | `phase/3-workspace-realtime` | GitHub only |
 | Phase 4 — Automation, Legal Ingest, Optional AI | ✅ Implemented (light, no crawler/LLM) | `phase/4-automation-admin` | GitHub |
-| Phase 5 — Analytics & Polish | 🔲 Not started | `phase/5-analytics-polish` | — |
+| Phase 5 — UI Customization | ✅ Implemented (Appearance studio + ticket views) | `phase/5-ui-customization` | GitHub |
+| Phase 6 — Analytics, Security Dashboard & Polish | 🔲 Planned (was Phase 5) | `phase/6-analytics-polish` | — |
 
 ---
 
@@ -1200,5 +1249,5 @@ Never commit scraped corpora to the repo.
 
 ---
 
-*Last updated: after Phase 4 light automation — SLA cron, CSAT, admin UI, rule-based Q&A, tests.*
-*Next: Phase 5 analytics and polish. Keep local + GitHub; no crawler/LLM unless you ask.*
+*Last updated: Phase 5 UI customization merged to `main` — Appearance studio, DB prefs, ticket views.*
+*Next: Phase 6 analytics. Keep local + GitHub; no crawler/LLM unless you ask.*

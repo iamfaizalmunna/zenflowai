@@ -5,6 +5,7 @@ import { useMutation, useQuery } from '@apollo/client';
 import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { ADMIN_ARTICLES, PUBLISH_ARTICLE, SAVE_ARTICLE } from '@/modules/admin/queries/admin.queries';
+import { Button, Input, PageTitle, Textarea } from '@/components/ui/Field';
 
 export default function AdminKnowledgePage() {
   const { data, refetch } = useQuery(ADMIN_ARTICLES);
@@ -15,31 +16,31 @@ export default function AdminKnowledgePage() {
   return (
     <RoleGuard minRole="ADMIN">
       <AppShell>
-        <div className="space-y-4 max-w-3xl">
-          <h1 className="text-2xl font-bold tracking-tight">Knowledge</h1>
+        <div className="space-y-5 max-w-3xl">
+          <PageTitle title="Knowledge" hint="Draft and publish owned articles." />
           <form
-            className="space-y-2"
+            className="space-y-3 rounded-3xl border border-border/70 bg-card/70 p-4"
             onSubmit={(e) => {
               e.preventDefault();
               save({ variables: { input: { title: form.title, body: form.body, isPublished: false } } });
               setForm({ title: '', body: '' });
             }}
           >
-            <input required minLength={3} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Title" className="w-full border rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-900" />
-            <textarea required minLength={10} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} rows={4} placeholder="Markdown body" className="w-full border rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-900" />
-            <button type="submit" className="px-3 py-2 rounded-xl bg-slate-900 text-white text-sm dark:bg-white dark:text-slate-900">Save draft</button>
+            <Input required minLength={3} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Title" />
+            <Textarea required minLength={10} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} rows={4} placeholder="Markdown body" />
+            <Button type="submit">Save draft</Button>
           </form>
           <ul className="space-y-2">
             {data?.adminArticles?.map((a: { id: number; title: string; isPublished: boolean; visibility: string }) => (
-              <li key={a.id} className="rounded-xl border p-3 text-sm flex justify-between gap-3">
+              <li key={a.id} className="rounded-2xl border border-border/70 bg-card/70 p-4 text-sm flex justify-between gap-3 items-center">
                 <span>{a.title} · {a.visibility} · {a.isPublished ? 'published' : 'draft'}</span>
-                <button
+                <Button
                   type="button"
-                  className="text-xs underline"
+                  variant="ghost"
                   onClick={() => publish({ variables: { id: a.id, isPublished: !a.isPublished } })}
                 >
                   {a.isPublished ? 'Unpublish' : 'Publish'}
-                </button>
+                </Button>
               </li>
             ))}
           </ul>

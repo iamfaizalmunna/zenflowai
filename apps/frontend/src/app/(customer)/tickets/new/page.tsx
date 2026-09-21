@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { CATEGORIES, CREATE_TICKET, KNOWLEDGE_ARTICLES } from '@/modules/tickets/queries/ticket.queries';
+import { Button, Field, Input, PageTitle, Textarea } from '@/components/ui/Field';
+import { Select } from '@/components/ui/Select';
 
 export default function NewTicketPage() {
   const router = useRouter();
@@ -43,74 +45,65 @@ export default function NewTicketPage() {
   return (
     <RoleGuard minRole="CUSTOMER">
       <AppShell>
-        <div className="max-w-xl space-y-4">
-          <h1 className="text-2xl font-bold tracking-tight">Create ticket</h1>
-          {error && <p className="text-sm text-red-600">{error.message}</p>}
-          <form onSubmit={submit} className="space-y-4">
-            <label className="block text-sm font-medium">
-              Title
-              <input
+        <div className="max-w-xl space-y-5">
+          <PageTitle title="Create ticket" hint="We’ll route this to the right team." />
+          {error && <p className="text-sm text-destructive">{error.message}</p>}
+          <form onSubmit={submit} className="space-y-4 rounded-3xl border border-border/70 bg-card/70 p-5 app:p-6">
+            <Field label="Title">
+              <Input
                 required
                 minLength={4}
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="mt-1 w-full border rounded-xl px-3 py-2 bg-white dark:bg-slate-900"
+                placeholder="What’s going on?"
               />
-            </label>
+            </Field>
             {kbData?.knowledgeArticles?.length > 0 && (
-              <div className="rounded-xl border p-3 text-sm space-y-1">
-                <p className="text-xs font-medium text-slate-500">Related help articles</p>
+              <div className="rounded-2xl border border-iris/20 bg-iris/5 p-3 text-sm space-y-1">
+                <p className="text-xs font-medium text-muted-foreground">Related help articles</p>
                 {kbData.knowledgeArticles.slice(0, 4).map((a: { id: number; title: string }) => (
-                  <Link key={a.id} href={`/knowledge/${a.id}`} className="block text-indigo-600 hover:underline">
+                  <Link key={a.id} href={`/knowledge/${a.id}`} className="block text-iris hover:underline">
                     {a.title}
                   </Link>
                 ))}
               </div>
             )}
-            <label className="block text-sm font-medium">
-              Description
-              <textarea
+            <Field label="Description">
+              <Textarea
                 required
                 minLength={10}
                 rows={6}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="mt-1 w-full border rounded-xl px-3 py-2 bg-white dark:bg-slate-900"
+                placeholder="Share steps, errors, and what you expected."
               />
-            </label>
-            <label className="block text-sm font-medium">
-              Category
-              <select
+            </Field>
+            <Field label="Category">
+              <Select
                 value={form.categoryId}
-                onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-                className="mt-1 w-full border rounded-xl px-3 py-2 bg-white dark:bg-slate-900"
-              >
-                <option value="">Select…</option>
-                {catData?.categories?.map((c: { id: number; name: string }) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm font-medium">
-              Priority
-              <select
+                onValueChange={(categoryId) => setForm({ ...form, categoryId })}
+                placeholder="Select category"
+                options={(catData?.categories ?? []).map((c: { id: number; name: string }) => ({
+                  value: String(c.id),
+                  label: c.name,
+                }))}
+              />
+            </Field>
+            <Field label="Priority">
+              <Select
                 value={form.priority}
-                onChange={(e) => setForm({ ...form, priority: e.target.value })}
-                className="mt-1 w-full border rounded-xl px-3 py-2 bg-white dark:bg-slate-900"
-              >
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="URGENT">Urgent</option>
-              </select>
-            </label>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium disabled:opacity-50"
-            >
+                onValueChange={(priority) => setForm({ ...form, priority })}
+                options={[
+                  { value: 'LOW', label: 'Low' },
+                  { value: 'MEDIUM', label: 'Medium' },
+                  { value: 'HIGH', label: 'High' },
+                  { value: 'URGENT', label: 'Urgent' },
+                ]}
+              />
+            </Field>
+            <Button type="submit" disabled={loading} className="w-full">
               {loading ? 'Submitting…' : 'Submit ticket'}
-            </button>
+            </Button>
           </form>
         </div>
       </AppShell>

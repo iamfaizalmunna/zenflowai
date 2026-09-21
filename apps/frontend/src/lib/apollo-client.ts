@@ -31,7 +31,10 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
     graphQLErrors.forEach(({ message, extensions }) => {
       if (extensions?.code === 'UNAUTHENTICATED') {
         localStorage.removeItem('zenflow_token');
-        window.location.href = '/login';
+        localStorage.removeItem('zenflow-auth');
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login';
+        }
       }
       console.error(`[GraphQL Error]: ${message}`);
     });

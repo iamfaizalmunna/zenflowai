@@ -5,6 +5,7 @@ import { useMutation, useQuery } from '@apollo/client';
 import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { SAVE_TEAM, TEAMS } from '@/modules/admin/queries/admin.queries';
+import { Button, Input, PageTitle } from '@/components/ui/Field';
 
 export default function AdminTeamsPage() {
   const { data, refetch } = useQuery(TEAMS);
@@ -14,10 +15,10 @@ export default function AdminTeamsPage() {
   return (
     <RoleGuard minRole="ADMIN">
       <AppShell>
-        <div className="space-y-4 max-w-2xl">
-          <h1 className="text-2xl font-bold tracking-tight">Teams</h1>
+        <div className="space-y-5 max-w-2xl">
+          <PageTitle title="Teams" hint="Who receives routed tickets." />
           <form
-            className="flex gap-2"
+            className="flex flex-col app:flex-row gap-2"
             onSubmit={(e) => {
               e.preventDefault();
               if (!name.trim()) return;
@@ -25,14 +26,14 @@ export default function AdminTeamsPage() {
               setName('');
             }}
           >
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="New team name" className="flex-1 border rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-900" />
-            <button type="submit" className="px-3 py-2 rounded-xl bg-slate-900 text-white text-sm dark:bg-white dark:text-slate-900">Add</button>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="New team name" className="flex-1" />
+            <Button type="submit">Add</Button>
           </form>
           <ul className="space-y-2">
             {data?.teams?.map((team: { id: number; name: string; isDefault: boolean; members?: Array<{ user: { name: string } }> }) => (
-              <li key={team.id} className="rounded-xl border p-3 text-sm">
+              <li key={team.id} className="rounded-2xl border border-border/70 bg-card/70 p-4 text-sm">
                 <p className="font-medium">{team.name}{team.isDefault ? ' · default' : ''}</p>
-                <p className="text-xs text-slate-500">{team.members?.map((m) => m.user.name).join(', ') || 'No members'}</p>
+                <p className="text-xs text-muted-foreground mt-1">{team.members?.map((m) => m.user.name).join(', ') || 'No members'}</p>
               </li>
             ))}
           </ul>

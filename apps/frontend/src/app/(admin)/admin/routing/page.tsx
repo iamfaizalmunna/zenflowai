@@ -5,6 +5,8 @@ import { useMutation, useQuery } from '@apollo/client';
 import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { ROUTING_RULES, SAVE_ROUTING } from '@/modules/admin/queries/admin.queries';
+import { Button, Input, PageTitle } from '@/components/ui/Field';
+import { Select } from '@/components/ui/Select';
 
 export default function AdminRoutingPage() {
   const { data, refetch } = useQuery(ROUTING_RULES);
@@ -14,10 +16,10 @@ export default function AdminRoutingPage() {
   return (
     <RoleGuard minRole="ADMIN">
       <AppShell>
-        <div className="space-y-4 max-w-3xl">
-          <h1 className="text-2xl font-bold tracking-tight">Routing rules</h1>
+        <div className="space-y-5 max-w-3xl">
+          <PageTitle title="Routing rules" hint="Keyword, category, priority, then fallback." />
           <form
-            className="grid gap-2 sm:grid-cols-4"
+            className="grid gap-3 sm:grid-cols-2 app:grid-cols-4 rounded-3xl border border-border/70 bg-card/70 p-4"
             onSubmit={(e) => {
               e.preventDefault();
               save({
@@ -33,15 +35,21 @@ export default function AdminRoutingPage() {
               });
             }}
           >
-            <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="border rounded-xl px-2 py-2 text-sm bg-white dark:bg-slate-900">
-              {['KEYWORD', 'CATEGORY', 'PRIORITY', 'FALLBACK'].map((t) => <option key={t}>{t}</option>)}
-            </select>
-            <input value={form.keyword} onChange={(e) => setForm({ ...form, keyword: e.target.value })} placeholder="keyword" className="border rounded-xl px-2 py-2 text-sm bg-white dark:bg-slate-900" />
-            <select value={form.targetTeamId} onChange={(e) => setForm({ ...form, targetTeamId: e.target.value })} className="border rounded-xl px-2 py-2 text-sm bg-white dark:bg-slate-900" required>
-              <option value="">Team…</option>
-              {data?.teams?.map((t: { id: number; name: string }) => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
-            <button type="submit" className="rounded-xl bg-slate-900 text-white text-sm dark:bg-white dark:text-slate-900">Add rule</button>
+            <Select
+              aria-label="Rule type"
+              value={form.type}
+              onValueChange={(type) => setForm({ ...form, type })}
+              options={['KEYWORD', 'CATEGORY', 'PRIORITY', 'FALLBACK'].map((t) => ({ value: t, label: t }))}
+            />
+            <Input value={form.keyword} onChange={(e) => setForm({ ...form, keyword: e.target.value })} placeholder="Keyword" />
+            <Select
+              aria-label="Target team"
+              value={form.targetTeamId}
+              onValueChange={(targetTeamId) => setForm({ ...form, targetTeamId })}
+              placeholder="Team"
+              options={(data?.teams ?? []).map((t: { id: number; name: string }) => ({ value: String(t.id), label: t.name }))}
+            />
+            <Button type="submit">Add rule</Button>
           </form>
           <ul className="space-y-2 text-sm">
             {data?.routingRules?.map((rule: {
@@ -53,11 +61,11 @@ export default function AdminRoutingPage() {
               targetTeam?: { name: string };
               order: number;
             }) => (
-              <li key={rule.id} className="rounded-xl border p-3 flex justify-between">
+              <li key={rule.id} className="rounded-2xl border border-border/70 bg-card/70 p-4 flex justify-between gap-3">
                 <span>#{rule.order} {rule.type} {rule.keyword ?? ''} → {rule.targetTeam?.name}</span>
-                <button
+                <Button
                   type="button"
-                  className="text-xs underline"
+                  variant="ghost"
                   onClick={() => save({
                     variables: {
                       id: rule.id,
@@ -72,7 +80,7 @@ export default function AdminRoutingPage() {
                   })}
                 >
                   {rule.isActive ? 'Disable' : 'Enable'}
-                </button>
+                </Button>
               </li>
             ))}
           </ul>

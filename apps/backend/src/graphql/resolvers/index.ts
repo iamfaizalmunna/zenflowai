@@ -6,6 +6,7 @@ import { knowledgeResolvers } from './knowledge.resolver';
 import { subscriptionResolvers } from './subscription.resolver';
 import { adminResolvers } from './admin.resolver';
 import { csatResolvers } from './csat.resolver';
+import { appearanceResolvers } from './appearance.resolver';
 
 export const resolvers = {
   DateTime: DateTimeResolver,
@@ -18,6 +19,7 @@ export const resolvers = {
     ...knowledgeResolvers.Query,
     ...adminResolvers.Query,
     ...csatResolvers.Query,
+    ...appearanceResolvers.Query,
   },
 
   Mutation: {
@@ -26,6 +28,7 @@ export const resolvers = {
     ...ticketResolvers.Mutation,
     ...adminResolvers.Mutation,
     ...csatResolvers.Mutation,
+    ...appearanceResolvers.Mutation,
   },
 
   Subscription: {

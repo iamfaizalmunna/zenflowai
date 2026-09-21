@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
-import { LogOut, Moon, Sun, Volume2, VolumeX } from 'lucide-react';
+import { LogOut, Moon, Settings2, Sun, Volume2, VolumeX } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useLogout } from '@/modules/auth/hooks/useAuth';
 import { ROLE_COLOR, ROLE_LABEL } from '@/lib/constants';
@@ -13,18 +13,20 @@ import { cn } from '@/lib/utils';
 import { ZenLogo } from '@/components/brand/ZenLogo';
 import { NAV_ICONS } from '@/components/layout/navIcons';
 import { useUiSound } from '@/hooks/useUiSound';
+import { useAppearance } from '@/hooks/useAppearance';
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+  const { theme } = useTheme();
   const { user } = useAuthStore();
   const { logout } = useLogout();
-  const { play, muted, setMuted } = useUiSound();
+  const { play } = useUiSound();
+  const { prefs, update } = useAppearance();
   const role = user?.role ?? 'CUSTOMER';
   const navItems = navForRole(role);
 
   return (
-    <aside className="hidden app:flex w-60 flex-col h-full border-r border-white/10 bg-card/80 backdrop-blur-xl">
+    <aside className="hidden app:flex w-60 flex-col h-full border-r border-white/10 surface">
       <div className="h-16 flex items-center px-4 border-b border-white/10">
         <ZenLogo size={32} />
       </div>
@@ -38,7 +40,6 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               onClick={() => void play('tap')}
-              onMouseEnter={() => void play('hover')}
               className={cn(
                 'relative flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm transition-colors min-h-11',
                 active ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground',
@@ -59,17 +60,24 @@ export function Sidebar() {
       </nav>
 
       <div className="p-3 border-t border-white/10 space-y-1">
-        <button
-          type="button"
-          onClick={() => setMuted(!muted)}
+        <Link
+          href="/settings"
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm text-muted-foreground hover:text-foreground min-h-11"
         >
-          {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          {muted ? 'Sounds off' : 'Sounds on'}
+          <Settings2 className="w-4 h-4" />
+          Appearance
+        </Link>
+        <button
+          type="button"
+          onClick={() => update({ soundsMuted: !prefs.soundsMuted })}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm text-muted-foreground hover:text-foreground min-h-11"
+        >
+          {prefs.soundsMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          {prefs.soundsMuted ? 'Sounds off' : 'Sounds on'}
         </button>
         <button
           type="button"
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          onClick={() => update({ colorMode: prefs.colorMode === 'DARK' ? 'LIGHT' : 'DARK' })}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm text-muted-foreground hover:text-foreground min-h-11"
         >
           {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}

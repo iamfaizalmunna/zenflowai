@@ -3,6 +3,8 @@ import { Fraunces, Outfit } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 import { ApolloWrapper } from '@/components/layout/ApolloWrapper';
 import { PwaRegister } from '@/components/layout/PwaRegister';
+import { SoundBoot } from '@/hooks/useUiSound';
+import { AppearanceProvider } from '@/hooks/useAppearance';
 import { PWA_MANIFEST, PWA_THEME_DARK, PWA_THEME_LIGHT } from '@/lib/pwa';
 import './globals.css';
 
@@ -39,7 +41,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <ApolloWrapper>
             <PwaRegister />
-            {children}
+            <SoundBoot />
+            <AppearanceProvider>{children}</AppearanceProvider>
           </ApolloWrapper>
         </ThemeProvider>
       </body>

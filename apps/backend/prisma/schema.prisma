@@ -180,6 +180,7 @@ model User {
   savedQueries   SavedQuery[]
   bookmarks      BookmarkedNode[]
   permissionOverrides PermissionOverride[]
+  appearance     UiPreference?
 
   @@index([email])
   @@index([role])
@@ -721,4 +722,27 @@ model BookmarkedNode {
   @@unique([userId, nodeType, nodeId])
   @@index([userId])
   @@map("bookmarked_nodes")
+}
+
+model UiPreference {
+  id           Int     @id @default(autoincrement())
+  userId       Int     @unique
+  colorMode    String  @default("SYSTEM")
+  accentHex    String  @default("#7C5CFC")
+  shade        Int     @default(0)
+  finish       String  @default("GLOSSY")
+  fontFamily   String  @default("OUTFIT")
+  fontSize     String  @default("M")
+  density      String  @default("COMFORTABLE")
+  ticketView   String  @default("LIST")
+  ticketSort   String  @default("UPDATED")
+  soundsMuted  Boolean @default(false)
+  logoDataUrl  String? @db.LongText
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ui_preferences")
 }

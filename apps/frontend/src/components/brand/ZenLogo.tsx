@@ -1,8 +1,22 @@
+'use client';
+
 import { cn } from '@/lib/utils';
+import { useAppearance } from '@/hooks/useAppearance';
 
 export function ZenLogo({ className, size = 36 }: { className?: string; size?: number }) {
+  const { prefs } = useAppearance();
   return (
     <span className={cn('inline-flex items-center gap-2.5', className)}>
+      {prefs.logoDataUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={prefs.logoDataUrl}
+          alt=""
+          width={size}
+          height={size}
+          className="shrink-0 rounded-xl object-cover"
+        />
+      ) : (
       <svg
         width={size}
         height={size}
@@ -27,6 +41,7 @@ export function ZenLogo({ className, size = 36 }: { className?: string; size?: n
           </linearGradient>
         </defs>
       </svg>
+      )}
       <span className="font-display text-lg tracking-tight leading-none">
         ZenFlow<span className="text-iris">AI</span>
       </span>

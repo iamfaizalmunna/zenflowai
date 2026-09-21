@@ -67,9 +67,31 @@
   }
   html {
     @apply bg-background;
+    font-size: var(--app-font-size, 16px);
+    --surface-blur: 18px;
+    --surface-alpha: 0.82;
+  }
+  html[data-finish='matte'] {
+    --surface-blur: 0px;
+    --surface-alpha: 0.98;
+  }
+  html[data-finish='glossy'] {
+    --surface-blur: 18px;
+    --surface-alpha: 0.84;
+  }
+  html[data-finish='glass'] {
+    --surface-blur: 28px;
+    --surface-alpha: 0.55;
+  }
+  html[data-density='compact'] {
+    --radius: 0.85rem;
+  }
+  html[data-density='comfortable'] {
+    --radius: 1.15rem;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: inherit;
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -77,6 +99,13 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+  }
+}
+
+@layer components {
+  .surface {
+    background-color: hsl(var(--card) / var(--surface-alpha));
+    backdrop-filter: blur(var(--surface-blur));
   }
 }
 
