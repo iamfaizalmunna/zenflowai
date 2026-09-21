@@ -1,0 +1,244 @@
+// ZenFlowAI Ticketing System - Prisma Schema
+// MySQL Database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  AGENT
+  CUSTOMER
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  ON_HOLD
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TicketType {
+  BUG
+  FEATURE_REQUEST
+  QUESTION
+  INCIDENT
+  TASK
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(CUSTOMER)
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  createdTickets  Ticket[]       @relation("CreatedByUser")
+  assignedTickets Ticket[]       @relation("AssignedToUser")
+  comments        Comment[]
+  notifications   Notification[]
+  savedQueries    SavedQuery[]   // GraphQL persisted/saved queries
+
+  @@map("users")
+}
+
+model Team {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tickets Ticket[]
+
+  @@map("teams")
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  color       String?  @default("#6366f1")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tickets Ticket[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  color     String?  @default("#94a3b8")
+  createdAt DateTime @default(now())
+
+  tickets TicketTag[]
+
+  @@map("tags")
+}
+
+model Ticket {
+  id          Int            @id @default(autoincrement())
+  title       String
+  description String         @db.Text
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  type        TicketType     @default(BUG)
+  dueDate     DateTime?
+  resolvedAt  DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Foreign keys
+  createdById Int
+  assignedToId Int?
+  teamId      Int?
+  categoryId  Int?
+
+  // Relations
+  createdBy  User      @relation("CreatedByUser", fields: [createdById], references: [id])
+  assignedTo User?     @relation("AssignedToUser", fields: [assignedToId], references: [id])
+  team       Team?     @relation(fields: [teamId], references: [id])
+  category   Category? @relation(fields: [categoryId], references: [id])
+  comments   Comment[]
+  tags       TicketTag[]
+  attachments Attachment[]
+  activities  Activity[]
+
+  @@index([status])
+  @@index([priority])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@map("tickets")
+}
+
+model TicketTag {
+  ticketId Int
+  tagId    Int
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([ticketId, tagId])
+  @@map("ticket_tags")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  body      String   @db.Text
+  isInternal Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ticketId Int
+  authorId Int
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id])
+
+  @@index([ticketId])
+  @@map("comments")
+}
+
+model Attachment {
+  id        Int      @id @default(autoincrement())
+  filename  String
+  url       String
+  mimeType  String
+  size      Int
+  createdAt DateTime @default(now())
+
+  ticketId Int
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
+}
+
+model Activity {
+  id          Int      @id @default(autoincrement())
+  action      String   // e.g. "status_changed", "assigned", "commented"
+  description String
+  metadata    Json?    // flexible JSON for extra data
+  createdAt   DateTime @default(now())
+
+  ticketId Int
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("activities")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+// ─── GraphQL Superpowers ─────────────────────────────────────────────────────
+// Save tokens (persisted queries) & bookmark/mark nodes
+
+model SavedQuery {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  query       String   @db.Text  // The full GraphQL query string
+  hash        String   @unique   // SHA-256 hash for persisted queries (APQ)
+  variables   Json?              // Default variables
+  isBookmarked Boolean @default(false)
+  tags        String?            // comma-separated tags for organization
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([hash])
+  @@index([userId])
+  @@map("saved_queries")
+}
+
+model BookmarkedNode {
+  id          Int      @id @default(autoincrement())
+  nodeType    String   // e.g. "Ticket", "User", "Comment"
+  nodeId      Int      // the ID of the bookmarked record
+  label       String?  // user-defined label/note
+  color       String?  @default("#6366f1")
+  createdAt   DateTime @default(now())
+
+  // Polymorphic: userId who bookmarked it
+  userId      Int
+
+  @@unique([userId, nodeType, nodeId])
+  @@index([userId])
+  @@map("bookmarked_nodes")
+}
