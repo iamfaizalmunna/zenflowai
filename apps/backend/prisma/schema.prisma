@@ -1,5 +1,5 @@
-// ZenFlowAI Ticketing System - Prisma Schema
-// MySQL Database
+// ZenFlowAI — Prisma Schema
+// MySQL · Phase 1: Foundation & Auth
 
 generator client {
   provider = "prisma-client-js"
@@ -10,20 +10,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── Enums ──────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+// ENUMS
+// ═══════════════════════════════════════════════════════════════
 
-// ─── Role Hierarchy (highest → lowest privilege) ─────────────────────────────
-// SUPER_ADMIN > ADMIN > MODERATOR > AGENT > CUSTOMER > GUEST
 enum Role {
-  SUPER_ADMIN   // Platform owner — unrestricted, manages other admins
-  ADMIN         // Full org control, can manage users/settings
-  MODERATOR     // Can review, flag, suspend — cannot delete admins
-  AGENT         // Handle tickets, respond, change status
-  CUSTOMER      // Submit tickets, comment on own tickets
-  GUEST         // Read-only, extremely limited
+  CUSTOMER
+  AGENT
+  SUPERVISOR
+  ADMIN
+  SUPER_ADMIN
 }
 
 enum TicketStatus {
+  NEW
   OPEN
   IN_PROGRESS
   ON_HOLD
@@ -35,153 +35,352 @@ enum TicketPriority {
   LOW
   MEDIUM
   HIGH
-  CRITICAL
+  URGENT
 }
 
 enum TicketType {
   BUG
-  FEATURE_REQUEST
+  FEATURE
   QUESTION
   INCIDENT
   TASK
 }
 
-// ─── Models ──────────────────────────────────────────────────────────────────
+enum MessageType {
+  REPLY          // visible to customer + agent
+  INTERNAL_NOTE  // agent/supervisor only
+  SYSTEM_EVENT   // auto-generated (e.g. "Status changed to Resolved")
+}
+
+enum RoutingRuleType {
+  CATEGORY
+  KEYWORD
+  PRIORITY
+  FALLBACK
+}
+
+enum AuditCategory {
+  AUTH
+  ACCESS
+  TICKET
+  MODERATION
+  SECURITY
+  ADMIN
+  FAIR_USAGE
+}
+
+enum AuditSeverity {
+  INFO
+  WARN
+  ERROR
+  CRITICAL
+}
+
+enum SpamStatus {
+  PENDING
+  CONFIRMED
+  DISMISSED
+  AUTO_BLOCKED
+}
+
+enum SpamReason {
+  SPAM_CONTENT
+  SCAM
+  BOT_BEHAVIOR
+  ABUSE
+  DUPLICATE
+  FAKE_ACCOUNT
+  OTHER
+}
+
+enum ArticleVisibility {
+  PUBLIC    // customers + agents
+  INTERNAL  // agents + supervisors only
+}
+
+enum CsatStatus {
+  PENDING
+  SUBMITTED
+  EXPIRED
+}
+
+enum NotificationType {
+  TICKET_CREATED
+  TICKET_ASSIGNED
+  TICKET_REPLIED
+  TICKET_RESOLVED
+  TICKET_CLOSED
+  SLA_WARNING
+  SLA_BREACHED
+  CSAT_REQUEST
+  SYSTEM
+}
+
+enum WebhookDeliveryStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+// ═══════════════════════════════════════════════════════════════
+// USERS & AUTH
+// ═══════════════════════════════════════════════════════════════
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String
-  password  String
-  role      Role     @default(CUSTOMER)
-  avatar    String?
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  name     String
+  password String // bcrypt hash
 
-  // ─── Account Security Fields ───────────────────────────────────────────────
-  isActive          Boolean  @default(true)
-  isBanned          Boolean  @default(false)
-  banReason         String?
-  bannedAt          DateTime?
-  bannedById        Int?
+  role     Role    @default(CUSTOMER)
+  isActive Boolean @default(true)
+  isBanned Boolean @default(false)
+  banReason String?
+  bannedAt  DateTime?
 
-  // Suspicious / AI-flagged
-  isSuspicious      Boolean  @default(false)
-  suspicionScore    Float    @default(0)   // 0–100, auto-computed by AI layer
-  suspicionReason   String?
-
-  // Account lockout (brute-force protection)
-  failedLoginCount  Int      @default(0)
-  lockedUntil       DateTime?
+  // Login security
+  failedLoginCount Int       @default(0)
+  lockedUntil      DateTime?
 
   // Email verification
-  emailVerified     Boolean  @default(false)
-  emailVerifyToken  String?
+  emailVerified     Boolean @default(false)
+  emailVerifyToken  String? @unique
 
   // Password reset
-  passwordResetToken    String?
-  passwordResetExpires  DateTime?
+  passwordResetToken   String?  @unique
+  passwordResetExpires DateTime?
 
-  // 2FA
-  twoFactorEnabled  Boolean  @default(false)
-  twoFactorSecret   String?
+  // 2FA (optional, future)
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret  String?
 
-  // Fair-usage / cooldown
-  ticketQuota       Int      @default(10)   // max tickets per window
-  ticketWindowStart DateTime @default(now())
-  ticketCount       Int      @default(0)    // tickets created in current window
+  // Suspicion (spam/abuse scoring)
+  isSuspicious    Boolean @default(false)
+  suspicionScore  Float   @default(0) // 0–100
+  suspicionReason String?
 
-  // Metadata
-  lastLoginAt   DateTime?
-  lastLoginIp   String?
-  registeredIp  String?
-  userAgent     String?
+  // Activity metadata
+  lastLoginAt  DateTime?
+  lastLoginIp  String?
+  registeredIp String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relationships
-  createdTickets  Ticket[]       @relation("CreatedByUser")
-  assignedTickets Ticket[]       @relation("AssignedToUser")
-  comments        Comment[]
-  notifications   Notification[]
-  savedQueries    SavedQuery[]
-  auditLogs       AuditLog[]     @relation("AuditActor")
-  sessions        UserSession[]
+  // Relations
+  sessions       UserSession[]
+  refreshTokens  RefreshToken[]
+  teamMembers    TeamMember[]
+  createdTickets Ticket[]          @relation("TicketCreatedBy")
+  assignedTickets Ticket[]         @relation("TicketAssignedTo")
+  messages       TicketMessage[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]        @relation("AuditActor")
+  csatSurveys    CsatSurvey[]
+  savedQueries   SavedQuery[]
+  bookmarks      BookmarkedNode[]
+  permissionOverrides PermissionOverride[]
 
   @@index([email])
+  @@index([role])
   @@index([isBanned])
   @@index([isSuspicious])
   @@map("users")
 }
 
-model Team {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
+model UserSession {
+  id          String   @id @default(uuid())
+  userId      Int
+  tokenHash   String   @unique // SHA-256 of access token
+  ip          String
+  userAgent   String?  @db.Text
+  isRevoked   Boolean  @default(false)
+  revokedAt   DateTime?
+  revokedReason String?
+  expiresAt   DateTime
+  lastSeenAt  DateTime @default(now())
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 
-  tickets Ticket[]
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([expiresAt])
+  @@map("user_sessions")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    Int
+  tokenHash String   @unique // SHA-256 of the refresh token (never store raw)
+  ip        String?
+  userAgent String?  @db.Text
+  isRevoked Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TEAMS
+// ═══════════════════════════════════════════════════════════════
+
+model Team {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+  isDefault   Boolean @default(false) // fallback team for unmatched routing
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members       TeamMember[]
+  tickets       Ticket[]
+  routingRules  RoutingRule[]
+  routingDecisions RoutingDecision[]
 
   @@map("teams")
 }
 
-model Category {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  description String?
-  color       String?  @default("#6366f1")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model TeamMember {
+  teamId Int
+  userId Int
+  isLead Boolean @default(false)
 
-  tickets Ticket[]
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, userId])
+  @@map("team_members")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CATEGORIES & ROUTING
+// ═══════════════════════════════════════════════════════════════
+
+model Category {
+  id              Int            @id @default(autoincrement())
+  name            String         @unique
+  description     String?
+  color           String         @default("#6366f1")
+  defaultPriority TicketPriority @default(MEDIUM)
+  defaultTeamId   Int?
+
+  tickets      Ticket[]
+  routingRules RoutingRule[]
+  articles     KnowledgeArticle[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("categories")
 }
 
-model Tag {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  color     String?  @default("#94a3b8")
+model RoutingRule {
+  id               Int              @id @default(autoincrement())
+  type             RoutingRuleType
+  categoryId       Int?
+  keyword          String?
+  priority         TicketPriority?
+  targetTeamId     Int
+  priorityOverride TicketPriority?
+  order            Int              @default(100)
+  isActive         Boolean          @default(true)
+
+  targetTeam Team      @relation(fields: [targetTeamId], references: [id])
+  category   Category? @relation(fields: [categoryId], references: [id])
+
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  tickets TicketTag[]
-
-  @@map("tags")
+  @@index([isActive, order])
+  @@map("routing_rules")
 }
 
-model Ticket {
-  id          Int            @id @default(autoincrement())
-  title       String
-  description String         @db.Text
-  status      TicketStatus   @default(OPEN)
-  priority    TicketPriority @default(MEDIUM)
-  type        TicketType     @default(BUG)
-  dueDate     DateTime?
-  resolvedAt  DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+// ═══════════════════════════════════════════════════════════════
+// SLA POLICIES
+// ═══════════════════════════════════════════════════════════════
 
-  // Foreign keys
-  createdById Int
+model SlaPolicy {
+  id                  Int            @id @default(autoincrement())
+  priority            TicketPriority @unique
+  responseTimeHours   Float          // time to first reply
+  resolutionTimeHours Float          // time to full resolution
+  isActive            Boolean        @default(true)
+
+  @@map("sla_policies")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TICKETS
+// ═══════════════════════════════════════════════════════════════
+
+model Ticket {
+  id           Int            @id @default(autoincrement())
+  ticketNumber String         @unique // #ZEN-0001
+  title        String
+  description  String         @db.Text
+  status       TicketStatus   @default(NEW)
+  priority     TicketPriority @default(MEDIUM)
+  type         TicketType     @default(QUESTION)
+
+  // People
+  customerId   Int
+  teamId       Int?
   assignedToId Int?
-  teamId      Int?
-  categoryId  Int?
+  categoryId   Int?
+
+  // SLA tracking
+  slaResponseDueAt      DateTime?
+  slaResolutionDueAt    DateTime?
+  firstRespondedAt      DateTime?
+  resolvedAt            DateTime?
+  closedAt              DateTime?
+  slaResponseBreached   Boolean @default(false)
+  slaResolutionBreached Boolean @default(false)
+
+  // Spam / AI
+  isSpamFlagged          Boolean @default(false)
+  aiClassificationScore  Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  createdBy  User      @relation("CreatedByUser", fields: [createdById], references: [id])
-  assignedTo User?     @relation("AssignedToUser", fields: [assignedToId], references: [id])
+  customer   User      @relation("TicketCreatedBy", fields: [customerId], references: [id])
   team       Team?     @relation(fields: [teamId], references: [id])
+  assignedTo User?     @relation("TicketAssignedTo", fields: [assignedToId], references: [id])
   category   Category? @relation(fields: [categoryId], references: [id])
-  comments   Comment[]
-  tags       TicketTag[]
-  attachments Attachment[]
-  activities  Activity[]
+
+  messages         TicketMessage[]
+  attachments      Attachment[]
+  tags             TicketTag[]
+  csatSurvey       CsatSurvey?
+  routingDecision  RoutingDecision?
+  spamReports      SpamReport[]
 
   @@index([status])
   @@index([priority])
-  @@index([createdById])
+  @@index([customerId])
   @@index([assignedToId])
+  @@index([teamId])
+  @@index([slaResolutionDueAt])
   @@map("tickets")
+}
+
+model Tag {
+  id        Int         @id @default(autoincrement())
+  name      String      @unique
+  color     String      @default("#94a3b8")
+  createdAt DateTime    @default(now())
+  tickets   TicketTag[]
+
+  @@map("tags")
 }
 
 model TicketTag {
@@ -195,200 +394,218 @@ model TicketTag {
   @@map("ticket_tags")
 }
 
-model Comment {
-  id        Int      @id @default(autoincrement())
-  body      String   @db.Text
-  isInternal Boolean @default(false)
+// ═══════════════════════════════════════════════════════════════
+// MESSAGES & ATTACHMENTS
+// ═══════════════════════════════════════════════════════════════
+
+model TicketMessage {
+  id       Int         @id @default(autoincrement())
+  ticketId Int
+  senderId Int
+  body     String      @db.Text
+  type     MessageType @default(REPLY)
+  isRead   Boolean     @default(false) // for customer read receipts
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  ticketId Int
-  authorId Int
-
-  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  author User   @relation(fields: [authorId], references: [id])
+  ticket      Ticket       @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender      User         @relation(fields: [senderId], references: [id])
+  attachments Attachment[]
 
   @@index([ticketId])
-  @@map("comments")
+  @@index([senderId])
+  @@map("ticket_messages")
 }
 
 model Attachment {
-  id        Int      @id @default(autoincrement())
-  filename  String
-  url       String
-  mimeType  String
-  size      Int
+  id          Int    @id @default(autoincrement())
+  ticketId    Int
+  messageId   Int?
+  filename    String
+  storagePath String // local path or cloud URL
+  mimeType    String
+  sizeBytes   Int
+  uploadedById Int
+
   createdAt DateTime @default(now())
 
-  ticketId Int
-  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticket  Ticket         @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  message TicketMessage? @relation(fields: [messageId], references: [id], onDelete: SetNull)
 
+  @@index([ticketId])
   @@map("attachments")
 }
 
-model Activity {
-  id          Int      @id @default(autoincrement())
-  action      String   // e.g. "status_changed", "assigned", "commented"
-  description String
-  metadata    Json?    // flexible JSON for extra data
-  createdAt   DateTime @default(now())
+// ═══════════════════════════════════════════════════════════════
+// ROUTING DECISIONS (audit trail)
+// ═══════════════════════════════════════════════════════════════
 
-  ticketId Int
-  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+model RoutingDecision {
+  id             Int  @id @default(autoincrement())
+  ticketId       Int  @unique
+  ruleId         Int? // which rule matched (null = fallback)
+  assignedTeamId Int
+  assignedUserId Int? // null = unassigned, goes to team queue
+  reason         String
 
-  @@index([ticketId])
-  @@map("activities")
-}
-
-model Notification {
-  id        Int      @id @default(autoincrement())
-  title     String
-  body      String
-  read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [assignedTeamId], references: [id])
 
-  @@index([userId])
+  @@map("routing_decisions")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KNOWLEDGE BASE
+// ═══════════════════════════════════════════════════════════════
+
+model KnowledgeArticle {
+  id          Int                @id @default(autoincrement())
+  title       String
+  body        String             @db.LongText // markdown
+  visibility  ArticleVisibility  @default(PUBLIC)
+  categoryId  Int?
+  authorId    Int
+  viewCount   Int                @default(0)
+  isPublished Boolean            @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  @@index([visibility, isPublished])
+  @@map("knowledge_articles")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CSAT
+// ═══════════════════════════════════════════════════════════════
+
+model CsatSurvey {
+  id         Int        @id @default(autoincrement())
+  ticketId   Int        @unique
+  customerId Int
+  rating     Int?       // 1–5, null until submitted
+  comment    String?    @db.Text
+  status     CsatStatus @default(PENDING)
+  sentAt     DateTime   @default(now())
+  submittedAt DateTime?
+  expiresAt  DateTime   // sentAt + 7 days
+
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  customer User   @relation(fields: [customerId], references: [id])
+
+  @@index([customerId, status])
+  @@map("csat_surveys")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════
+
+model Notification {
+  id       Int              @id @default(autoincrement())
+  userId   Int
+  type     NotificationType
+  ticketId Int?
+  title    String
+  body     String
+  isRead   Boolean          @default(false)
+  createdAt DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
   @@map("notifications")
 }
 
-// ─── GraphQL Superpowers ─────────────────────────────────────────────────────
-// Save tokens (persisted queries) & bookmark/mark nodes
+// ═══════════════════════════════════════════════════════════════
+// WEBHOOKS
+// ═══════════════════════════════════════════════════════════════
 
-model SavedQuery {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  query       String   @db.Text  // The full GraphQL query string
-  hash        String   @unique   // SHA-256 hash for persisted queries (APQ)
-  variables   Json?              // Default variables
-  isBookmarked Boolean @default(false)
-  tags        String?            // comma-separated tags for organization
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model Webhook {
+  id       Int     @id @default(autoincrement())
+  url      String
+  secret   String  // HMAC signing key
+  events   Json    // string[]
+  isActive Boolean @default(true)
 
-  userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+  deliveries  WebhookDelivery[]
 
-  @@index([hash])
-  @@index([userId])
-  @@map("saved_queries")
+  @@map("webhooks")
 }
 
-model BookmarkedNode {
-  id          Int      @id @default(autoincrement())
-  nodeType    String   // e.g. "Ticket", "User", "Comment"
-  nodeId      Int      // the ID of the bookmarked record
-  label       String?  // user-defined label/note
-  color       String?  @default("#6366f1")
-  createdAt   DateTime @default(now())
+model WebhookDelivery {
+  id         Int                   @id @default(autoincrement())
+  webhookId  Int
+  event      String
+  payload    Json
+  status     WebhookDeliveryStatus @default(PENDING)
+  httpStatus Int?
+  attempts   Int                   @default(0)
+  lastAttemptAt DateTime?
+  nextRetryAt   DateTime?
+  createdAt     DateTime            @default(now())
 
-  userId      Int
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, nodeType, nodeId])
-  @@index([userId])
-  @@map("bookmarked_nodes")
+  @@index([webhookId, status])
+  @@map("webhook_deliveries")
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ENTERPRISE SECURITY LAYER
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// SECURITY LAYER
+// ═══════════════════════════════════════════════════════════════
 
-// ─── Audit Log ────────────────────────────────────────────────────────────────
-// Immutable record of every security-relevant action
 model AuditLog {
-  id          Int      @id @default(autoincrement())
-  action      String   // e.g. "LOGIN_SUCCESS", "TICKET_CREATE_BLOCKED", "USER_BANNED"
-  category    AuditCategory
-  severity    AuditSeverity @default(INFO)
+  id         Int           @id @default(autoincrement())
+  action     String        // e.g. "LOGIN_SUCCESS", "TICKET_CREATED"
+  category   AuditCategory
+  severity   AuditSeverity @default(INFO)
+  actorId    Int?
+  actorIp    String?
+  actorAgent String?       @db.Text
+  targetType String?       // "User", "Ticket", etc.
+  targetId   Int?
+  message    String        @db.Text
+  metadata   Json?
+  createdAt  DateTime      @default(now())
 
-  actorId     Int?     // who did it (null = anonymous/system)
-  actorIp     String?
-  actorAgent  String?
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
 
-  targetType  String?  // "User", "Ticket", etc.
-  targetId    Int?
-
-  metadata    Json?    // extra context
-  message     String   @db.Text
-
-  createdAt   DateTime @default(now())
-
-  actor       User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
-
-  @@index([actorId])
   @@index([category])
   @@index([severity])
+  @@index([actorId])
   @@index([createdAt])
   @@map("audit_logs")
 }
 
-enum AuditCategory {
-  AUTH           // login, logout, register, password reset
-  ACCESS         // permission denied, role change
-  TICKET         // ticket CRUD
-  MODERATION     // ban, flag, suspend
-  SECURITY       // rate limit, bot detected, spam
-  ADMIN          // system config changes
-  FAIR_USAGE     // quota hit, cooldown triggered
-}
-
-enum AuditSeverity {
-  DEBUG
-  INFO
-  WARN
-  ERROR
-  CRITICAL
-}
-
-// ─── User Sessions ────────────────────────────────────────────────────────────
-// Track all active sessions — enables remote session invalidation
-model UserSession {
-  id          String   @id @default(uuid())
-  userId      Int
-  token       String   @unique @db.VarChar(512)
-  ip          String
-  userAgent   String?  @db.Text
-  isRevoked   Boolean  @default(false)
-  revokedAt   DateTime?
-  revokedReason String?
-  expiresAt   DateTime
-  createdAt   DateTime @default(now())
-  lastSeenAt  DateTime @default(now())
-
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([token])
-  @@index([expiresAt])
-  @@map("user_sessions")
-}
-
-// ─── IP Blocklist ─────────────────────────────────────────────────────────────
 model BlockedIp {
-  id          Int      @id @default(autoincrement())
-  ip          String   @unique
+  id          Int       @id @default(autoincrement())
+  ip          String    @unique
   reason      String
   blockedById Int?
-  expiresAt   DateTime?   // null = permanent
-  createdAt   DateTime @default(now())
+  expiresAt   DateTime? // null = permanent
+  createdAt   DateTime  @default(now())
 
   @@index([ip])
   @@map("blocked_ips")
 }
 
-// ─── Rate Limit Violations Log ────────────────────────────────────────────────
 model RateLimitViolation {
-  id          Int      @id @default(autoincrement())
-  ip          String
-  userId      Int?
-  endpoint    String
-  violationType String  // "RATE_LIMIT", "COOLDOWN", "QUOTA_EXCEEDED", "BOT_DETECTED"
-  requestCount Int
-  windowStart DateTime
-  createdAt   DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  ip            String
+  userId        Int?
+  endpoint      String
+  violationType String
+  requestCount  Int      @default(1)
+  windowStart   DateTime
+  createdAt     DateTime @default(now())
 
   @@index([ip])
   @@index([userId])
@@ -396,98 +613,113 @@ model RateLimitViolation {
   @@map("rate_limit_violations")
 }
 
-// ─── Spam / Scam Detection Reports ───────────────────────────────────────────
-model SpamReport {
-  id            Int      @id @default(autoincrement())
-  targetType    String   // "Ticket", "Comment", "User"
-  targetId      Int
-  reportedById  Int?
-  reason        SpamReason
-  aiScore       Float    @default(0)   // 0–1 confidence from AI detection
-  aiFlags       Json?    // array of triggered flags
-  status        SpamStatus @default(PENDING)
-  reviewedById  Int?
-  reviewedAt    DateTime?
-  reviewNote    String?
-  createdAt     DateTime @default(now())
-
-  @@index([targetType, targetId])
-  @@index([status])
-  @@map("spam_reports")
-}
-
-enum SpamReason {
-  SPAM_CONTENT       // repetitive/advertising content
-  SCAM               // phishing, fraud
-  BOT_BEHAVIOR       // automated submission pattern
-  ABUSE              // harassment, hate
-  DUPLICATE          // mass duplicate tickets
-  FAKE_ACCOUNT       // suspicious registration
-  OTHER
-}
-
-enum SpamStatus {
-  PENDING    // awaiting review
-  CONFIRMED  // confirmed spam/scam → action taken
-  DISMISSED  // false positive
-  AUTO_BLOCKED // auto-blocked by AI
-}
-
-// ─── Cooldown Periods ─────────────────────────────────────────────────────────
-// Tracks per-user random cooldowns (anti-burst / fair usage)
 model CooldownPeriod {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  action      String   // "CREATE_TICKET", "POST_COMMENT", etc.
-  cooldownMs  Int      // actual cooldown in ms (randomized within role's range)
-  endsAt      DateTime
-  reason      String?
-  createdAt   DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  action     String
+  cooldownMs Int
+  endsAt     DateTime
+  reason     String?
+  createdAt  DateTime @default(now())
 
   @@index([userId, action])
   @@index([endsAt])
   @@map("cooldown_periods")
 }
 
-// ─── Fair Usage Quotas ────────────────────────────────────────────────────────
 model UsageQuota {
-  id          Int      @id @default(autoincrement())
-  userId      Int      @unique
-  // Ticket creation
-  ticketsCreatedToday     Int @default(0)
-  ticketsCreatedThisHour  Int @default(0)
-  // Comments
-  commentsCreatedToday    Int @default(0)
-  commentsCreatedThisHour Int @default(0)
-  // API calls
-  apiCallsThisMinute      Int @default(0)
-  apiCallsToday           Int @default(0)
-  // Reset timestamps
-  hourWindowStart   DateTime @default(now())
-  dayWindowStart    DateTime @default(now())
-  minuteWindowStart DateTime @default(now())
-  // Violation tracking
-  quotaViolations   Int @default(0)
-  lastViolationAt   DateTime?
-
-  updatedAt DateTime @updatedAt
+  id                   Int      @id @default(autoincrement())
+  userId               Int      @unique
+  ticketsThisHour      Int      @default(0)
+  ticketsToday         Int      @default(0)
+  messagesThisHour     Int      @default(0)
+  messagesToday        Int      @default(0)
+  apiCallsThisMinute   Int      @default(0)
+  apiCallsToday        Int      @default(0)
+  hourWindowStart      DateTime @default(now())
+  dayWindowStart       DateTime @default(now())
+  minuteWindowStart    DateTime @default(now())
+  quotaViolations      Int      @default(0)
+  lastViolationAt      DateTime?
+  updatedAt            DateTime @updatedAt
 
   @@map("usage_quotas")
 }
 
-// ─── Permission Overrides ─────────────────────────────────────────────────────
-// Allows granting/revoking specific permissions beyond the role baseline
+model SpamReport {
+  id           Int        @id @default(autoincrement())
+  targetType   String     // "Ticket", "TicketMessage"
+  targetId     Int
+  reportedById Int?
+  reason       SpamReason
+  aiScore      Float      @default(0) // 0–1
+  aiFlags      Json?
+  status       SpamStatus @default(PENDING)
+  reviewedById Int?
+  reviewedAt   DateTime?
+  reviewNote   String?
+  createdAt    DateTime   @default(now())
+
+  @@index([targetType, targetId])
+  @@index([status])
+  @@map("spam_reports")
+}
+
 model PermissionOverride {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   userId      Int
-  permission  String   // e.g. "ticket:delete", "user:ban"
-  granted     Boolean  // true = grant, false = revoke
+  permission  String    // e.g. "ticket:delete"
+  granted     Boolean   // true = grant, false = revoke
   grantedById Int?
   reason      String?
   expiresAt   DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, permission])
   @@index([userId])
   @@map("permission_overrides")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GRAPHQL SUPERPOWERS (persisted queries + node bookmarks)
+// ═══════════════════════════════════════════════════════════════
+
+model SavedQuery {
+  id           Int      @id @default(autoincrement())
+  name         String
+  description  String?
+  query        String   @db.Text
+  hash         String   @unique // SHA-256 APQ hash
+  variables    Json?
+  isBookmarked Boolean  @default(false)
+  tags         String?  // comma-separated
+
+  userId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([hash])
+  @@map("saved_queries")
+}
+
+model BookmarkedNode {
+  id       Int    @id @default(autoincrement())
+  userId   Int
+  nodeType String // "Ticket", "User", etc. — polymorphic, no FK
+  nodeId   Int
+  label    String?
+  color    String @default("#6366f1")
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, nodeType, nodeId])
+  @@index([userId])
+  @@map("bookmarked_nodes")
 }

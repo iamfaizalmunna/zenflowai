@@ -1,29 +1,23 @@
 import { DateTimeResolver, JSONResolver } from 'graphql-scalars';
-import { ticketResolvers } from './ticket.resolver';
+import { authResolvers } from './auth.resolver';
 import { userResolvers } from './user.resolver';
-import { commentResolvers } from './comment.resolver';
-import { superPowerResolvers } from './superpower.resolver';
+import { ticketResolvers } from './ticket.resolver';
+import { knowledgeResolvers } from './knowledge.resolver';
 
 export const resolvers = {
   DateTime: DateTimeResolver,
   JSON: JSONResolver,
 
   Query: {
+    ...authResolvers.Query,
     ...userResolvers.Query,
     ...ticketResolvers.Query,
-    ...commentResolvers.Query,
-    ...superPowerResolvers.Query,
+    ...knowledgeResolvers.Query,
   },
 
   Mutation: {
+    ...authResolvers.Mutation,
     ...userResolvers.Mutation,
     ...ticketResolvers.Mutation,
-    ...commentResolvers.Mutation,
-    ...superPowerResolvers.Mutation,
   },
-
-  // Type resolvers for nested fields
-  Ticket: ticketResolvers.Ticket,
-  User: userResolvers.User,
-  Comment: commentResolvers.Comment,
 };

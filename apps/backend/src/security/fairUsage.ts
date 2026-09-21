@@ -18,7 +18,7 @@ type ActionType = 'CREATE_TICKET' | 'POST_COMMENT' | 'API_CALL';
 // ─── Cooldown Check ───────────────────────────────────────────────────────────
 
 export async function checkCooldown(userId: number, role: string, action: ActionType): Promise<void> {
-  const cooldownAction = action === 'CREATE_TICKET' ? 'ticket' : 'comment';
+  const cooldownAction = action === 'CREATE_TICKET' ? 'ticket' : 'message';
 
   const active = await prisma.cooldownPeriod.findFirst({
     where: {
@@ -103,13 +103,13 @@ export async function checkQuota(userId: number, role: string, action: ActionTyp
 
   const updateData: Record<string, unknown> = {};
   if (hourExpired) {
-    updateData.ticketsCreatedThisHour = 0;
-    updateData.commentsCreatedThisHour = 0;
+    updateData.ticketsThisHour = 0;
+    updateData.messagesThisHour = 0;
     updateData.hourWindowStart = now;
   }
   if (dayExpired) {
-    updateData.ticketsCreatedToday = 0;
-    updateData.commentsCreatedToday = 0;
+    updateData.ticketsToday = 0;
+    updateData.messagesToday = 0;
     updateData.dayWindowStart = now;
   }
   if (minExpired) {
@@ -127,14 +127,14 @@ export async function checkQuota(userId: number, role: string, action: ActionTyp
   // ── Check limits ────────────────────────────────────────────────────────────
 
   if (action === 'CREATE_TICKET') {
-    if (quota.ticketsCreatedThisHour >= limits.ticketsPerHour) {
+    if (quota.ticketsThisHour >= limits.ticketsPerHour) {
       await logQuotaViolation(userId, action, 'HOURLY_QUOTA');
       throw new GraphQLError(
         `You have reached the hourly ticket limit (${limits.ticketsPerHour}). Please try again later.`,
         { extensions: { code: 'QUOTA_EXCEEDED', limit: limits.ticketsPerHour, window: 'hour' } }
       );
     }
-    if (quota.ticketsCreatedToday >= limits.ticketsPerDay) {
+    if (quota.ticketsToday >= limits.ticketsPerDay) {
       await logQuotaViolation(userId, action, 'DAILY_QUOTA');
       throw new GraphQLError(
         `You have reached the daily ticket limit (${limits.ticketsPerDay}).`,
@@ -146,33 +146,33 @@ export async function checkQuota(userId: number, role: string, action: ActionTyp
     await prisma.usageQuota.update({
       where: { userId },
       data: {
-        ticketsCreatedThisHour: { increment: 1 },
-        ticketsCreatedToday: { increment: 1 },
+        ticketsThisHour: { increment: 1 },
+        ticketsToday: { increment: 1 },
       },
     });
   }
 
   if (action === 'POST_COMMENT') {
-    if (quota.commentsCreatedThisHour >= limits.commentsPerHour) {
+    if (quota.messagesThisHour >= limits.messagesPerHour) {
       await logQuotaViolation(userId, action, 'HOURLY_QUOTA');
       throw new GraphQLError(
-        `You have reached the hourly comment limit (${limits.commentsPerHour}).`,
-        { extensions: { code: 'QUOTA_EXCEEDED', limit: limits.commentsPerHour, window: 'hour' } }
+        `You have reached the hourly message limit (${limits.messagesPerHour}).`,
+        { extensions: { code: 'QUOTA_EXCEEDED', limit: limits.messagesPerHour, window: 'hour' } }
       );
     }
-    if (quota.commentsCreatedToday >= limits.commentsPerDay) {
+    if (quota.messagesToday >= limits.messagesPerDay) {
       await logQuotaViolation(userId, action, 'DAILY_QUOTA');
       throw new GraphQLError(
-        `You have reached the daily comment limit (${limits.commentsPerDay}).`,
-        { extensions: { code: 'QUOTA_EXCEEDED', limit: limits.commentsPerDay, window: 'day' } }
+        `You have reached the daily message limit (${limits.messagesPerDay}).`,
+        { extensions: { code: 'QUOTA_EXCEEDED', limit: limits.messagesPerDay, window: 'day' } }
       );
     }
 
     await prisma.usageQuota.update({
       where: { userId },
       data: {
-        commentsCreatedThisHour: { increment: 1 },
-        commentsCreatedToday: { increment: 1 },
+        messagesThisHour: { increment: 1 },
+        messagesToday: { increment: 1 },
       },
     });
   }

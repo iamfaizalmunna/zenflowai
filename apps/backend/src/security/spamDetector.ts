@@ -18,6 +18,10 @@
 
 import { prisma } from '../utils/prisma';
 import { auditSecurity } from './audit';
+import { verdictFromScore, type SpamVerdict } from './spamVerdict';
+
+export { verdictFromScore };
+export type { SpamVerdict };
 
 // ─── Signal Weights ───────────────────────────────────────────────────────────
 const WEIGHTS = {
@@ -83,8 +87,6 @@ export interface SpamAnalysis {
   shouldFlag: boolean;
   requiresReview: boolean;
 }
-
-export type SpamVerdict = 'CLEAN' | 'SUSPICIOUS' | 'HIGH_RISK' | 'BLOCK';
 
 export interface ContentCheckOptions {
   content: string;
@@ -214,12 +216,7 @@ export async function analyzeContent(opts: ContentCheckOptions): Promise<SpamAna
   // ── Cap score at 100 ──────────────────────────────────────────────────────
   score = Math.min(100, score);
 
-  // ── Verdict ───────────────────────────────────────────────────────────────
-  const verdict: SpamVerdict =
-    score >= 80 ? 'BLOCK'
-    : score >= 60 ? 'HIGH_RISK'
-    : score >= 30 ? 'SUSPICIOUS'
-    : 'CLEAN';
+  const verdict = verdictFromScore(score);
 
   if (score >= 30 && userId) {
     await auditSecurity('SPAM_DETECTED', {
