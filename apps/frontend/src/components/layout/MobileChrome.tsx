@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useLogout } from '@/modules/auth/hooks/useAuth';
 import { isNavActive, navForRole, splitMobileNav, type AppNavItem } from '@/lib/nav';
 import { cn } from '@/lib/utils';
+import { NotificationBell } from '@/components/layout/NotificationBell';
 import { ZenLogo } from '@/components/brand/ZenLogo';
 import { NAV_ICONS } from '@/components/layout/navIcons';
 import { MoreSheet } from '@/components/layout/MoreSheet';
@@ -26,9 +27,12 @@ export function MobileChrome() {
     <>
       <header className="app:hidden sticky top-0 z-40 flex items-center justify-between gap-3 px-4 h-14 border-b border-border/60 bg-background/80 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
         <ZenLogo size={28} className="[&>span]:text-base" />
-        <Link href="/settings" className="p-2 min-h-11 min-w-11 rounded-xl text-muted-foreground" aria-label="Appearance settings">
-          <Settings2 className="w-4 h-4 mx-auto" />
-        </Link>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <Link href="/settings" className="p-2 min-h-11 min-w-11 rounded-xl text-muted-foreground" aria-label="Appearance settings">
+            <Settings2 className="w-4 h-4 mx-auto" />
+          </Link>
+        </div>
       </header>
 
       <nav className="app:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-background/88 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">

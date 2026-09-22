@@ -6,6 +6,7 @@ import { audit } from '../../security/audit';
 import { pubsub, messageAddedTopic, ticketUpdatedTopic } from '../../utils/pubsub';
 import { getTicket } from '../ticket.service';
 import { consult, formatKbConsultReply } from './consult.service';
+import { notifyUser } from '../notify.service';
 
 async function loadNova() {
   return prisma.user.findFirst({
@@ -75,6 +76,13 @@ export async function applyAiConsult(ticketId: number): Promise<void> {
     },
   });
   await postSystem(ticketId, nova.id, formatKbConsultReply(result), MessageType.REPLY);
+  await notifyUser(
+    ticket.customerId,
+    'TICKET_REPLIED',
+    `Nova replied on ${ticket.ticketNumber}`,
+    result.answer.slice(0, 180),
+    ticket.id
+  );
 }
 
 export async function continueAiConsult(ticketId: number): Promise<void> {

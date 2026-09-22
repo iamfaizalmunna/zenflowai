@@ -45,3 +45,6 @@ data/kb/
 
 # Test coverage
 coverage/
+
+# Local ticket attachments
+uploads/

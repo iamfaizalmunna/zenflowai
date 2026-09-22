@@ -176,7 +176,7 @@ export async function refreshAccessToken(
 
   const user = await prisma.user.findUnique({
     where: { id: stored.userId },
-    select: { id: true, email: true, name: true, role: true, isActive: true, isBanned: true },
+    select: { id: true, email: true, name: true, role: true, isActive: true, isBanned: true, isAiConsultant: true },
   });
   if (!user || !user.isActive || user.isBanned) {
     throw new GraphQLError('Account is disabled', { extensions: { code: 'UNAUTHORIZED' } });
@@ -193,7 +193,7 @@ export async function refreshAccessToken(
 
   return {
     accessToken,
-    user: { id: user.id, email: user.email, name: user.name, role: user.role, isAiConsultant: 'isAiConsultant' in user ? user.isAiConsultant : false },
+    user: { id: user.id, email: user.email, name: user.name, role: user.role, isAiConsultant: user.isAiConsultant },
   };
 }
 

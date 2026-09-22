@@ -12,6 +12,7 @@ import {
   SUGGEST_REPLY,
   TICKET_UPDATED,
   UPDATE_TICKET,
+  UPLOAD_TICKET_ATTACHMENT,
 } from '@/modules/tickets/queries/ticket.queries';
 import { STATUS_COLOR, STATUS_LABEL, PRIORITY_COLOR, PRIORITY_LABEL } from '@/lib/constants';
 import { cn, formatRelativeTime } from '@/lib/utils';
@@ -29,6 +30,13 @@ interface TicketMessage {
   type: string;
   createdAt: string;
   sender: { id: number; name: string; role?: string; isAiConsultant?: boolean };
+}
+
+interface TicketAttachment {
+  id: number;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
 }
 
 interface RelatedArticle {
@@ -53,6 +61,7 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
       void refetch();
     },
   });
+  const [uploadAttachment] = useMutation(UPLOAD_TICKET_ATTACHMENT, { onCompleted: () => refetch() });
   const [handoffTicket, { loading: handing }] = useMutation(HANDOFF_TICKET, { onCompleted: () => refetch() });
   const [updateTicket] = useMutation(UPDATE_TICKET, { onCompleted: () => refetch() });
   const [fetchSuggest, { loading: suggesting }] = useLazyQuery(SUGGEST_REPLY);
@@ -86,6 +95,23 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
   const applySuggest = async () => {
     const res = await fetchSuggest({ variables: { ticketId: id } });
     if (res.data?.suggestReply) setBody(res.data.suggestReply);
+  };
+
+  const onFile = async (file: File | undefined) => {
+    if (!file) return;
+    const contentBase64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = String(reader.result ?? '');
+        const comma = result.indexOf(',');
+        resolve(comma >= 0 ? result.slice(comma + 1) : result);
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+    await uploadAttachment({
+      variables: { ticketId: id, filename: file.name, mimeType: file.type || 'application/octet-stream', contentBase64 },
+    });
   };
 
   const insertArticle = async (articleId: number) => {
@@ -123,6 +149,15 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
           </div>
         ))}
       </div>
+      {(ticket.attachments as TicketAttachment[] | undefined)?.length ? (
+        <ul className="text-xs text-slate-500 space-y-1">
+          {(ticket.attachments as TicketAttachment[]).map((file) => (
+            <li key={file.id}>
+              {file.filename} ({Math.ceil(file.sizeBytes / 1024)} KB)
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <form onSubmit={send} className="space-y-2 pt-3">
         <Textarea
           value={body}
@@ -136,6 +171,14 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
             Internal note
           </label>
         )}
+        <label className="block text-xs text-slate-500">
+          Attach a file (saved on this machine)
+          <input
+            type="file"
+            className="mt-1 block w-full text-xs"
+            onChange={(e) => void onFile(e.target.files?.[0])}
+          />
+        </label>
         <Button
           type="submit"
           disabled={sending || !body.trim()}

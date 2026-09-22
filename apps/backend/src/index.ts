@@ -74,8 +74,15 @@ async function bootstrap() {
   app.use(morgan(IS_PROD ? 'combined' : 'dev'));
 
   // ─── Layer 6: Body Parsing (with size limits) ──────────────────────────────
-  app.use(express.json({ limit: JSON_BODY_LIMIT }));
-  app.use(express.urlencoded({ extended: true, limit: JSON_BODY_LIMIT }));
+  // Skip /graphql so the 12mb GraphQL parser can accept local base64 attachments.
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/graphql')) return next();
+    return express.json({ limit: JSON_BODY_LIMIT })(req, res, next);
+  });
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/graphql')) return next();
+    return express.urlencoded({ extended: true, limit: JSON_BODY_LIMIT })(req, res, next);
+  });
 
   // ─── Layer 7: Global Rate Limiting ────────────────────────────────────────
   app.use(globalRateLimiter);
@@ -164,7 +171,7 @@ async function bootstrap() {
     },
     graphqlSecurityMiddleware,
     expressMiddleware(server, {
-      context: async ({ req }) => buildContext({ req }),
+      context: async ({ req, res }) => buildContext({ req, res }),
     })
   );
 

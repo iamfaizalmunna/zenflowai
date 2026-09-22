@@ -7,6 +7,7 @@ import { adminTypeDefs } from './admin.schema';
 import { csatTypeDefs } from './csat.schema';
 import { appearanceTypeDefs } from './appearance.schema';
 import { analyticsTypeDefs } from './analytics.schema';
+import { notificationTypeDefs } from './notification.schema';
 
 export const typeDefs = [
   baseTypeDefs,
@@ -18,4 +19,5 @@ export const typeDefs = [
   csatTypeDefs,
   appearanceTypeDefs,
   analyticsTypeDefs,
+  notificationTypeDefs,
 ];

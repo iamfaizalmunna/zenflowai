@@ -8,6 +8,7 @@ import { Context } from '../types/context';
 import { pubsub, messageAddedTopic, ticketUpdatedTopic } from '../utils/pubsub';
 import { continueAiConsult } from './ai/consultTicket.service';
 import { getTicket } from './ticket.service';
+import { notifyUser } from './notify.service';
 
 const STAFF_ROLES = new Set(['AGENT', 'SUPERVISOR', 'ADMIN', 'SUPER_ADMIN']);
 
@@ -61,6 +62,19 @@ export async function addMessage(ctx: Context, raw: unknown) {
   await pubsub.publish(messageAddedTopic(ticket.id), { messageAdded: message });
   const fresh = await getTicket(ctx, ticket.id);
   await pubsub.publish(ticketUpdatedTopic(ticket.id), { ticketUpdated: fresh });
+
+  if (type === MessageType.REPLY) {
+    const recipientId = STAFF_ROLES.has(ctx.role) ? ticket.customerId : ticket.assignedToId;
+    if (recipientId && recipientId !== ctx.userId) {
+      await notifyUser(
+        recipientId,
+        'TICKET_REPLIED',
+        `New reply on ${ticket.ticketNumber}`,
+        body.slice(0, 180),
+        ticket.id
+      );
+    }
+  }
 
   if (!STAFF_ROLES.has(ctx.role) && type === MessageType.REPLY) {
     void continueAiConsult(ticket.id).catch(() => undefined);
