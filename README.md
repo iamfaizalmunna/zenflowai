@@ -1,10 +1,10 @@
 # ZenFlowAI
 
-> Phase 5 UI customization for a clean, fast, AI-ready ticketing system.
+> Phase 6 analytics and polish for a clean, fast, AI-ready ticketing system.
 > Built with Next.js · Express · GraphQL · MySQL · Prisma.
 > Local + GitHub only — no cloud host is wired.
 
-[![Phase](https://img.shields.io/badge/Phase-5%20UI%20Customization-blue)](#phases)
+[![Phase](https://img.shields.io/badge/Phase-6%20Analytics%20%26%20Polish-blue)](#phases)
 [![Stack](https://img.shields.io/badge/Stack-Next.js%2015%20%2B%20GraphQL%20%2B%20MySQL-6366f1)](#stack)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
@@ -17,7 +17,7 @@ ZenFlowAI is a **medium-scale service desk and ticketing platform** — think Ze
 - Customers submit tickets on the web, browse the Help Center, and rate CSAT after resolve
 - Agents work tickets in a **3-column workspace** with graphql-ws live updates
 - Supervisors watch SLA due times; admins edit users, teams, routing, SLA hours, and KB drafts
-- Signed-in users personalize the UI at **Appearance** (`/settings`); prefs persist in MySQL
+- Signed-in users personalize the UI at **Appearance** (`/settings`); prefs persist **per user** in MySQL. Login and public pages always stay the default light iris look.
 - Mobile-first app chrome at ≤1024px, plus a PWA manifest
 - Every sensitive write is audit-logged. Every role sees only what they should.
 
@@ -64,7 +64,7 @@ quotas, and cooldowns before a `#ZEN-XXXX` ticket is saved.
 
 ---
 
-## Project Structure — actual (through Phase 5)
+## Project Structure — actual (through Phase 6)
 
 ```
 ZenFlowAI/
@@ -72,11 +72,11 @@ ZenFlowAI/
 │   ├── backend/
 │   │   ├── prisma/
 │   │   │   ├── schema.prisma        # Includes UiPreference (ui_preferences)
-│   │   │   └── seed.ts              # Five roles, teams, categories, SLA, rules
+│   │   │   └── seed.ts              # Roles, 6 consultants, 144 tickets, CSAT, spam
 │   │   └── src/
 │   │       ├── graphql/schemas/     # auth, user, ticket, knowledge, admin, csat, appearance
 │   │       ├── graphql/resolvers/
-│   │       ├── services/            # tickets, routing, SLA, CSAT, Q&A, appearance, …
+│   │       ├── services/            # tickets, routing, SLA, CSAT, Q&A, appearance, analytics, consultants, security, …
 │   │       ├── jobs/slaCron.ts      # node-cron SLA sweep
 │   │       ├── security/            # RBAC, audit, spam, fair usage, HTTP stack
 │   │       ├── middleware/auth.ts
@@ -88,7 +88,8 @@ ZenFlowAI/
 │           │   ├── (auth)/          # /login, /register, /forgot-password
 │           │   ├── (customer)/      # /dashboard, /tickets, /tickets/new, /knowledge
 │           │   ├── (agent)/         # /queue, /knowledge/internal, /supervisor
-│           │   ├── (admin)/admin/   # /admin/users, teams, routing, sla, knowledge
+│           │   ├── (admin)/admin/   # users, teams, routing, sla, knowledge, consultants, security
+│           │   ├── analytics/       # SUPERVISOR+ infographic dashboard
 │           │   └── settings/        # Appearance studio
 │           ├── modules/auth/
 │           ├── modules/tickets/
@@ -97,7 +98,7 @@ ZenFlowAI/
 │           ├── components/layout/   # AppShell, Sidebar, MobileChrome, PWA
 │           ├── components/ui/       # Field, Select, shared control styles
 │           ├── hooks/               # useAppearance, useUiSound
-│           ├── lib/                 # Apollo, appearance tokens, sounds, nav
+│           ├── lib/                 # Apollo, appearance tokens/session, sounds, nav, charts
 │           └── store/               # Zustand auth only
 │
 ├── packages/shared/                 # Placeholder types (app code does not rely on these)
@@ -139,7 +140,7 @@ cp apps/frontend/.env.local.example apps/frontend/.env.local
 ```bash
 pnpm db:generate   # generate Prisma client
 pnpm db:seed       # seed demo data
-pnpm test          # unit tests (tsx --test), including Phase 5 appearance tokens
+pnpm test          # unit tests (tsx --test), including appearance session + analytics
 # prisma/migrations is gitignored; apply schema locally with `pnpm --filter backend exec prisma db push`
 ```
 
@@ -168,7 +169,7 @@ pnpm dev
 | Agent | lina@zenflowai.com | password123 |
 | Customer | customer@zenflowai.com | password123 |
 
-After login, **Appearance** is `/settings`: sounds, system/light/dark, accent + shade, matte/glossy/glass, font family/size, density, logo, default ticket view. Saved in `ui_preferences` via `myAppearance` / `saveAppearance`. Ticket queues also sort, filter (status + priority), and switch list / compact / card / icon views.
+After login, **Appearance** is `/settings`: sounds, system/light/dark, accent + shade, matte/glossy/glass, font family/size, density, logo, default ticket view. Saved in `ui_preferences` **for that user only** via `myAppearance` / `saveAppearance`. Ticket queues also sort, filter (status + priority), and switch list / compact / card / icon views. Sign-out returns the guest shell to the product default.
 
 ---
 
@@ -178,12 +179,12 @@ This project is built in 6 phases. Each phase = a working push to GitHub.
 
 | Phase | What's built | Status |
 |-------|-------------|--------|
-| **1 — Foundation & Auth** | Auth screens, JWT auth service, role-aware layout, RBAC and security modules | ✅ Implemented on `phase/1-foundation` |
-| **2 — Ticket Engine + Help Center** | Tickets, routing, SLA dates, messages, owned KB, unit tests | ✅ Merged to `main` |
+| **1 — Foundation & Auth** | Auth screens, JWT auth service, role-aware layout, RBAC and security modules | ✅ Merged to `main` (with Phase 2) |
+| **2 — Ticket Engine + Help Center** | Tickets, routing, SLA dates, messages, owned KB, unit tests | ✅ Merged to `main` ([#1](https://github.com/iamfaizalmunna/zenflowai/pull/1)) |
 | **3 — Workspace & Real-time** | 3-column workspace, graphql-ws, related articles, template replies | ✅ Merged to `main` |
 | **4 — Automation & Admin** | SLA cron, CSAT, admin screens, rule-based Help Center Q&A | ✅ Merged to `main` |
-| **5 — UI Customization** | Appearance studio, DB prefs, ticket sort/filter/views, click-only sounds | ✅ Merged to `main` |
-| **6 — Analytics & Polish** | Infographic analytics, consultant profiles, security review, demo seed | ✅ Implemented on `phase/6-analytics-polish` |
+| **5 — UI Customization** | Appearance studio, per-user DB prefs, ticket sort/filter/views, click-only sounds | ✅ Merged to `main` ([#3](https://github.com/iamfaizalmunna/zenflowai/pull/3) isolation) |
+| **6 — Analytics & Polish** | Infographic analytics, consultant profiles, security review, demo seed | ✅ Merged to `main` ([#2](https://github.com/iamfaizalmunna/zenflowai/pull/2)) |
 
 See [`PLAN.md`](./PLAN.md) for the full architecture blueprint.
 
@@ -194,13 +195,15 @@ See [`PLAN.md`](./PLAN.md) for the full architecture blueprint.
 ```
 Supervisor/Admin opens Analytics
       ↓
-Range 7/30/90 days + chart-type switcher (line/area/bar/pie/donut/radial)
+Range 7/30/90 days + chart-type switcher (line/area/bar/pie/donut/radial/radar)
       ↓
-Admin opens Consultants (ADMIN+ only) — progress, CSAT, completed tickets
+Leaderboard + customer feedback on resolved work
+      ↓
+Admin opens Consultants (ADMIN+ only) — progress, CSAT, assessment, completed tickets
       ↓
 Security: audit log, block IP, spam confirm/dismiss
       ↓
-Seed: 52 tickets, CSAT, spam queue, second agent
+Seed: 144 tickets, CSAT comments, spam queue, 6 consultants
 ```
 
 ## Phase 5 capabilities
@@ -210,11 +213,11 @@ Signed-in user opens Appearance (/settings)
       ↓
 Sounds, light/dark, accent, finish, type, density, logo
       ↓
-Prefs saved in MySQL (ui_preferences) and restored on login
+Prefs saved in MySQL (ui_preferences, unique userId) and restored on that login
       ↓
 Ticket lists: sort, status/priority filter, list/compact/card/icon views
       ↓
-Defaults stay the current ZenFlow iris look
+Guest/login always stay the default ZenFlow light iris look
 ```
 
 ## Phase 4 capabilities
@@ -269,7 +272,7 @@ Thread messages (reply / internal note)
 Help Center: public articles for customers, internal guides for staff
 ```
 
-This is the light MVP through Phase 5: live workspace, SLA cron, CSAT, admin screens, rule-based Q&A, Appearance prefs in MySQL, PWA/mobile chrome. No crawler, no LLM, no cloud host.
+This is the light MVP through Phase 6: live workspace, SLA cron, CSAT, admin screens, rule-based Q&A, per-user Appearance prefs in MySQL, analytics/consultants/security, PWA/mobile chrome. No crawler, no LLM, no cloud host.
 
 ---
 
@@ -377,4 +380,4 @@ describes the code that actually exists.
 
 ---
 
-*README updates with every phase. Last updated: Phase 6 analytics, consultants, security, unit tests.*
+*README updates with every phase. Last updated: Phase 6 on `main` (PRs #2–#3) — analytics, consultants, security, per-user appearance, unit tests.*

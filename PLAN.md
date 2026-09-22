@@ -679,7 +679,7 @@ Retry: 3 attempts with exponential backoff. Stored in `WebhookDelivery` for debu
 | Public Help Center | `/knowledge` | Shipped |
 | Agent queue + 3-col workspace | `/queue`, `/tickets/[id]` | Shipped |
 | Internal guides | `/knowledge/internal` | Shipped |
-| Supervisor SLA watch | `/supervisor` | Shipped (counts, not charts) |
+| Supervisor SLA watch | `/supervisor` | Shipped (KPIs + analytics for SUPERVISOR+) |
 | Admin users, teams, routing, SLA, KB drafts | `/admin/…` | Shipped |
 | Appearance | `/settings` | Shipped (Phase 5) |
 | Analytics infographic dashboard | `/analytics` (SUPERVISOR+) | Shipped |
@@ -1022,7 +1022,7 @@ Sounds: same global click policy; one optional chart-tap cue (shared with analyt
 #### Slice 2 — Analytics dashboard
 - One screen `/admin/analytics` (ADMIN+) and a **read-team** view for SUPERVISOR at `/supervisor` extra tab or `/analytics` with `analytics:read:team`
 - Date range, team, category filters
-- Chart-type switcher: line, area, bar, pie, donut, radial — same data
+- Chart-type switcher: line, area, bar, pie, donut, radial, radar — same data
 - KPIs + grid of infographics (volume, SLA, CSAT, category, unanswered Help)
 - Library: **shadcn Chart on Recharts** (already in package.json) + Framer Motion layout; CSS variables only
 
@@ -1033,7 +1033,7 @@ Keep `spamDetector` + `bad-words` + `isbot`. Behind it:
 - No cloud spam APIs
 
 #### Slice 4 — Polish
-- Seed 96 tickets, 6 consultants (Maya, Jordan, Priya, Marcus, Lina + supervisor), threads, CSAT, spam flags
+- Seed 144 tickets, 6 consultants (Maya, Jordan, Priya, Marcus, Lina + supervisor), threads, CSAT comments, spam flags
 - Skeletons, empty states
 - Permission pass
 
@@ -1095,8 +1095,8 @@ git push origin phase/2-ticket-engine
 | Phase 2 — Ticket Engine + KB Foundation | ✅ Merged | `phase/2-ticket-engine` | #1 merged |
 | Phase 3 — Workspace, Real-Time, KB in Tickets | ✅ Implemented (light) | `phase/3-workspace-realtime` | GitHub only |
 | Phase 4 — Automation, Legal Ingest, Optional AI | ✅ Implemented (light, no crawler/LLM) | `phase/4-automation-admin` | GitHub |
-| Phase 5 — UI Customization | ✅ Merged to `main` (Appearance + ticket views) | `phase/5-ui-customization` | GitHub |
-| Phase 6 — Analytics, UI fit, consultant profiles, security | ✅ Implemented (unit tests; AI is Phase 7) | `phase/6-analytics-polish` | — |
+| Phase 5 — UI Customization | ✅ Merged to `main` (Appearance + per-user prefs) | `phase/5-ui-customization` | #3 isolation |
+| Phase 6 — Analytics, UI fit, consultant profiles, security | ✅ Merged to `main` (unit tests; AI is Phase 7) | `phase/6-analytics-polish` | #2 |
 
 ---
 
@@ -1224,5 +1224,4 @@ Never commit scraped corpora to the repo.
 
 ---
 
-*Last updated: Phase 6 implemented — infographic dashboard, admin consultant profiles, security/spam, fat seed, unit tests. AI is Phase 7. No cloud, no HTTP-only cookie.*
-*Next: review locally, then commit/push `phase/6-analytics-polish` when you ask.*
+*Last updated: Phase 6 merged to `main` (PR #2) plus per-user appearance isolation (PR #3). AI is Phase 7. No cloud, no HTTP-only cookie.*
