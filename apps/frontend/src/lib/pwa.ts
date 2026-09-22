@@ -1,5 +1,5 @@
 export const PWA_THEME_LIGHT = '#F8F6F2';
-export const PWA_THEME_DARK = '#1C2433';
+export const PWA_THEME_DARK = '#2A2442';
 
 export const PWA_MANIFEST = {
   name: 'ZenFlowAI',

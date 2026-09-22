@@ -33,6 +33,7 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('zenflow_token');
+          localStorage.removeItem('zenflow-appearance-local');
         }
         set({ token: null, user: null, isAuthenticated: false });
       },

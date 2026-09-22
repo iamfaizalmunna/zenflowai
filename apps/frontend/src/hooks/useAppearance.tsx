@@ -1,16 +1,21 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery, useApolloClient } from '@apollo/client';
 import { useAuthStore } from '@/store/auth.store';
 import { useUiSound } from '@/hooks/useUiSound';
 import { MY_APPEARANCE, SAVE_APPEARANCE } from '@/modules/appearance/queries/appearance.queries';
 import {
   applyAppearanceToDocument,
-  DEFAULT_APPEARANCE,
   mergeAppearance,
   type AppearancePrefs,
 } from '@/lib/appearance';
+import {
+  appearanceCacheKey,
+  LEGACY_APPEARANCE_KEY,
+  PUBLIC_APPEARANCE,
+  resolveSessionAppearance,
+} from '@/lib/appearanceSession';
 
 interface AppearanceContextValue {
   prefs: AppearancePrefs;
@@ -18,16 +23,14 @@ interface AppearanceContextValue {
 }
 
 const AppearanceContext = createContext<AppearanceContextValue>({
-  prefs: DEFAULT_APPEARANCE,
+  prefs: PUBLIC_APPEARANCE,
   update: () => undefined,
 });
 
-export const APPEARANCE_LOCAL_KEY = 'zenflow-appearance-local';
-
-function readLocalPatch(): Partial<AppearancePrefs> {
+function readUserPatch(userId: number): Partial<AppearancePrefs> {
   if (typeof window === 'undefined') return {};
   try {
-    const raw = localStorage.getItem(APPEARANCE_LOCAL_KEY);
+    const raw = localStorage.getItem(appearanceCacheKey(userId));
     return raw ? (JSON.parse(raw) as Partial<AppearancePrefs>) : {};
   } catch {
     return {};
@@ -36,18 +39,33 @@ function readLocalPatch(): Partial<AppearancePrefs> {
 
 export function AppearanceProvider({ children }: { children: ReactNode }) {
   const token = useAuthStore((s) => s.token);
+  const userId = useAuthStore((s) => s.user?.id ?? null);
+  const signedIn = Boolean(token && userId);
   const { setMuted } = useUiSound();
-  const { data } = useQuery(MY_APPEARANCE, { skip: !token });
+  const client = useApolloClient();
+  const { data } = useQuery(MY_APPEARANCE, { skip: !signedIn, fetchPolicy: 'network-only' });
   const [save] = useMutation(SAVE_APPEARANCE);
   const [localPatch, setLocalPatch] = useState<Partial<AppearancePrefs>>({});
 
   useLayoutEffect(() => {
-    setLocalPatch(readLocalPatch());
-  }, []);
+    if (typeof window !== 'undefined') localStorage.removeItem(LEGACY_APPEARANCE_KEY);
+    if (!userId) {
+      setLocalPatch({});
+      client.cache.evict({ fieldName: 'myAppearance' });
+      client.cache.gc();
+      return;
+    }
+    setLocalPatch(readUserPatch(userId));
+  }, [userId, client]);
 
   const prefs = useMemo(
-    () => mergeAppearance({ ...DEFAULT_APPEARANCE, ...data?.myAppearance, ...localPatch }),
-    [data?.myAppearance, localPatch],
+    () =>
+      resolveSessionAppearance({
+        isSignedIn: signedIn,
+        dbPrefs: data?.myAppearance ?? null,
+        localPatch,
+      }),
+    [signedIn, data?.myAppearance, localPatch],
   );
 
   useEffect(() => {
@@ -57,13 +75,13 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
 
   const update = useCallback(
     (patch: Partial<AppearancePrefs>) => {
+      if (!signedIn || userId === null) return;
       const nextPatch = { ...localPatch, ...patch };
       const next = mergeAppearance({ ...prefs, ...nextPatch });
       setLocalPatch(nextPatch);
-      localStorage.setItem(APPEARANCE_LOCAL_KEY, JSON.stringify(nextPatch));
+      localStorage.setItem(appearanceCacheKey(userId), JSON.stringify(nextPatch));
       applyAppearanceToDocument(next, document.documentElement);
       if (patch.soundsMuted !== undefined) setMuted(next.soundsMuted);
-      if (!token) return;
       void save({
         variables: { input: patch },
         optimisticResponse: { saveAppearance: next },
@@ -75,7 +93,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
         },
       });
     },
-    [token, prefs, localPatch, save, setMuted],
+    [signedIn, userId, prefs, localPatch, save, setMuted],
   );
 
   const value = useMemo(() => ({ prefs, update }), [prefs, update]);

@@ -88,7 +88,7 @@ export default function AppearanceSettingsPage() {
         <div className="max-w-2xl space-y-6">
           <PageTitle
             title="Appearance"
-            hint="A calmer workspace, saved to your account. Defaults stay ZenFlow iris."
+            hint="Yours only — saved to your account. Login and public pages always stay the default ZenFlow look."
           />
 
           <div className="surface rounded-3xl border border-iris/20 p-5">

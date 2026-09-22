@@ -35,31 +35,31 @@
   }
 
   .dark {
-    --background: 222 16% 13%;
-    --foreground: 214 20% 93%;
-    --card: 222 14% 16%;
-    --card-foreground: 214 20% 93%;
-    --popover: 222 14% 17%;
-    --popover-foreground: 214 20% 93%;
-    --primary: 234 72% 76%;
-    --primary-foreground: 222 28% 12%;
-    --secondary: 222 12% 20%;
-    --secondary-foreground: 214 16% 90%;
-    --muted: 222 12% 19%;
-    --muted-foreground: 218 12% 72%;
-    --accent: 32 58% 58%;
-    --accent-foreground: 222 20% 12%;
-    --destructive: 0 58% 62%;
+    --background: 258 22% 16%;
+    --foreground: 270 18% 95%;
+    --card: 258 20% 20%;
+    --card-foreground: 270 18% 95%;
+    --popover: 258 20% 21%;
+    --popover-foreground: 270 18% 95%;
+    --primary: 258 78% 78%;
+    --primary-foreground: 258 32% 14%;
+    --secondary: 258 16% 24%;
+    --secondary-foreground: 270 16% 92%;
+    --muted: 258 14% 23%;
+    --muted-foreground: 258 12% 76%;
+    --accent: 32 58% 60%;
+    --accent-foreground: 258 24% 14%;
+    --destructive: 0 58% 64%;
     --destructive-foreground: 0 0% 98%;
-    --border: 222 12% 24%;
-    --input: 222 12% 24%;
-    --ring: 234 72% 76%;
-    --iris: 234 72% 76%;
-    --chart-1: 234 72% 76%;
-    --chart-2: 174 40% 52%;
-    --chart-3: 32 64% 58%;
-    --chart-4: 210 22% 68%;
-    --chart-5: 348 44% 64%;
+    --border: 258 16% 30%;
+    --input: 258 16% 30%;
+    --ring: 258 78% 78%;
+    --iris: 258 78% 78%;
+    --chart-1: 258 78% 78%;
+    --chart-2: 174 40% 54%;
+    --chart-3: 32 64% 60%;
+    --chart-4: 280 36% 72%;
+    --chart-5: 348 44% 66%;
   }
 }
 
@@ -136,8 +136,8 @@
   }
   html.dark .bg-mesh {
     background:
-      radial-gradient(900px 360px at 8% -20%, hsl(var(--iris) / 0.14), transparent 60%),
-      radial-gradient(640px 280px at 100% 0%, hsl(210 40% 40% / 0.12), transparent 55%),
+      radial-gradient(900px 380px at 6% -18%, hsl(var(--iris) / 0.22), transparent 58%),
+      radial-gradient(640px 280px at 100% 0%, hsl(280 40% 40% / 0.12), transparent 55%),
       hsl(var(--background));
   }
 }
