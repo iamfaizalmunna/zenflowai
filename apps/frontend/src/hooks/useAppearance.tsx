@@ -1,8 +1,7 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
-import { useTheme } from 'next-themes';
 import { useAuthStore } from '@/store/auth.store';
 import { useUiSound } from '@/hooks/useUiSound';
 import { MY_APPEARANCE, SAVE_APPEARANCE } from '@/modules/appearance/queries/appearance.queries';
@@ -23,35 +22,46 @@ const AppearanceContext = createContext<AppearanceContextValue>({
   update: () => undefined,
 });
 
-function themeFromMode(mode: AppearancePrefs['colorMode']): string {
-  if (mode === 'LIGHT') return 'light';
-  if (mode === 'DARK') return 'dark';
-  return 'system';
+export const APPEARANCE_LOCAL_KEY = 'zenflow-appearance-local';
+
+function readLocalPatch(): Partial<AppearancePrefs> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(APPEARANCE_LOCAL_KEY);
+    return raw ? (JSON.parse(raw) as Partial<AppearancePrefs>) : {};
+  } catch {
+    return {};
+  }
 }
 
 export function AppearanceProvider({ children }: { children: ReactNode }) {
   const token = useAuthStore((s) => s.token);
-  const { setTheme } = useTheme();
   const { setMuted } = useUiSound();
   const { data } = useQuery(MY_APPEARANCE, { skip: !token });
   const [save] = useMutation(SAVE_APPEARANCE);
+  const [localPatch, setLocalPatch] = useState<Partial<AppearancePrefs>>({});
+
+  useLayoutEffect(() => {
+    setLocalPatch(readLocalPatch());
+  }, []);
 
   const prefs = useMemo(
-    () => mergeAppearance(data?.myAppearance ?? DEFAULT_APPEARANCE),
-    [data?.myAppearance],
+    () => mergeAppearance({ ...DEFAULT_APPEARANCE, ...data?.myAppearance, ...localPatch }),
+    [data?.myAppearance, localPatch],
   );
 
   useEffect(() => {
     applyAppearanceToDocument(prefs, document.documentElement);
-    setTheme(themeFromMode(prefs.colorMode));
     setMuted(prefs.soundsMuted);
-  }, [prefs, setMuted, setTheme]);
+  }, [prefs, setMuted]);
 
   const update = useCallback(
     (patch: Partial<AppearancePrefs>) => {
-      const next = mergeAppearance({ ...prefs, ...patch });
+      const nextPatch = { ...localPatch, ...patch };
+      const next = mergeAppearance({ ...prefs, ...nextPatch });
+      setLocalPatch(nextPatch);
+      localStorage.setItem(APPEARANCE_LOCAL_KEY, JSON.stringify(nextPatch));
       applyAppearanceToDocument(next, document.documentElement);
-      if (patch.colorMode) setTheme(themeFromMode(next.colorMode));
       if (patch.soundsMuted !== undefined) setMuted(next.soundsMuted);
       if (!token) return;
       void save({
@@ -65,7 +75,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
         },
       });
     },
-    [token, prefs, save, setMuted, setTheme],
+    [token, prefs, localPatch, save, setMuted],
   );
 
   const value = useMemo(() => ({ prefs, update }), [prefs, update]);

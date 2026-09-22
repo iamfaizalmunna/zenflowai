@@ -682,8 +682,9 @@ Retry: 3 attempts with exponential backoff. Stored in `WebhookDelivery` for debu
 | Supervisor SLA watch | `/supervisor` | Shipped (counts, not charts) |
 | Admin users, teams, routing, SLA, KB drafts | `/admin/…` | Shipped |
 | Appearance | `/settings` | Shipped (Phase 5) |
-| Analytics dashboard | — | Phase 6 |
-| Security dashboard | — | Phase 6 |
+| Analytics infographic dashboard | `/analytics` (SUPERVISOR+) | Shipped |
+| Consultant directory + profile | `/admin/consultants`, `/admin/consultants/[id]` | Shipped, ADMIN+ only |
+| Security / spam review | `/admin/security` | Shipped |
 
 ---
 
@@ -960,32 +961,106 @@ Analytics dashboards, security dashboard, webhooks, crawler, LLM, cloud host.
 
 ---
 
-### PHASE 6 — Analytics, Security Dashboard & Polish
+### PHASE 6 — Analytics, Security, UI fit, Consultant profiles & Polish
 **Branch:** `phase/6-analytics-polish`
-**Push when:** Full demo flow works. App looks production-ready. Remaining product screens complete.
+**Push when:** Phase 4 screens match the Appearance shell; one infographic dashboard; admin-only consultant profiles; spam/security review; fat local demo seed.
+
+**Not in this phase:** AI/LLM (Phase 7), HTTP-only cookies, cloud host, crawler, webhooks.
+
+#### Access — consultant profiles
+Zendesk/Freshdesk put **agent performance + CSAT by assignee** in manager reporting, not on a wall agents browse. We copy that:
+
+- Route: `/admin/consultants` (directory) and `/admin/consultants/[id]` (profile)
+- Visible to **ADMIN** and **SUPER_ADMIN** only (`consultant:read`)
+- Agents, customers, and supervisors **cannot** open another consultant’s profile
+- Supervisor still sees **team KPIs** on the analytics dashboard (no drill-into-peer profile)
+- `audit()` on every profile view
+
+#### UX draft (admin)
+
+**Directory `/admin/consultants`**
+```
+[PageTitle: Consultants]     [Search Field]  [Team Select]
+
+KPI strip (org): active agents | tickets resolved 30d | avg CSAT
+
+Table / cards (same ticket-view tokens):
+  Avatar  Name  Team(s)  Open  Resolved 30d  CSAT  Last active     [View]
+```
+
+**Profile `/admin/consultants/[id]`** — not a social page
+```
+Header (surface): avatar | name | role | teams | last login
+Primary buttons:  [Open tickets assigned]  [Back to directory]
+                  No “rate this agent”. Ratings are customer CSAT only.
+
+Summary KPIs (4–6 tiles):
+  Open assigned | Resolved | Closed | Avg first response | Avg resolve | CSAT avg (n)
+
+Charts (same dashboard kit — shadcn/Recharts + --chart-* tokens):
+  Line: resolved per week
+  Pie/donut: status mix
+  Bar: CSAT 1–5 distribution
+  Chart-type Select reuses the dashboard switcher
+
+Completed work:
+  List of resolved/closed tickets (ticketNumber, title, CSAT if any, date)
+  Click → existing workspace (admin already allowed)
+
+Empty: “No resolved tickets yet.” Skeleton on load.
+```
+
+Sounds: same global click policy; one optional chart-tap cue (shared with analytics). Density/finish/accent from Appearance. No hardcoded hex.
+
+#### Slice 1 — UI accommodation
+- Admin users/teams/routing/SLA/KB use Field, Select, PageTitle, surface
+- Remove leftover unprefixed admin routes if they still collide
+- CSAT banner + Help Q&A match the shell
+- Agent workspace: Q&A on the right rail
+- Supervisor watch uses ticket view prefs + CSAT KPI tiles
+
+#### Slice 2 — Analytics dashboard
+- One screen `/admin/analytics` (ADMIN+) and a **read-team** view for SUPERVISOR at `/supervisor` extra tab or `/analytics` with `analytics:read:team`
+- Date range, team, category filters
+- Chart-type switcher: line, area, bar, pie, donut, radial — same data
+- KPIs + grid of infographics (volume, SLA, CSAT, category, unanswered Help)
+- Library: **shadcn Chart on Recharts** (already in package.json) + Framer Motion layout; CSS variables only
+
+#### Slice 3 — Spam & security (MIT, don’t rewrite)
+Keep `spamDetector` + `bad-words` + `isbot`. Behind it:
+- [NaturalNode/natural](https://github.com/NaturalNode/natural) (MIT) for similarity / tokens
+- Security screen `/admin/security`: audit log, blocked IPs, spam queue confirm/dismiss
+- No cloud spam APIs
+
+#### Slice 4 — Polish
+- Seed 72 tickets, 6 consultants (Maya, Jordan, Priya, Marcus, Lina + supervisor), threads, CSAT, spam flags
+- Skeletons, empty states
+- Permission pass
 
 #### Backend
-- [ ] Analytics resolvers: volume, SLA, resolution time, agent performance, CSAT, category
-- [ ] KB analytics: unanswered questions, helpful/unhelpful, deflection rate
-- [ ] Security dashboard resolvers: `auditLogs`, `blockedIps`, `blockIp`, `unblockIp`, `spamReports`
-- [ ] Webhooks + HMAC retry
-- [ ] Realistic demo seed: 50+ tickets, message threads, 25+ published articles
+- [x] Analytics service + resolvers (role-scoped)
+- [x] `consultants` / `consultantProfile(id)` — ADMIN+ only
+- [x] Profile stats from tickets assignedTo + CSAT on those tickets
+- [x] Security resolvers as above
+- [x] Dice similarity wired into existing score, same 0–100 verdicts
+- [x] Demo seed
 
 #### Frontend
-- [ ] Analytics dashboard (Recharts) including KB usefulness
-- [ ] Security dashboard (audit log, blocked IPs, spam reports)
-- [ ] Loading skeletons, empty states, error boundaries
-- [ ] Final security pass (permission guards, internal KB leak checks, audit logs)
+- [x] Dashboard + chart switcher
+- [x] Consultant directory + profile
+- [x] Security page
+- [x] UI fit for Phase 4 screens
 
 #### Deliverable at push
 ```
-✅ Analytics charts populated with realistic demo data
-✅ KB Q&A is cited, role-scoped, and works without an AI key
-✅ Audit log shows every security event
-✅ Full demo flow: Customer → Agent → Supervisor → Admin
+✅ Phase 4 admin/CSAT/Q&A look like Appearance
+✅ Infographic dashboard, filterable chart types
+✅ Admin-only consultant profiles (progress, CSAT, completed tickets)
+✅ Spam/security review, MIT libs, no peer profile browsing
+✅ Local seed; no AI, no cloud, no cookie change
 ```
 
-**Git push:** `git push origin phase/6-analytics-polish` → PR → merge → `main`
+**Git push:** `git push origin phase/6-analytics-polish` → merge `main`
 
 ---
 
@@ -1021,7 +1096,7 @@ git push origin phase/2-ticket-engine
 | Phase 3 — Workspace, Real-Time, KB in Tickets | ✅ Implemented (light) | `phase/3-workspace-realtime` | GitHub only |
 | Phase 4 — Automation, Legal Ingest, Optional AI | ✅ Implemented (light, no crawler/LLM) | `phase/4-automation-admin` | GitHub |
 | Phase 5 — UI Customization | ✅ Merged to `main` (Appearance + ticket views) | `phase/5-ui-customization` | GitHub |
-| Phase 6 — Analytics, Security Dashboard & Polish | 🔲 Planned (was Phase 5) | `phase/6-analytics-polish` | — |
+| Phase 6 — Analytics, UI fit, consultant profiles, security | ✅ Implemented (unit tests; AI is Phase 7) | `phase/6-analytics-polish` | — |
 
 ---
 
@@ -1149,5 +1224,5 @@ Never commit scraped corpora to the repo.
 
 ---
 
-*Last updated: Phase 5 UI customization merged to `main` — Appearance `/settings`, `ui_preferences`, ticket views. Docs match shipped code.*
-*Next: Phase 6 analytics. Keep local + GitHub; no crawler/LLM unless you ask.*
+*Last updated: Phase 6 implemented — infographic dashboard, admin consultant profiles, security/spam, fat seed, unit tests. AI is Phase 7. No cloud, no HTTP-only cookie.*
+*Next: review locally, then commit/push `phase/6-analytics-polish` when you ask.*

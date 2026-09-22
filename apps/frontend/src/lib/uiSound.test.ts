@@ -9,7 +9,7 @@ describe('UI sound policy', () => {
 
   it('does not use hover as a global cue', () => {
     assert.equal(shouldPlayUiSound({ muted: false, event: 'hover' }), false);
-    assert.equal(shouldPlayUiSound({ muted: false, event: 'tap' }), true);
+    assert.equal(shouldPlayUiSound({ muted: false, event: 'chart' }), true);
   });
 
   it('limits clicks to buttons, checkboxes, radios, and similar controls', () => {

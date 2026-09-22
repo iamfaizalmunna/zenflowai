@@ -21,6 +21,12 @@ describe('Phase 1 RBAC', () => {
   it('keeps customers off agent-only actions', () => {
     assert.equal(hasPermission('CUSTOMER', 'ticket:create'), true);
     assert.equal(hasPermission('CUSTOMER', 'appearance:update:own'), true);
+    assert.equal(hasPermission('AGENT', 'consultant:read'), false);
+    assert.equal(hasPermission('SUPERVISOR', 'consultant:read'), false);
+    assert.equal(hasPermission('SUPERVISOR', 'analytics:read:team'), true);
+    assert.equal(hasPermission('SUPERVISOR', 'routing:create'), true);
+    assert.equal(hasPermission('AGENT', 'routing:create'), false);
+    assert.equal(hasPermission('ADMIN', 'consultant:read'), true);
     assert.equal(hasPermission('CUSTOMER', 'ticket:read:all'), false);
   });
 

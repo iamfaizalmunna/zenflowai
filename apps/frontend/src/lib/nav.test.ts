@@ -17,12 +17,20 @@ describe('mobile-first navigation', () => {
     const { primary, overflow } = splitMobileNav(navForRole('ADMIN'));
     assert.equal(primary.length, 3);
     assert.ok(overflow.length > 0);
-    assert.equal(primary[0]?.href, '/admin/users');
+    assert.equal(primary[0]?.href, '/analytics');
   });
 
   it('does not mark New Ticket as the Tickets list', () => {
     assert.equal(isNavActive('/tickets/new', '/tickets'), false);
     assert.equal(isNavActive('/tickets/12', '/tickets'), true);
-    assert.equal(isNavActive('/knowledge/internal', '/knowledge'), false);
+    assert.equal(isNavActive('/admin/sla', '/admin/sla'), true);
+    assert.equal(isNavActive('/admin/routing', '/admin/users'), false);
+  });
+
+  it('gives supervisors analytics and keeps agents off consultant admin', () => {
+    assert.ok(navForRole('SUPERVISOR').some((item) => item.href === '/analytics'));
+    assert.ok(navForRole('SUPERVISOR').some((item) => item.href === '/admin/routing'));
+    assert.equal(navForRole('AGENT').some((item) => item.href === '/admin/consultants'), false);
+    assert.ok(navForRole('ADMIN').some((item) => item.href === '/admin/consultants'));
   });
 });

@@ -5,7 +5,8 @@ export type UiSoundEvent =
   | 'error'
   | 'login'
   | 'logout'
-  | 'notify';
+  | 'notify'
+  | 'chart';
 
 export interface UiSoundPreset {
   freqs: number[];
@@ -21,6 +22,7 @@ export const UI_SOUND_PRESETS: Record<UiSoundEvent, UiSoundPreset> = {
   login: { freqs: [392, 523, 659], durationMs: 180, gain: 0.08 },
   logout: { freqs: [659, 392], durationMs: 160, gain: 0.07 },
   error: { freqs: [220, 185], durationMs: 200, gain: 0.1 },
+  chart: { freqs: [660, 990], durationMs: 90, gain: 0.07 },
 };
 
 export const SOUND_MUTE_KEY = 'zenflow-sound-muted';

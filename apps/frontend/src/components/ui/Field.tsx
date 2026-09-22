@@ -35,9 +35,9 @@ export function Button({
 
 export function PageTitle({ title, hint }: { title: string; hint?: string }) {
   return (
-    <header className="space-y-1">
-      <h1 className="font-display text-2xl app:text-3xl tracking-tight">{title}</h1>
-      {hint && <p className="text-sm text-muted-foreground">{hint}</p>}
+    <header className="space-y-1.5 max-w-2xl">
+      <h1 className="font-display text-[1.75rem] app:text-[2rem] tracking-tight text-foreground">{title}</h1>
+      {hint && <p className="text-sm leading-6 text-muted-foreground">{hint}</p>}
     </header>
   );
 }

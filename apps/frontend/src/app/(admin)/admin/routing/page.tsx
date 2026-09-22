@@ -10,11 +10,11 @@ import { Select } from '@/components/ui/Select';
 
 export default function AdminRoutingPage() {
   const { data, refetch } = useQuery(ROUTING_RULES);
-  const [save] = useMutation(SAVE_ROUTING, { onCompleted: () => refetch() });
+  const [save, { error }] = useMutation(SAVE_ROUTING, { onCompleted: () => refetch() });
   const [form, setForm] = useState({ type: 'KEYWORD', keyword: '', targetTeamId: '', order: '100' });
 
   return (
-    <RoleGuard minRole="ADMIN">
+    <RoleGuard minRole="SUPERVISOR">
       <AppShell>
         <div className="space-y-5 max-w-3xl">
           <PageTitle title="Routing rules" hint="Keyword, category, priority, then fallback." />
@@ -22,12 +22,14 @@ export default function AdminRoutingPage() {
             className="grid gap-3 sm:grid-cols-2 app:grid-cols-4 rounded-3xl border border-border/70 bg-card/70 p-4"
             onSubmit={(e) => {
               e.preventDefault();
+              const targetTeamId = Number(form.targetTeamId);
+              if (!Number.isInteger(targetTeamId) || targetTeamId <= 0) return;
               save({
                 variables: {
                   input: {
                     type: form.type,
                     keyword: form.keyword || null,
-                    targetTeamId: Number(form.targetTeamId),
+                    targetTeamId,
                     order: Number(form.order) || 100,
                     isActive: true,
                   },
@@ -51,6 +53,7 @@ export default function AdminRoutingPage() {
             />
             <Button type="submit">Add rule</Button>
           </form>
+          {error && <p className="text-sm text-destructive">{error.message}</p>}
           <ul className="space-y-2 text-sm">
             {data?.routingRules?.map((rule: {
               id: number;

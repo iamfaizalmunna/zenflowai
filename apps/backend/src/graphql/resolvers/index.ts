@@ -7,6 +7,7 @@ import { subscriptionResolvers } from './subscription.resolver';
 import { adminResolvers } from './admin.resolver';
 import { csatResolvers } from './csat.resolver';
 import { appearanceResolvers } from './appearance.resolver';
+import { analyticsResolvers } from './analytics.resolver';
 
 export const resolvers = {
   DateTime: DateTimeResolver,
@@ -20,6 +21,7 @@ export const resolvers = {
     ...adminResolvers.Query,
     ...csatResolvers.Query,
     ...appearanceResolvers.Query,
+    ...analyticsResolvers.Query,
   },
 
   Mutation: {
@@ -29,6 +31,7 @@ export const resolvers = {
     ...adminResolvers.Mutation,
     ...csatResolvers.Mutation,
     ...appearanceResolvers.Mutation,
+    ...analyticsResolvers.Mutation,
   },
 
   Subscription: {

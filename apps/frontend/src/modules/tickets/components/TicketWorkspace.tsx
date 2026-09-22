@@ -18,6 +18,7 @@ import { useCountdown } from '@/modules/tickets/hooks/useCountdown';
 import { useUiSound } from '@/hooks/useUiSound';
 import { Button, Textarea } from '@/components/ui/Field';
 import { Select } from '@/components/ui/Select';
+import { HelpAskBox } from '@/modules/tickets/components/HelpAskBox';
 
 const STAFF = new Set(['AGENT', 'SUPERVISOR', 'ADMIN', 'SUPER_ADMIN']);
 
@@ -228,10 +229,11 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
               </li>
             ))}
             {!relatedData?.relatedArticles?.length && (
-              <li className="text-xs text-slate-400">No related articles</li>
+              <li className="text-xs text-muted-foreground">No related articles</li>
             )}
           </ul>
         </div>
+        <HelpAskBox />
       </aside>
     </div>
   );

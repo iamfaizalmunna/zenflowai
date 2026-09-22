@@ -19,7 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           className="flex-1 overflow-y-auto pb-24 app:pb-0"
         >
-          <div className={cn('max-w-6xl mx-auto', prefs.density === 'COMPACT' ? 'p-3 app:p-4' : 'p-4 app:p-6')}>
+          <div className={cn('max-w-6xl mx-auto w-full', prefs.density === 'COMPACT' ? 'p-4 app:p-5' : 'px-5 py-6 app:px-8 app:py-8')}>
             {children}
           </div>
         </motion.main>

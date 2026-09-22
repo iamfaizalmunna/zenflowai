@@ -169,6 +169,20 @@ function pick<T extends string>(value: unknown, allowed: readonly T[], fallback:
   return typeof value === 'string' && (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
 }
 
+export function isDarkColorMode(mode: ColorMode, prefersDark: boolean): boolean {
+  if (mode === 'DARK') return true;
+  if (mode === 'LIGHT') return false;
+  return prefersDark;
+}
+
+export function htmlThemeClass(mode: ColorMode, prefersDark: boolean): 'dark' | 'light' {
+  return isDarkColorMode(mode, prefersDark) ? 'dark' : 'light';
+}
+
+export function toggledColorMode(mode: ColorMode, prefersDark: boolean): ColorMode {
+  return isDarkColorMode(mode, prefersDark) ? 'LIGHT' : 'DARK';
+}
+
 export function mergeAppearance(input: Partial<AppearancePrefs> | Record<string, unknown> | null | undefined): AppearancePrefs {
   const raw = (input ?? {}) as Partial<AppearancePrefs>;
   const next: AppearancePrefs = { ...DEFAULT_APPEARANCE, ...raw };

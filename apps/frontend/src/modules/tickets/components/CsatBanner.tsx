@@ -23,7 +23,7 @@ export function CsatBanner() {
   return (
     <div className="rounded-2xl border border-iris/25 bg-iris/10 p-4 text-sm space-y-2">
       <p className="font-medium">How was {survey.ticket.ticketNumber}?</p>
-      <p className="text-slate-500 text-xs">{survey.ticket.title}</p>
+      <p className="text-muted-foreground text-xs">{survey.ticket.title}</p>
       <form
         className="flex flex-wrap gap-2 items-center"
         onSubmit={(e) => {

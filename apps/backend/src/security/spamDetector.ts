@@ -17,6 +17,7 @@
  */
 
 import { prisma } from '../utils/prisma';
+import { diceCoefficient } from '../services/similarity';
 import { auditSecurity } from './audit';
 import { verdictFromScore, type SpamVerdict } from './spamVerdict';
 
@@ -176,7 +177,7 @@ export async function analyzeContent(opts: ContentCheckOptions): Promise<SpamAna
     });
 
     for (const t of recentTickets) {
-      const similarity = computeSimilarity(fullText, `${t.title} ${t.description}`.toLowerCase());
+      const similarity = diceCoefficient(fullText, `${t.title} ${t.description}`.toLowerCase());
       if (similarity > 0.8) {
         score += WEIGHTS.NEAR_DUPLICATE;
         flags.push(`NEAR_DUPLICATE:${Math.round(similarity * 100)}%`);
@@ -262,15 +263,6 @@ export function detectBotRequest(userAgent: string, ip: string): {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-// Simple Jaccard similarity on word sets
-function computeSimilarity(a: string, b: string): number {
-  const setA = new Set(a.split(/\s+/));
-  const setB = new Set(b.split(/\s+/));
-  const intersection = new Set([...setA].filter((x) => setB.has(x)));
-  const union = new Set([...setA, ...setB]);
-  return union.size === 0 ? 0 : intersection.size / union.size;
-}
 
 async function updateUserSuspicionScore(userId: number, newScore: number, flags: string[]) {
   try {

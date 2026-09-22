@@ -3,13 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { useTheme } from 'next-themes';
 import { LogOut, Moon, Settings2, Sun, Volume2, VolumeX } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useLogout } from '@/modules/auth/hooks/useAuth';
 import { ROLE_COLOR, ROLE_LABEL } from '@/lib/constants';
 import { isNavActive, navForRole } from '@/lib/nav';
 import { cn } from '@/lib/utils';
+import { isDarkColorMode, toggledColorMode } from '@/lib/appearance';
 import { ZenLogo } from '@/components/brand/ZenLogo';
 import { NAV_ICONS } from '@/components/layout/navIcons';
 import { useUiSound } from '@/hooks/useUiSound';
@@ -17,17 +17,18 @@ import { useAppearance } from '@/hooks/useAppearance';
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { theme } = useTheme();
   const { user } = useAuthStore();
   const { logout } = useLogout();
   const { play } = useUiSound();
   const { prefs, update } = useAppearance();
   const role = user?.role ?? 'CUSTOMER';
   const navItems = navForRole(role);
+  const prefersDark = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const dark = isDarkColorMode(prefs.colorMode, prefersDark);
 
   return (
-    <aside className="hidden app:flex w-60 flex-col h-full border-r border-white/10 surface">
-      <div className="h-16 flex items-center px-4 border-b border-white/10">
+    <aside className="hidden app:flex w-60 flex-col h-full border-r border-border/60 bg-background/80 backdrop-blur-xl">
+      <div className="h-16 flex items-center px-4 border-b border-border/60">
         <ZenLogo size={32} />
       </div>
 
@@ -59,7 +60,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-3 border-t border-white/10 space-y-1">
+      <div className="p-3 border-t border-border/60 space-y-1">
         <Link
           href="/settings"
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm text-muted-foreground hover:text-foreground min-h-11"
@@ -77,11 +78,14 @@ export function Sidebar() {
         </button>
         <button
           type="button"
-          onClick={() => update({ colorMode: prefs.colorMode === 'DARK' ? 'LIGHT' : 'DARK' })}
+          onClick={() => {
+            const osDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            update({ colorMode: toggledColorMode(prefs.colorMode, osDark) });
+          }}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm text-muted-foreground hover:text-foreground min-h-11"
         >
-          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          {theme === 'dark' ? 'Light' : 'Dark'}
+          {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          {dark ? 'Light' : 'Dark'}
         </button>
         <div className="flex items-center gap-2.5 px-3 py-2">
           <div className="w-8 h-8 rounded-full bg-iris/20 text-iris flex items-center justify-center text-xs font-bold">
