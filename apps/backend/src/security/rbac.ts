@@ -48,6 +48,7 @@ const CUSTOMER_PERMS = new Set([
   'node:bookmark',
   'node:bookmark:read:own',
   'csat:submit',
+  'ticket:handoff',
   'appearance:read:own',
   'appearance:update:own',
 ]);

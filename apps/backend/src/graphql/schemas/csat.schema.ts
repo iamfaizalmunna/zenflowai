@@ -31,6 +31,7 @@ export const csatTypeDefs = gql`
   type KbAnswer {
     answer: String!
     confidence: Float!
+    engine: String
     citations: [KbCitation!]!
   }
 

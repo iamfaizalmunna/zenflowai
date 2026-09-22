@@ -11,6 +11,7 @@ import {
   updateTicket,
 } from '../../services/ticket.service';
 import { addMessage } from '../../services/message.service';
+import { handoffTicket } from '../../services/ai/consultTicket.service';
 
 function mapZod(err: unknown): never {
   if (err instanceof ZodError) {
@@ -66,5 +67,15 @@ export const ticketResolvers = {
         return mapZod(err);
       }
     },
+
+    handoffTicket: async (_: unknown, { ticketId }: { ticketId: number }, ctx: Context) => {
+      requirePermission(ctx.role, 'ticket:handoff', ctx.permissionOverrides);
+      return handoffTicket(ctx, ticketId);
+    },
+  },
+
+  Ticket: {
+    lastConsult: (parent: { consultAttempts?: Array<{ id: number; engine: string; confidence: number; createdAt: Date }> }) =>
+      parent.consultAttempts?.[0] ?? null,
   },
 };

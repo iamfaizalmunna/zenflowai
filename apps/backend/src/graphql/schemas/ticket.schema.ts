@@ -48,6 +48,7 @@ export const ticketTypeDefs = gql`
     name: String!
     email: String
     role: Role
+    isAiConsultant: Boolean
   }
 
   type Ticket {
@@ -67,6 +68,14 @@ export const ticketTypeDefs = gql`
     team: TeamSummary
     category: Category
     messages: [TicketMessage!]
+    lastConsult: ConsultAttempt
+  }
+
+  type ConsultAttempt {
+    id: Int!
+    engine: String!
+    confidence: Float!
+    createdAt: DateTime!
   }
 
   type TicketMessage {
@@ -129,6 +138,7 @@ export const ticketTypeDefs = gql`
     createTicket(input: CreateTicketInput!): Ticket!
     updateTicket(id: Int!, input: UpdateTicketInput!): Ticket!
     addMessage(input: AddMessageInput!): TicketMessage!
+    handoffTicket(ticketId: Int!): Ticket!
   }
 
   extend type Subscription {

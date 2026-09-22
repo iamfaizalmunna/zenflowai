@@ -41,7 +41,7 @@ export async function evaluateRouting(input: {
     throw new Error('No support team is configured');
   }
 
-  const assignedUserId = await pickLeastBusyAgent(teamId);
+  const assignedUserId = await pickAssignee(teamId);
   const reason = matched
     ? `Matched ${matched.type} rule #${matched.id}`
     : 'Default team fallback';
@@ -55,9 +55,24 @@ export async function evaluateRouting(input: {
   };
 }
 
+async function pickAssignee(teamId: number): Promise<number | null> {
+  const ai = await prisma.teamMember.findFirst({
+    where: {
+      teamId,
+      user: { isActive: true, isBanned: false, isAiConsultant: true },
+    },
+    select: { userId: true },
+  });
+  if (ai) return ai.userId;
+  return pickLeastBusyAgent(teamId);
+}
+
 async function pickLeastBusyAgent(teamId: number): Promise<number | null> {
   const members = await prisma.teamMember.findMany({
-    where: { teamId, user: { isActive: true, isBanned: false, role: { in: ['AGENT', 'SUPERVISOR'] } } },
+    where: {
+      teamId,
+      user: { isActive: true, isBanned: false, isAiConsultant: false, role: { in: ['AGENT', 'SUPERVISOR'] } },
+    },
     select: { userId: true },
   });
   if (members.length === 0) return null;

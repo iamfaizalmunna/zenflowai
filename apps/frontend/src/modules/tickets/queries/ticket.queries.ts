@@ -14,7 +14,7 @@ export const TICKET_FIELDS = gql`
     createdAt
     updatedAt
     customer { id name email }
-    assignedTo { id name }
+    assignedTo { id name isAiConsultant }
     team { id name }
     category { id name color }
   }
@@ -43,8 +43,9 @@ export const GET_TICKET = gql`
         body
         type
         createdAt
-        sender { id name role }
+        sender { id name role isAiConsultant }
       }
+      lastConsult { id engine confidence createdAt }
     }
   }
 `;
@@ -75,6 +76,15 @@ export const UPDATE_TICKET = gql`
   }
 `;
 
+export const HANDOFF_TICKET = gql`
+  ${TICKET_FIELDS}
+  mutation HandoffTicket($ticketId: Int!) {
+    handoffTicket(ticketId: $ticketId) {
+      ...TicketFields
+    }
+  }
+`;
+
 export const ADD_MESSAGE = gql`
   mutation AddMessage($input: AddMessageInput!) {
     addMessage(input: $input) {
@@ -83,7 +93,7 @@ export const ADD_MESSAGE = gql`
       body
       type
       createdAt
-      sender { id name role }
+      sender { id name role isAiConsultant }
     }
   }
 `;

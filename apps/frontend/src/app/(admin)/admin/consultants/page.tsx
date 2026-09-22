@@ -57,11 +57,15 @@ export default function ConsultantsPage() {
                   id: number; name: string; email: string; teams: string[];
                   openCount: number; resolvedCount: number; csatAverage: number; csatCount: number;
                   assessmentIndex: number;
+                  isAiConsultant?: boolean;
                   lastLoginAt?: string | null;
                 }) => (
                   <tr key={p.id} className="border-t border-border/50 hover:bg-muted/30">
                     <td className="px-5 py-4">
-                      <p className="font-medium tracking-tight">{p.name}</p>
+                      <p className="font-medium tracking-tight">
+                        {p.name}
+                        {p.isAiConsultant ? ' · AI' : ''}
+                      </p>
                       <p className="text-xs text-muted-foreground">{p.email}</p>
                     </td>
                     <td className="px-5 py-4 text-muted-foreground">{p.teams.join(', ') || '—'}</td>

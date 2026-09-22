@@ -118,6 +118,7 @@ export const ASK_KB = gql`
     askKnowledgeBase(question: $question) {
       answer
       confidence
+      engine
       citations { id title }
     }
   }

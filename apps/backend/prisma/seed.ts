@@ -5,8 +5,13 @@
  * Seeds: demo users, 144 tickets, CSAT, spam queue, blocked IP, KB articles
  */
 
+import { existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { PrismaClient, Role, TicketPriority, TicketType, RoutingRuleType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { hashChunk, splitArticleBody } from '../src/services/ai/consultMath';
+import { loadOwnedKb, loadKbShards } from '../src/services/ai/kbPack';
 
 const prisma = new PrismaClient();
 const HASH_ROUNDS = 10;
@@ -48,11 +53,22 @@ async function main() {
   const priya = await upsertUser({ email: 'priya@zenflowai.com', name: 'Priya Patel', role: Role.AGENT, hash });
   const marcus = await upsertUser({ email: 'marcus@zenflowai.com', name: 'Marcus Chen', role: Role.AGENT, hash });
   const lina = await upsertUser({ email: 'lina@zenflowai.com', name: 'Lina Rossi', role: Role.AGENT, hash });
+  const nova = await upsertUser({
+    email: 'nova@zenflowai.com',
+    name: 'Nova AI',
+    role: Role.AGENT,
+    hash,
+    isAiConsultant: true,
+  });
   await Promise.all([
     upsertTeamMember({ teamId: billingTeam.id, userId: jordan.id, isLead: false }),
     upsertTeamMember({ teamId: itTeam.id, userId: priya.id, isLead: false }),
     upsertTeamMember({ teamId: generalTeam.id, userId: marcus.id, isLead: false }),
     upsertTeamMember({ teamId: tier2Team.id, userId: lina.id, isLead: false }),
+    upsertTeamMember({ teamId: generalTeam.id, userId: nova.id, isLead: false }),
+    upsertTeamMember({ teamId: itTeam.id, userId: nova.id, isLead: false }),
+    upsertTeamMember({ teamId: billingTeam.id, userId: nova.id, isLead: false }),
+    upsertTeamMember({ teamId: tier2Team.id, userId: nova.id, isLead: false }),
   ]);
   await prisma.user.updateMany({
     where: { email: { in: [
@@ -266,81 +282,51 @@ async function main() {
     data: { ip: '203.0.113.50', reason: 'demo block' },
   });
 
+  const kbDir = join(dirname(fileURLToPath(import.meta.url)), '../kb');
+  const pack = loadOwnedKb(kbDir);
+  const shardDir = join(kbDir, 'shards');
+  const shardPack = existsSync(shardDir) ? await loadKbShards(shardDir, 400) : [];
+  const allKb = [...pack, ...shardPack];
+  const kbTitles = allKb.map((row) => row.title);
   await prisma.knowledgeArticle.deleteMany({
-    where: { title: { in: [
-      'How to reset your password',
-      'Cannot log in',
-      'Duplicate charge or refund request',
-      'How to create a support ticket',
-      'When to escalate a ticket',
-      'Writing a clear first response',
-      'Draft: new refund FAQ',
-    ] } },
+    where: { title: { in: kbTitles } },
   });
+
+  const categoryByName: Record<string, number> = {
+    Technical: techCat.id,
+    Billing: billingCat.id,
+    General: generalCat.id,
+    Incident: incidentCat.id,
+  };
 
   await prisma.knowledgeArticle.createMany({
-    data: [
-      {
-        title: 'How to reset your password',
-        visibility: 'PUBLIC',
-        isPublished: true,
-        authorId: agent.id,
-        categoryId: generalCat.id,
-        body: '1. Open the login page.\n2. Select Forgot password.\n3. Enter your email.\n4. Open the reset link and choose a new password (8+ characters).',
-      },
-      {
-        title: 'Cannot log in',
-        visibility: 'PUBLIC',
-        isPublished: true,
-        authorId: agent.id,
-        categoryId: techCat.id,
-        body: 'Try another browser, clear cache, and confirm Caps Lock is off. If the account is locked after failed attempts, wait 15 minutes or contact support.',
-      },
-      {
-        title: 'Duplicate charge or refund request',
-        visibility: 'PUBLIC',
-        isPublished: true,
-        authorId: agent.id,
-        categoryId: billingCat.id,
-        body: 'If you were billed twice, create a Billing ticket with the invoice date and amount. Finance reviews duplicate charges within one business day.',
-      },
-      {
-        title: 'How to create a support ticket',
-        visibility: 'PUBLIC',
-        isPublished: true,
-        authorId: agent.id,
-        categoryId: generalCat.id,
-        body: 'Go to New Ticket, add a short title, describe what you expected vs what happened, pick a category, then submit. You will receive a #ZEN-XXXX number.',
-      },
-      {
-        title: 'When to escalate a ticket',
-        visibility: 'INTERNAL',
-        isPublished: true,
-        authorId: agent.id,
-        categoryId: incidentCat.id,
-        body: 'Escalate to Tier-2 when there is an outage, a security concern, or SLA is past 80%. Add an internal note with impact and the last customer update.',
-      },
-      {
-        title: 'Writing a clear first response',
-        visibility: 'INTERNAL',
-        isPublished: true,
-        authorId: agent.id,
-        categoryId: generalCat.id,
-        body: 'Acknowledge the issue, confirm the ticket number, set the next step, and give a time window. Do not promise refunds unless Billing policy allows it.',
-      },
-      {
-        title: 'Draft: new refund FAQ',
-        visibility: 'PUBLIC',
-        isPublished: false,
-        authorId: agent.id,
-        categoryId: billingCat.id,
-        body: 'Draft: explain when refunds apply. Review before publishing.',
-      },
-    ],
+    data: allKb.map((row) => ({
+      title: row.title,
+      visibility: row.visibility,
+      isPublished: row.isPublished,
+      authorId: agent.id,
+      categoryId: categoryByName[row.category] ?? generalCat.id,
+      body: row.body,
+    })),
   });
 
+  await prisma.knowledgeChunk.deleteMany({});
+  const published = await prisma.knowledgeArticle.findMany({ where: { isPublished: true } });
+  for (const article of published) {
+    for (const part of splitArticleBody(article.body)) {
+      await prisma.knowledgeChunk.create({
+        data: {
+          articleId: article.id,
+          body: part,
+          contentHash: hashChunk(part),
+          licenseNote: 'owned-demo',
+        },
+      });
+    }
+  }
+
   console.log('✅ Sample tickets: #ZEN-0001 through #ZEN-0144');
-  console.log('✅ Knowledge articles: 4 public, 2 internal, 1 draft');
+  console.log('✅ Knowledge articles: public how-tos + internal playbooks + chunks');
 
   console.log(`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -356,6 +342,7 @@ async function main() {
   Agent         priya@zenflowai.com           password123
   Agent         marcus@zenflowai.com          password123
   Agent         lina@zenflowai.com            password123
+  AI consultant nova@zenflowai.com            password123
   Customer      customer@zenflowai.com        password123
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   `);
@@ -363,11 +350,13 @@ async function main() {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-async function upsertUser({ email, name, role, hash }: { email: string; name: string; role: Role; hash: string }) {
+async function upsertUser({
+  email, name, role, hash, isAiConsultant = false,
+}: { email: string; name: string; role: Role; hash: string; isAiConsultant?: boolean }) {
   return prisma.user.upsert({
     where: { email },
-    update: { name, role },
-    create: { email, name, password: hash, role, emailVerified: true },
+    update: { name, role, isAiConsultant },
+    create: { email, name, password: hash, role, emailVerified: true, isAiConsultant },
   });
 }
 

@@ -103,6 +103,7 @@ export async function listConsultants(ctx: Context) {
       teams: user.teamMembers.map((m) => m.team.name),
       ...stats,
       assessmentIndex: assessment.index,
+      isAiConsultant: user.isAiConsultant,
     };
   });
 }
@@ -144,6 +145,7 @@ export async function getConsultantProfile(ctx: Context, id: number) {
     teams: user.teamMembers.map((m) => m.team.name),
     ...stats,
     assessmentIndex: assessment.index,
+    isAiConsultant: user.isAiConsultant,
     assessment: assessment.axes,
     gaps: assessment.gaps,
     resolvedWeekly: fillWeekBuckets(

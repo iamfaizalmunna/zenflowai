@@ -18,7 +18,7 @@ export const CONSULTANTS = gql`
   query Consultants {
     consultants {
       id name email role lastLoginAt teams
-      openCount resolvedCount closedCount csatAverage csatCount assessmentIndex
+      openCount resolvedCount closedCount csatAverage csatCount assessmentIndex isAiConsultant
     }
   }
 `;
@@ -26,7 +26,7 @@ export const CONSULTANTS = gql`
 export const CONSULTANT_PROFILE = gql`
   query ConsultantProfile($id: Int!) {
     consultantProfile(id: $id) {
-      id name email role lastLoginAt teams
+      id name email role lastLoginAt teams isAiConsultant
       openCount resolvedCount closedCount csatAverage csatCount
       avgFirstResponseHours avgResolveHours
       assessmentIndex assessment { key value } gaps

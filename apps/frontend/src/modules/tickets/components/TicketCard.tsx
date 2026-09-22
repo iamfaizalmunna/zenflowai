@@ -14,7 +14,7 @@ export interface TicketListItem {
   priority: string;
   createdAt: string;
   updatedAt?: string | null;
-  assignedTo?: { name: string } | null;
+  assignedTo?: { name: string; isAiConsultant?: boolean | null } | null;
   category?: { name: string; color: string } | null;
 }
 
@@ -87,7 +87,10 @@ export function TicketCard({
             <Badges ticket={ticket} />
           </div>
           {ticket.assignedTo && (
-            <p className="text-xs text-muted-foreground mt-3">Assigned {ticket.assignedTo.name}</p>
+            <p className="text-xs text-muted-foreground mt-3">
+              Assigned {ticket.assignedTo.name}
+              {ticket.assignedTo.isAiConsultant ? ' · AI' : ''}
+            </p>
           )}
         </article>
       </Link>
@@ -107,7 +110,10 @@ export function TicketCard({
         <div className="mt-3 flex items-center justify-between gap-2">
           <Badges ticket={ticket} />
           {ticket.assignedTo && (
-            <span className="text-xs text-muted-foreground">Assigned: {ticket.assignedTo.name}</span>
+            <span className="text-xs text-muted-foreground">
+              Assigned: {ticket.assignedTo.name}
+              {ticket.assignedTo.isAiConsultant ? ' · AI' : ''}
+            </span>
           )}
         </div>
       </article>

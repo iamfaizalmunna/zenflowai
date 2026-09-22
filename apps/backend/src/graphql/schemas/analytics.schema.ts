@@ -35,6 +35,7 @@ export const analyticsTypeDefs = gql`
     csatAverage: Float!
     csatCount: Int!
     assessmentIndex: Float!
+    isAiConsultant: Boolean!
   }
 
   type ConsultantTicket {
@@ -62,6 +63,7 @@ export const analyticsTypeDefs = gql`
     avgFirstResponseHours: Float!
     avgResolveHours: Float!
     assessmentIndex: Float!
+    isAiConsultant: Boolean!
     assessment: [ChartPoint!]!
     gaps: [String!]!
     resolvedWeekly: [ChartPoint!]!

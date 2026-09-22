@@ -5,6 +5,7 @@ import { useLazyQuery, useMutation, useQuery, useSubscription } from '@apollo/cl
 import {
   ADD_MESSAGE,
   ARTICLE_SNIPPET,
+  HANDOFF_TICKET,
   GET_TICKET,
   MESSAGE_ADDED,
   RELATED_ARTICLES,
@@ -27,7 +28,7 @@ interface TicketMessage {
   body: string;
   type: string;
   createdAt: string;
-  sender: { id: number; name: string; role?: string };
+  sender: { id: number; name: string; role?: string; isAiConsultant?: boolean };
 }
 
 interface RelatedArticle {
@@ -52,6 +53,7 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
       void refetch();
     },
   });
+  const [handoffTicket, { loading: handing }] = useMutation(HANDOFF_TICKET, { onCompleted: () => refetch() });
   const [updateTicket] = useMutation(UPDATE_TICKET, { onCompleted: () => refetch() });
   const [fetchSuggest, { loading: suggesting }] = useLazyQuery(SUGGEST_REPLY);
   const [fetchSnippet] = useLazyQuery(ARTICLE_SNIPPET);
@@ -109,7 +111,12 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
             )}
           >
             <div className="flex justify-between text-xs text-slate-400 mb-1">
-              <span>{msg.sender.name}{msg.type === 'INTERNAL_NOTE' ? ' · internal' : ''}</span>
+              <span>
+                {msg.sender.name}
+                {msg.sender.isAiConsultant ? ' · AI' : ''}
+                {msg.type === 'INTERNAL_NOTE' ? ' · internal' : ''}
+                {msg.type === 'SYSTEM_EVENT' ? ' · system' : ''}
+              </span>
               <span>{formatRelativeTime(msg.createdAt)}</span>
             </div>
             <p className="whitespace-pre-wrap">{msg.body}</p>
@@ -170,6 +177,22 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
             </span>
           </div>
           <div className="mt-2">{slaBlock}</div>
+          {ticket.assignedTo?.isAiConsultant && (
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-3"
+              disabled={handing}
+              onClick={() => void handoffTicket({ variables: { ticketId: id } })}
+            >
+              {handing ? 'Connecting…' : 'Still need a person'}
+            </Button>
+          )}
+          {ticket.lastConsult && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Nova engine: {ticket.lastConsult.engine === 'OLLAMA' ? 'local model + KB' : 'knowledge base'}
+            </p>
+          )}
         </header>
         {thread}
       </div>
@@ -183,7 +206,12 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
         <h1 className="text-lg font-semibold leading-snug">{ticket.title}</h1>
         <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{ticket.description}</p>
         <p className="text-xs text-slate-500">Customer: {ticket.customer?.name}</p>
-        {ticket.assignedTo && <p className="text-xs text-slate-500">Agent: {ticket.assignedTo.name}</p>}
+        {ticket.assignedTo && (
+          <p className="text-xs text-slate-500">
+            Agent: {ticket.assignedTo.name}
+            {ticket.assignedTo.isAiConsultant ? ' · AI' : ''}
+          </p>
+        )}
         {ticket.team && <p className="text-xs text-slate-500">Team: {ticket.team.name}</p>}
         {slaBlock}
       </aside>
