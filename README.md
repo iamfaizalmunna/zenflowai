@@ -2,7 +2,7 @@
 
 > Phase 7 AI consultant for a clean, fast, AI-ready ticketing system.
 > Built with Next.js · Express · GraphQL · MySQL · Prisma.
-> Local + GitHub only — no cloud host is wired.
+> Local MVP through Phase 7. Phase 8 is hardening, not a new product.
 
 [![Phase](https://img.shields.io/badge/Phase-7%20AI%20Consultant-blue)](#phases)
 [![Stack](https://img.shields.io/badge/Stack-Next.js%2015%20%2B%20GraphQL%20%2B%20MySQL-6366f1)](#stack)
@@ -22,6 +22,8 @@ ZenFlowAI is a **medium-scale service desk and ticketing platform** — think Ze
 - Every sensitive write is audit-logged. Every role sees only what they should.
 
 **AI consultant Nova is first responder.** Answers come from owned KB (optional local Ollama). Humans take over only if confidence is low. No API key required.
+
+**MVP status:** Phases 1–7 are a complete **local** ticketing MVP (demo MySQL, demo passwords). It is not internet-production until Phase 8 (HTTP-only cookies, migrations, email, attachments).
 
 ---
 
@@ -64,44 +66,35 @@ quotas, and cooldowns before a `#ZEN-XXXX` ticket is saved.
 
 ---
 
-## Project Structure — actual (through Phase 7)
+## Project Structure — actual (through Phase 7 on `main`)
 
 ```
 ZenFlowAI/
 ├── apps/
 │   ├── backend/
+│   │   ├── kb/                      # Owned how-tos + demo shards (seeded KB)
 │   │   ├── prisma/
-│   │   │   ├── schema.prisma        # Includes UiPreference (ui_preferences)
-│   │   │   └── seed.ts              # Roles, 6 consultants, 144 tickets, CSAT, spam
+│   │   │   ├── schema.prisma        # Tickets, UiPreference, isAiConsultant, KnowledgeChunk, ConsultAttempt
+│   │   │   └── seed.ts              # Roles, Nova, consultants, tickets, CSAT, owned KB
 │   │   └── src/
-│   │       ├── graphql/schemas/     # auth, user, ticket, knowledge, admin, csat, appearance
-│   │       ├── graphql/resolvers/
-│   │       ├── services/            # tickets, routing, SLA, CSAT, Q&A, appearance, analytics, consultants, security, …
-│   │       ├── jobs/slaCron.ts      # node-cron SLA sweep
+│   │       ├── graphql/schemas/     # auth, user, ticket, knowledge, admin, csat, appearance, analytics
+│   │       ├── graphql/resolvers/   # thin: auth + permission + service
+│   │       ├── services/            # tickets, routing, SLA, CSAT, appearance, analytics
+│   │       ├── services/ai/         # consult chain, Ollama probe, ingest, kb pack
+│   │       ├── jobs/slaCron.ts
 │   │       ├── security/            # RBAC, audit, spam, fair usage, HTTP stack
-│   │       ├── middleware/auth.ts
-│   │       └── utils/               # prisma, pubsub, #ZEN-XXXX
+│   │       └── utils/
 │   │
 │   └── frontend/
 │       └── src/
-│           ├── app/
-│           │   ├── (auth)/          # /login, /register, /forgot-password
-│           │   ├── (customer)/      # /dashboard, /tickets, /tickets/new, /knowledge
-│           │   ├── (agent)/         # /queue, /knowledge/internal, /supervisor
-│           │   ├── (admin)/admin/   # users, teams, routing, sla, knowledge, consultants, security
-│           │   ├── analytics/       # SUPERVISOR+ infographic dashboard
-│           │   └── settings/        # Appearance studio
-│           ├── modules/auth/
-│           ├── modules/tickets/
-│           ├── modules/admin/
-│           ├── modules/appearance/  # myAppearance / saveAppearance GraphQL
-│           ├── components/layout/   # AppShell, Sidebar, MobileChrome, PWA
-│           ├── components/ui/       # Field, Select, shared control styles
-│           ├── hooks/               # useAppearance, useUiSound
-│           ├── lib/                 # Apollo, appearance tokens/session, sounds, nav, charts
+│           ├── app/                 # (auth) (customer) (agent) (admin) analytics settings
+│           ├── modules/             # auth, tickets, admin, appearance, analytics
+│           ├── components/
+│           ├── lib/                 # Apollo, appearance, nav, charts
 │           └── store/               # Zustand auth only
 │
-├── packages/shared/                 # Placeholder types (app code does not rely on these)
+├── .github/workflows/test.yml       # prisma generate + unit tests + optional Sonar
+├── sonar-project.properties
 ├── PLAN.md
 └── turbo.json
 ```
@@ -133,6 +126,7 @@ cp apps/backend/.env.example apps/backend/.env
 
 # Frontend
 cp apps/frontend/.env.local.example apps/frontend/.env.local
+# Demo DB is often mysql://root@localhost:3307/zenflowai
 ```
 
 ### 3. Database
@@ -178,17 +172,19 @@ After login, **Appearance** is `/settings`: sounds, system/light/dark, accent + 
 
 ## Phases
 
-This project is built in 7 phases. Each phase = a working push to GitHub.
+This repo has **seven shipped phases** on `main` (local MVP). **Phase 8** is planned hardening.
 
 | Phase | What's built | Status |
 |-------|-------------|--------|
-| **1 — Foundation & Auth** | Auth screens, JWT auth service, role-aware layout, RBAC and security modules | ✅ Merged to `main` (with Phase 2) |
-| **2 — Ticket Engine + Help Center** | Tickets, routing, SLA dates, messages, owned KB, unit tests | ✅ Merged to `main` ([#1](https://github.com/iamfaizalmunna/zenflowai/pull/1)) |
-| **3 — Workspace & Real-time** | 3-column workspace, graphql-ws, related articles, template replies | ✅ Merged to `main` |
-| **4 — Automation & Admin** | SLA cron, CSAT, admin screens, rule-based Help Center Q&A | ✅ Merged to `main` |
-| **5 — UI Customization** | Appearance studio, per-user DB prefs, ticket sort/filter/views, click-only sounds | ✅ Merged to `main` ([#3](https://github.com/iamfaizalmunna/zenflowai/pull/3) isolation) |
-| **6 — Analytics & Polish** | Infographic analytics, consultant profiles, security review, demo seed | ✅ Merged to `main` ([#2](https://github.com/iamfaizalmunna/zenflowai/pull/2)) |
-| **7 — AI Consultant** | Nova AI-first tickets, grounded KB, optional Ollama, human handoff | ✅ Merged to `main` ([#5](https://github.com/iamfaizalmunna/zenflowai/pull/5)) |
+| **1 — Foundation & Auth** | Auth screens, JWT, role layout, RBAC, 10 security layers | ✅ `main` (with Phase 2) |
+| **2 — Ticket Engine + Help Center** | Tickets `#ZEN-XXXX`, routing, SLA dates, messages, owned KB | ✅ `main` ([#1](https://github.com/iamfaizalmunna/zenflowai/pull/1)) |
+| **3 — Workspace & Real-time** | 3-column workspace, graphql-ws, related articles, template replies | ✅ `main` |
+| **4 — Automation & Admin** | SLA cron, CSAT, admin screens, extractive Help Q&A | ✅ `main` |
+| **5 — UI Customization** | Per-user Appearance, ticket views/sort/filter, click sounds | ✅ `main` ([#3](https://github.com/iamfaizalmunna/zenflowai/pull/3)) |
+| **6 — Analytics & Polish** | Infographic analytics, consultant profiles, security review, seed | ✅ `main` ([#2](https://github.com/iamfaizalmunna/zenflowai/pull/2)) |
+| **7 — AI Consultant** | Nova first assignee, grounded KB, optional Ollama, handoff | ✅ `main` ([#5](https://github.com/iamfaizalmunna/zenflowai/pull/5)) |
+| **CI / Sonar** | `prisma generate`, unit tests, optional SonarCloud | ✅ `main` ([#6](https://github.com/iamfaizalmunna/zenflowai/pull/6)) |
+| **8 — MVP hardening** | HTTP-only cookies, migrations, email, attachments | 📋 Planned — see [`PLAN.md`](./PLAN.md) |
 
 See [`PLAN.md`](./PLAN.md) for the full architecture blueprint.
 
@@ -390,26 +386,20 @@ ts init --agent cursor --yes
 
 ---
 
-## Not implemented yet
+## Not in the local MVP (Phase 8 and later)
 
-- Crawler / Firecrawl ingest and optional paid OpenAI
-- Webhooks + HMAC retry
-- Production refresh-token HTTP-only cookie transport
-- Cloud hosting (this repo is local + GitHub only)
+**Phase 8 (next):** HTTP-only refresh cookies, committed Prisma migrations, transactional email, ticket attachments, honest GraphQL errors.
 
-These are reserved for later. The README is updated after each phase so it
-describes the code that actually exists.
+**Later than Phase 8:** crawler / Firecrawl, paid OpenAI, webhooks, SSO/SAML, React Native, Apollo Federation, voice tickets, cloud host.
 
-## Roadmap (post Phase 7)
+## Roadmap (after Phase 8)
 
-- [ ] Email notifications (SendGrid / Resend)
-- [ ] File attachments (Cloudflare R2)
-- [ ] Apollo Federation (split into microservices)
-- [ ] AI classification (OpenAI / Groq adapter — architecture already ready)
-- [ ] Voice-to-text ticket creation (Browser Web Speech API)
+- [ ] Email notifications (SendGrid / Resend) — starts in Phase 8
+- [ ] File attachments — local disk in Phase 8; R2 later
+- [ ] SSO / SAML
 - [ ] Mobile app (React Native)
-- [ ] SSO / SAML (enterprise auth)
+- [ ] Apollo Federation
 
 ---
 
-*README updates with every phase. Last updated: Phase 7 AI consultant (Nova, grounded KB, optional Ollama, human handoff).*
+*README matches code on `main`. Last updated: Phases 1–7 shipped; Phase 8 planned; ticket create uses `customerId` in spam checks.*

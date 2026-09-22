@@ -14,6 +14,7 @@ export const userTypeDefs = gql`
     email: String!
     name: String!
     role: Role!
+    isAiConsultant: Boolean!
     isActive: Boolean!
     isBanned: Boolean!
     emailVerified: Boolean!
