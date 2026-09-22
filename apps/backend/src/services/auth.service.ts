@@ -33,13 +33,26 @@ export interface AuthUser {
 
 // ── Login ─────────────────────────────────────────────────────────────────────
 
+const LOGIN_USER_SELECT = {
+  id: true,
+  email: true,
+  name: true,
+  password: true,
+  role: true,
+  isActive: true,
+  isBanned: true,
+} as const;
+
 export async function loginUser(
   email: string,
   password: string,
   ip: string,
   userAgent?: string | null
 ): Promise<{ tokens: TokenPair; user: AuthUser }> {
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: LOGIN_USER_SELECT,
+  });
 
   // Always run bcrypt comparison to prevent timing attacks
   const fakeHash = '$2b$10$invalidhashtopreventtimingattacks000000000000000000000';
@@ -100,7 +113,10 @@ export async function registerUser(
   ip: string,
   userAgent?: string | null
 ): Promise<{ tokens: TokenPair; user: AuthUser }> {
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const existing = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
   if (existing) {
     throw new GraphQLError('An account with this email already exists', {
       extensions: { code: 'EMAIL_TAKEN' },
@@ -155,7 +171,10 @@ export async function refreshAccessToken(
     });
   }
 
-  const user = await prisma.user.findUnique({ where: { id: stored.userId } });
+  const user = await prisma.user.findUnique({
+    where: { id: stored.userId },
+    select: { id: true, email: true, name: true, role: true, isActive: true, isBanned: true },
+  });
   if (!user || !user.isActive || user.isBanned) {
     throw new GraphQLError('Account is disabled', { extensions: { code: 'UNAUTHORIZED' } });
   }

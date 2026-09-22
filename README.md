@@ -1,10 +1,10 @@
 # ZenFlowAI
 
-> Phase 6 analytics and polish for a clean, fast, AI-ready ticketing system.
+> Phase 7 AI consultant for a clean, fast, AI-ready ticketing system.
 > Built with Next.js · Express · GraphQL · MySQL · Prisma.
 > Local + GitHub only — no cloud host is wired.
 
-[![Phase](https://img.shields.io/badge/Phase-6%20Analytics%20%26%20Polish-blue)](#phases)
+[![Phase](https://img.shields.io/badge/Phase-7%20AI%20Consultant-blue)](#phases)
 [![Stack](https://img.shields.io/badge/Stack-Next.js%2015%20%2B%20GraphQL%20%2B%20MySQL-6366f1)](#stack)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
@@ -21,7 +21,7 @@ ZenFlowAI is a **medium-scale service desk and ticketing platform** — think Ze
 - Mobile-first app chrome at ≤1024px, plus a PWA manifest
 - Every sensitive write is audit-logged. Every role sees only what they should.
 
-**AI is optional infrastructure, not the foundation.** Help Center Q&A and Suggest Reply are rule-based. No crawler or LLM key is required.
+**AI consultant Nova is first responder.** Answers come from owned KB (optional local Ollama). Humans take over only if confidence is low. No API key required.
 
 ---
 
@@ -64,7 +64,7 @@ quotas, and cooldowns before a `#ZEN-XXXX` ticket is saved.
 
 ---
 
-## Project Structure — actual (through Phase 6)
+## Project Structure — actual (through Phase 7)
 
 ```
 ZenFlowAI/
@@ -167,6 +167,7 @@ pnpm dev
 | Agent | priya@zenflowai.com | password123 |
 | Agent | marcus@zenflowai.com | password123 |
 | Agent | lina@zenflowai.com | password123 |
+| AI consultant | nova@zenflowai.com | password123 |
 | Customer | customer@zenflowai.com | password123 |
 
 After login, **Appearance** is `/settings`: sounds, system/light/dark, accent + shade, matte/glossy/glass, font family/size, density, logo, default ticket view. Saved in `ui_preferences` **for that user only** via `myAppearance` / `saveAppearance`. Ticket queues also sort, filter (status + priority), and switch list / compact / card / icon views. Sign-out returns the guest shell to the product default.
@@ -185,10 +186,27 @@ This project is built in 6 phases. Each phase = a working push to GitHub.
 | **4 — Automation & Admin** | SLA cron, CSAT, admin screens, rule-based Help Center Q&A | ✅ Merged to `main` |
 | **5 — UI Customization** | Appearance studio, per-user DB prefs, ticket sort/filter/views, click-only sounds | ✅ Merged to `main` ([#3](https://github.com/iamfaizalmunna/zenflowai/pull/3) isolation) |
 | **6 — Analytics & Polish** | Infographic analytics, consultant profiles, security review, demo seed | ✅ Merged to `main` ([#2](https://github.com/iamfaizalmunna/zenflowai/pull/2)) |
+| **7 — AI Consultant** | Nova AI-first tickets, grounded KB, optional Ollama, human handoff | ✅ On `phase/7-ai-consultant` |
 
 See [`PLAN.md`](./PLAN.md) for the full architecture blueprint.
 
 ---
+
+## Phase 7 capabilities
+
+```
+Customer opens a ticket
+      ↓
+Assigned to Nova (AI consultant)
+      ↓
+Retrieve owned KB → optional tiny Ollama if healthy → else extractive answer
+      ↓
+Cited reply in the thread (ticket create does not wait)
+      ↓
+Low confidence or “Still need a person” → human consultant
+```
+
+`pnpm --filter backend ai:doctor` never fails install. `ai:setup` is opt-in (no signup). `AI_PROVIDER=auto`.
 
 ## Phase 6 capabilities
 
@@ -272,7 +290,19 @@ Thread messages (reply / internal note)
 Help Center: public articles for customers, internal guides for staff
 ```
 
-This is the light MVP through Phase 6: live workspace, SLA cron, CSAT, admin screens, rule-based Q&A, per-user Appearance prefs in MySQL, analytics/consultants/security, PWA/mobile chrome. No crawler, no LLM, no cloud host.
+This is the light MVP through Phase 7: live workspace, SLA cron, CSAT, admin screens, Nova AI consultant (KB + optional Ollama), per-user Appearance, analytics/consultants/security, PWA. No Firecrawl, no paid LLM, no cloud host.
+
+### What is installed vs what runs in the background
+
+| Piece | On `pnpm install` | On GitHub | Runs in background |
+|-------|-------------------|-----------|--------------------|
+| Nova + consult chain (TypeScript) | Yes | Yes | With the API process |
+| Owned KB (`apps/backend/kb/` + `shards/pack-01.jsonl`) | Seeded into MySQL (how-tos + first 400 shard articles) | Yes — this **is** the demo KB (~88MB unique JSONL under the 100MB GitHub cap) | No extra process |
+| `ollama` **npm client** | Yes (tiny JS library) | Yes | No |
+| Ollama **app + model** (~0.4–2GB) | **No** | **No** | Only if you already installed Ollama |
+| Scraper / raw scrape cache | No | **No** (`data/kb/` gitignored) | No |
+
+Nova answers from the seeded KB even when Ollama is not installed. `pnpm --filter backend ai:doctor` prints `engine=retrieval` or `engine=ollama`. The demo knowledge base is `apps/backend/kb/` including `shards/pack-01.jsonl`. Do not commit Ollama models or scrape cache.
 
 ---
 
@@ -360,7 +390,7 @@ ts init --agent cursor --yes
 
 ## Not implemented yet
 
-- Crawler / Firecrawl ingest and optional OpenAI/Ollama (Phase 7)
+- Crawler / Firecrawl ingest and optional paid OpenAI
 - Webhooks + HMAC retry
 - Production refresh-token HTTP-only cookie transport
 - Cloud hosting (this repo is local + GitHub only)
@@ -368,7 +398,7 @@ ts init --agent cursor --yes
 These are reserved for later. The README is updated after each phase so it
 describes the code that actually exists.
 
-## Roadmap (post Phase 6)
+## Roadmap (post Phase 7)
 
 - [ ] Email notifications (SendGrid / Resend)
 - [ ] File attachments (Cloudflare R2)
@@ -380,4 +410,4 @@ describes the code that actually exists.
 
 ---
 
-*README updates with every phase. Last updated: Phase 6 on `main` (PRs #2–#3) — analytics, consultants, security, per-user appearance, unit tests.*
+*README updates with every phase. Last updated: Phase 7 AI consultant (Nova, grounded KB, optional Ollama, human handoff).*

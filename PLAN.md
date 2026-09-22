@@ -1064,6 +1064,19 @@ Keep `spamDetector` + `bad-words` + `isbot`. Behind it:
 
 ---
 
+### PHASE 7 — AI consultant (grounded chain)
+**Branch:** `phase/7-ai-consultant`
+
+Nova (seeded `nova@zenflowai.com`, `isAiConsultant`) is first assignee. Consult is retrieve → optional tiny Ollama SLM → extractive KB → human handoff. `createTicket` does not wait on the model. `ollama` JS client is in backend `package.json`. Runtime/model is **not** downloaded by `pnpm install`. `pnpm --filter backend ai:doctor` always exits 0. `ai:setup` is opt-in (no signup).
+
+- [x] `KnowledgeChunk` + `ConsultAttempt`
+- [x] AI-first routing; human only if confidence is low or “Still need a person”
+- [x] Unit tests for consult math, probe circuit, ingest skip
+
+**Not in this phase:** paid LLM, Firecrawl keys, HTTP-only cookies, cloud, webhooks.
+
+---
+
 ### Branch Strategy Summary
 
 ```
@@ -1074,6 +1087,7 @@ main                    ← always stable, always deployable
   └── phase/4-automation-admin
   └── phase/5-ui-customization
   └── phase/6-analytics-polish
+  └── phase/7-ai-consultant
 ```
 
 Each phase branch is created fresh from `main`:
@@ -1097,6 +1111,7 @@ git push origin phase/2-ticket-engine
 | Phase 4 — Automation, Legal Ingest, Optional AI | ✅ Implemented (light, no crawler/LLM) | `phase/4-automation-admin` | GitHub |
 | Phase 5 — UI Customization | ✅ Merged to `main` (Appearance + per-user prefs) | `phase/5-ui-customization` | #3 isolation |
 | Phase 6 — Analytics, UI fit, consultant profiles, security | ✅ Merged to `main` (unit tests; AI is Phase 7) | `phase/6-analytics-polish` | #2 |
+| Phase 7 — AI consultant | ✅ Implemented on `phase/7-ai-consultant` | `phase/7-ai-consultant` | — |
 
 ---
 
@@ -1224,4 +1239,4 @@ Never commit scraped corpora to the repo.
 
 ---
 
-*Last updated: Phase 6 merged to `main` (PR #2) plus per-user appearance isolation (PR #3). AI is Phase 7. No cloud, no HTTP-only cookie.*
+*Last updated: Phase 7 AI consultant chain on `phase/7-ai-consultant`. Retrieval always; Ollama optional; human last. No cloud, no HTTP-only cookie.*

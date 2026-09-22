@@ -33,6 +33,9 @@ export function HelpAskBox() {
           {data.askKnowledgeBase.citations.map((c: { id: number; title: string }) => (
             <Link key={c.id} href={`/knowledge/${c.id}`} className="block text-xs text-iris">{c.title}</Link>
           ))}
+          {data.askKnowledgeBase.engine ? (
+            <p className="text-xs text-muted-foreground">Engine {data.askKnowledgeBase.engine}</p>
+          ) : null}
         </div>
       )}
     </div>

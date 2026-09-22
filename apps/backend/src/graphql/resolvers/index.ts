@@ -37,4 +37,8 @@ export const resolvers = {
   Subscription: {
     ...subscriptionResolvers.Subscription,
   },
+
+  Ticket: {
+    ...ticketResolvers.Ticket,
+  },
 };

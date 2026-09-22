@@ -11,6 +11,7 @@ import { audit } from '../security/audit';
 import { Context } from '../types/context';
 import { pubsub, TICKET_CREATED_TOPIC, ticketUpdatedTopic } from '../utils/pubsub';
 import { openCsatForTicket } from './csat.service';
+import { scheduleAiConsult } from './ai/consultSchedule';
 
 const createSchema = z.object({
   title: z.string().min(4).max(180),
@@ -21,8 +22,8 @@ const createSchema = z.object({
 });
 
 const TICKET_INCLUDE = {
-  customer: { select: { id: true, name: true, email: true, role: true } },
-  assignedTo: { select: { id: true, name: true, email: true, role: true } },
+  customer: { select: { id: true, name: true, email: true, role: true, isAiConsultant: true } },
+  assignedTo: { select: { id: true, name: true, email: true, role: true, isAiConsultant: true } },
   team: { select: { id: true, name: true } },
   category: { select: { id: true, name: true, color: true } },
 } satisfies Prisma.TicketInclude;
@@ -79,9 +80,10 @@ export async function getTicket(ctx: Context, id: number) {
       ...TICKET_INCLUDE,
       messages: {
         where: STAFF_ROLES.has(ctx.role) ? undefined : { type: { not: 'INTERNAL_NOTE' } },
-        include: { sender: { select: { id: true, name: true, role: true } } },
+        include: { sender: { select: { id: true, name: true, role: true, isAiConsultant: true } } },
         orderBy: { createdAt: 'asc' },
       },
+      consultAttempts: { orderBy: { createdAt: 'desc' }, take: 1 },
     },
   });
 
@@ -186,6 +188,7 @@ export async function createTicket(ctx: Context, raw: unknown) {
   });
 
   await pubsub.publish(TICKET_CREATED_TOPIC, { ticketCreated: ticket });
+  scheduleAiConsult(ticket.id);
 
   return ticket;
 }

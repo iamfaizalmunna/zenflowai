@@ -40,8 +40,8 @@ Thumbs.db
 .turbo/
 .pnpm-store/
 
-# Prisma
-apps/backend/prisma/migrations/
+# Local KB ingest (never commit scrape dumps)
+data/kb/
 
 # Test coverage
 coverage/

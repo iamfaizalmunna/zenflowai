@@ -13,6 +13,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 
 import { typeDefs } from './graphql/schemas';
 import { resolvers } from './graphql/resolvers';
+import { publicGraphqlError } from './utils/publicGraphqlError';
 import { buildContext, buildContextFromAuthHeader } from './middleware/auth';
 import {
   helmetMiddleware,
@@ -134,23 +135,7 @@ async function bootstrap() {
     ],
 
     // Apollo error formatting — never leak stack traces in production
-    formatError: (formattedError, error) => {
-      if (IS_PROD) {
-        // Strip internal details
-        const safeError = {
-          message: formattedError.message,
-          extensions: {
-            code: formattedError.extensions?.code ?? 'INTERNAL_SERVER_ERROR',
-          },
-        };
-        // Don't leak INTERNAL_SERVER_ERROR messages
-        if (safeError.extensions.code === 'INTERNAL_SERVER_ERROR') {
-          safeError.message = 'An internal error occurred.';
-        }
-        return safeError;
-      }
-      return formattedError;
-    },
+    formatError: (formattedError) => publicGraphqlError(formattedError),
   });
 
   await server.start();

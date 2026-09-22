@@ -12,7 +12,11 @@
     "db:generate": "prisma generate",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit",
-    "test": "tsx --test src/security/*.test.ts src/utils/*.test.ts src/services/*.test.ts ../frontend/src/lib/*.test.ts"
+    "test": "tsx --test src/security/*.test.ts src/utils/*.test.ts src/services/*.test.ts src/services/ai/*.test.ts ../frontend/src/lib/*.test.ts",
+    "ai:doctor": "tsx src/scripts/aiDoctor.ts",
+    "ai:setup": "tsx src/scripts/aiSetup.ts",
+    "ai:ingest": "tsx src/scripts/aiSetup.ts",
+    "kb:shard": "tsx src/scripts/generateKbShard.ts"
   },
   "dependencies": {
     "@apollo/server": "^4.11.0",
@@ -40,6 +44,7 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "node-cron": "^4.6.0",
+    "ollama": "^0.5.16",
     "ua-parser-js": "^1.0.39",
     "uuid": "^10.0.0",
     "validator": "^13.12.0",
