@@ -5,6 +5,8 @@ import { useQuery } from '@apollo/client';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
+import { Input, PageTitle } from '@/components/ui/Field';
+import { HelpAskBox } from '@/modules/tickets/components/HelpAskBox';
 import { KNOWLEDGE_ARTICLES } from '@/modules/tickets/queries/ticket.queries';
 
 export default function InternalGuidesPage() {
@@ -16,18 +18,18 @@ export default function InternalGuidesPage() {
   return (
     <RoleGuard minRole="AGENT">
       <AppShell>
-        <div className="space-y-4 max-w-2xl">
-          <h1 className="text-2xl font-bold tracking-tight">Internal guides</h1>
-          <input
+        <div className="space-y-5 max-w-2xl">
+          <PageTitle title="Internal guides" hint="Playbooks for agents. Not visible to customers." />
+          <HelpAskBox />
+          <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search internal playbooks…"
-            className="w-full border rounded-xl px-3 py-2 bg-white dark:bg-slate-900 text-sm"
           />
           {data?.knowledgeArticles?.map((article: { id: number; title: string; body: string }) => (
-            <Link key={article.id} href={`/knowledge/${article.id}`} className="block rounded-xl border p-4 bg-white dark:bg-slate-900">
+            <Link key={article.id} href={`/knowledge/${article.id}`} className="block surface rounded-3xl border border-border/70 p-4">
               <h2 className="font-medium text-sm">{article.title}</h2>
-              <p className="text-xs text-slate-500 mt-1 line-clamp-2">{article.body}</p>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{article.body}</p>
             </Link>
           ))}
         </div>

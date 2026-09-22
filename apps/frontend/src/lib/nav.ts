@@ -9,7 +9,12 @@ export type AppNavIcon =
   | 'book'
   | 'inbox'
   | 'users'
-  | 'settings';
+  | 'settings'
+  | 'chart'
+  | 'shield'
+  | 'timer'
+  | 'route'
+  | 'usercog';
 
 export interface AppNavItem {
   href: string;
@@ -31,20 +36,28 @@ export const NAV_BY_ROLE: Record<string, AppNavItem[]> = {
   SUPERVISOR: [
     { href: '/queue', label: 'Queue', icon: 'inbox' },
     { href: '/supervisor', label: 'Watch', icon: 'dashboard' },
+    { href: '/analytics', label: 'Analytics', icon: 'chart' },
     { href: '/knowledge/internal', label: 'Guides', icon: 'book' },
+    { href: '/admin/routing', label: 'Routing', icon: 'route' },
   ],
   ADMIN: [
-    { href: '/admin/users', label: 'Users', icon: 'users' },
+    { href: '/analytics', label: 'Analytics', icon: 'chart' },
+    { href: '/admin/consultants', label: 'Consultants', icon: 'users' },
+    { href: '/admin/users', label: 'Users', icon: 'usercog' },
+    { href: '/admin/security', label: 'Security', icon: 'shield' },
     { href: '/admin/teams', label: 'Teams', icon: 'users' },
-    { href: '/admin/routing', label: 'Routing', icon: 'settings' },
-    { href: '/admin/sla', label: 'SLA', icon: 'settings' },
+    { href: '/admin/routing', label: 'Routing', icon: 'route' },
+    { href: '/admin/sla', label: 'SLA', icon: 'timer' },
     { href: '/admin/knowledge', label: 'Knowledge', icon: 'book' },
   ],
   SUPER_ADMIN: [
-    { href: '/admin/users', label: 'Users', icon: 'users' },
+    { href: '/analytics', label: 'Analytics', icon: 'chart' },
+    { href: '/admin/consultants', label: 'Consultants', icon: 'users' },
+    { href: '/admin/users', label: 'Users', icon: 'usercog' },
+    { href: '/admin/security', label: 'Security', icon: 'shield' },
     { href: '/admin/teams', label: 'Teams', icon: 'users' },
-    { href: '/admin/routing', label: 'Routing', icon: 'settings' },
-    { href: '/admin/sla', label: 'SLA', icon: 'settings' },
+    { href: '/admin/routing', label: 'Routing', icon: 'route' },
+    { href: '/admin/sla', label: 'SLA', icon: 'timer' },
     { href: '/admin/knowledge', label: 'Knowledge', icon: 'book' },
   ],
 };

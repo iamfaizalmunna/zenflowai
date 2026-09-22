@@ -49,9 +49,10 @@ export const adminResolvers = {
       return saveTeam(ctx, input, id);
     },
     saveRoutingRule: async (_: unknown, { id, input }: { id?: number; input: unknown }, ctx: Context) => {
-      requirePermission(ctx.role, id ? 'routing:update' : 'routing:create', ctx.permissionOverrides);
+      const isUpdate = typeof id === 'number' && id > 0;
+      requirePermission(ctx.role, isUpdate ? 'routing:update' : 'routing:create', ctx.permissionOverrides);
       try {
-        return await saveRoutingRule(ctx, input, id);
+        return await saveRoutingRule(ctx, input, isUpdate ? id : undefined);
       } catch (err) {
         return mapZod(err);
       }

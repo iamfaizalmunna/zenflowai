@@ -8,6 +8,10 @@ export const ROLE_HIERARCHY: Record<string, number> = {
 };
 
 // Role → home route mapping
+export function meetsMinRole(role: string | undefined, minRole: string): boolean {
+  return (ROLE_HIERARCHY[role ?? ''] ?? -1) >= (ROLE_HIERARCHY[minRole] ?? 0);
+}
+
 export const ROLE_HOME: Record<string, string> = {
   CUSTOMER:    '/dashboard',
   AGENT:       '/queue',

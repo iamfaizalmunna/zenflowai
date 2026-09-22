@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { ROLE_HOME, ROLE_HIERARCHY } from './constants';
+import { ROLE_HOME, ROLE_HIERARCHY, meetsMinRole } from './constants';
 
 describe('Phase 1 role home routes', () => {
   it('sends each role to its home path', () => {
@@ -16,5 +16,8 @@ describe('Phase 1 role home routes', () => {
     assert.ok(ROLE_HIERARCHY.AGENT < ROLE_HIERARCHY.SUPERVISOR);
     assert.ok(ROLE_HIERARCHY.SUPERVISOR < ROLE_HIERARCHY.ADMIN);
     assert.ok(ROLE_HIERARCHY.ADMIN < ROLE_HIERARCHY.SUPER_ADMIN);
+    assert.equal(meetsMinRole('ADMIN', 'SUPERVISOR'), true);
+    assert.equal(meetsMinRole('SUPERVISOR', 'ADMIN'), false);
+    assert.equal(meetsMinRole(undefined, 'CUSTOMER'), false);
   });
 });

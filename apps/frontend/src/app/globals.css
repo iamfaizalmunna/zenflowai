@@ -4,60 +4,62 @@
 
 @layer base {
   :root {
-    --background: 270 45% 97%;
-    --foreground: 258 32% 12%;
-    --card: 0 0% 100%;
-    --card-foreground: 258 32% 12%;
+    --background: 40 18% 98%;
+    --foreground: 250 22% 10%;
+    --card: 40 24% 100%;
+    --card-foreground: 250 22% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 258 32% 12%;
-    --primary: 258 78% 58%;
+    --popover-foreground: 250 22% 10%;
+    --primary: 258 64% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 270 30% 94%;
-    --secondary-foreground: 258 32% 18%;
-    --muted: 270 20% 93%;
-    --muted-foreground: 258 10% 42%;
-    --accent: 38 88% 72%;
-    --accent-foreground: 258 32% 12%;
-    --destructive: 0 72% 51%;
+    --secondary: 250 12% 95%;
+    --secondary-foreground: 250 18% 16%;
+    --muted: 250 10% 94%;
+    --muted-foreground: 250 8% 42%;
+    --accent: 28 70% 52%;
+    --accent-foreground: 250 22% 10%;
+    --destructive: 0 72% 46%;
     --destructive-foreground: 0 0% 98%;
-    --border: 258 24% 88%;
-    --input: 258 24% 88%;
-    --ring: 258 78% 58%;
-    --radius: 1.15rem;
-    --iris: 258 78% 58%;
-    --chart-1: 258 78% 58%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 38 88% 62%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --border: 250 10% 90%;
+    --input: 250 10% 90%;
+    --ring: 258 64% 50%;
+    --radius: 1rem;
+    --iris: 258 64% 50%;
+    --chart-1: 258 64% 50%;
+    --chart-2: 172 42% 36%;
+    --chart-3: 28 72% 48%;
+    --chart-4: 222 16% 42%;
+    --chart-5: 348 48% 48%;
+    --tracking-body: -0.012em;
+    --tracking-display: -0.03em;
   }
 
   .dark {
-    --background: 258 32% 6%;
-    --foreground: 270 40% 96%;
-    --card: 258 28% 9%;
-    --card-foreground: 270 40% 96%;
-    --popover: 258 28% 9%;
-    --popover-foreground: 270 40% 96%;
-    --primary: 258 86% 72%;
-    --primary-foreground: 258 32% 10%;
-    --secondary: 258 22% 14%;
-    --secondary-foreground: 270 40% 96%;
-    --muted: 258 18% 14%;
-    --muted-foreground: 258 12% 70%;
-    --accent: 38 80% 62%;
-    --accent-foreground: 258 32% 10%;
-    --destructive: 0 62% 45%;
+    --background: 222 16% 13%;
+    --foreground: 214 20% 93%;
+    --card: 222 14% 16%;
+    --card-foreground: 214 20% 93%;
+    --popover: 222 14% 17%;
+    --popover-foreground: 214 20% 93%;
+    --primary: 234 72% 76%;
+    --primary-foreground: 222 28% 12%;
+    --secondary: 222 12% 20%;
+    --secondary-foreground: 214 16% 90%;
+    --muted: 222 12% 19%;
+    --muted-foreground: 218 12% 72%;
+    --accent: 32 58% 58%;
+    --accent-foreground: 222 20% 12%;
+    --destructive: 0 58% 62%;
     --destructive-foreground: 0 0% 98%;
-    --border: 258 18% 18%;
-    --input: 258 18% 18%;
-    --ring: 258 86% 72%;
-    --iris: 258 86% 72%;
-    --chart-1: 258 86% 72%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 38 80% 62%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --border: 222 12% 24%;
+    --input: 222 12% 24%;
+    --ring: 234 72% 76%;
+    --iris: 234 72% 76%;
+    --chart-1: 234 72% 76%;
+    --chart-2: 174 40% 52%;
+    --chart-3: 32 64% 58%;
+    --chart-4: 210 22% 68%;
+    --chart-5: 348 44% 64%;
   }
 }
 
@@ -69,7 +71,7 @@
     @apply bg-background;
     font-size: var(--app-font-size, 16px);
     --surface-blur: 18px;
-    --surface-alpha: 0.82;
+    --surface-alpha: 0.88;
   }
   html[data-finish='matte'] {
     --surface-blur: 0px;
@@ -77,11 +79,11 @@
   }
   html[data-finish='glossy'] {
     --surface-blur: 18px;
-    --surface-alpha: 0.84;
+    --surface-alpha: 0.9;
   }
   html[data-finish='glass'] {
     --surface-blur: 28px;
-    --surface-alpha: 0.55;
+    --surface-alpha: 0.62;
   }
   html[data-density='compact'] {
     --radius: 0.85rem;
@@ -92,6 +94,20 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: inherit;
+    letter-spacing: var(--tracking-body);
+    font-feature-settings: "ss01" 1, "kern" 1;
+    line-height: 1.5;
+  }
+  h1, h2, h3 {
+    letter-spacing: var(--tracking-display);
+    line-height: 1.12;
+  }
+  .font-display {
+    letter-spacing: var(--tracking-display);
+  }
+  table th {
+    letter-spacing: 0.01em;
+    font-weight: 500;
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -107,13 +123,21 @@
     background-color: hsl(var(--card) / var(--surface-alpha));
     backdrop-filter: blur(var(--surface-blur));
   }
+  .dash-card {
+    @apply rounded-xl border border-border/50 bg-card;
+  }
 }
 
 @layer utilities {
   .bg-mesh {
     background:
-      radial-gradient(1200px 600px at 10% -10%, hsl(var(--iris) / 0.22), transparent 55%),
-      radial-gradient(900px 500px at 110% 0%, hsl(38 88% 62% / 0.16), transparent 50%),
+      radial-gradient(720px 280px at 0% -30%, hsl(var(--iris) / 0.05), transparent 58%),
+      hsl(var(--background));
+  }
+  html.dark .bg-mesh {
+    background:
+      radial-gradient(900px 360px at 8% -20%, hsl(var(--iris) / 0.14), transparent 60%),
+      radial-gradient(640px 280px at 100% 0%, hsl(210 40% 40% / 0.12), transparent 55%),
       hsl(var(--background));
   }
 }

@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
-import { ROLE_HOME, ROLE_HIERARCHY } from '@/lib/constants';
+import { ROLE_HOME, meetsMinRole } from '@/lib/constants';
 
 interface RoleGuardProps {
   children: React.ReactNode;
@@ -16,6 +16,7 @@ interface RoleGuardProps {
 export function RoleGuard({ children, minRole, requireAuth = true }: RoleGuardProps) {
   const { isAuthenticated, user } = useAuthStore();
   const router = useRouter();
+  const denied = Boolean(minRole && user && !meetsMinRole(user.role, minRole));
 
   useEffect(() => {
     if (requireAuth && !isAuthenticated) {
@@ -23,16 +24,13 @@ export function RoleGuard({ children, minRole, requireAuth = true }: RoleGuardPr
       return;
     }
 
-    if (minRole && user) {
-      const userLevel = ROLE_HIERARCHY[user.role] ?? 0;
-      const required  = ROLE_HIERARCHY[minRole] ?? 0;
-      if (userLevel < required) {
-        // Redirect to their own home instead of showing 403
-        router.replace(ROLE_HOME[user.role] ?? '/login');
-      }
+    if (denied && user) {
+      router.replace(ROLE_HOME[user.role] ?? '/login');
     }
-  }, [isAuthenticated, user, minRole, requireAuth, router]);
+  }, [isAuthenticated, user, denied, requireAuth, router]);
 
   if (requireAuth && !isAuthenticated) return null;
+  if (minRole && !user) return null;
+  if (denied) return null;
   return <>{children}</>;
 }

@@ -123,6 +123,17 @@ export function botDetectionMiddleware(req: Request, res: Response, next: NextFu
 // ─── 6. Global Rate Limiter ───────────────────────────────────────────────────
 // Hard limit: 200 req/15min per IP (all endpoints)
 
+export const graphqlRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 2000,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: {
+    error: 'Too many GraphQL requests from this IP. Please try again shortly.',
+    code: 'RATE_LIMIT_EXCEEDED',
+  },
+});
+
 export const globalRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,   // 15 minutes
   limit: 200,
@@ -133,8 +144,7 @@ export const globalRateLimiter = rateLimit({
     code: 'RATE_LIMIT_EXCEEDED',
   },
   skip: (req) => {
-    // Skip for health check
-    return req.path === '/health';
+    return req.path === '/health' || req.path === '/graphql';
   },
   handler: async (req, res, next, options) => {
     const ip = getClientIp(req);
@@ -190,6 +200,7 @@ export const speedLimiter = slowDown({
   delayAfter: 50,
   delayMs: (hits) => (hits - 50) * 100,  // 100ms per extra hit
   maxDelayMs: 5000,
+  skip: (req) => req.path === '/health' || req.path === '/graphql',
 });
 
 // ─── 9. Payload Size Limiter (applied in index.ts via express.json limit) ─────

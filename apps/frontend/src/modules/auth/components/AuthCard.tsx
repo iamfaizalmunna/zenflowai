@@ -21,8 +21,8 @@ export function AuthCard({ title, subtitle, children }: AuthCardProps) {
       <div className="text-center mb-8">
         <ZenLogo className="justify-center" size={44} />
       </div>
-      <div className="rounded-[1.75rem] border border-white/40 dark:border-white/10 bg-card/80 backdrop-blur-xl p-6 app:p-8 shadow-[0_30px_80px_-40px_rgba(90,50,180,0.55)]">
-        <h1 className="font-display text-2xl mb-1">{title}</h1>
+      <div className="rounded-2xl border border-border/60 bg-card/90 backdrop-blur-xl p-6 app:p-8 shadow-[0_24px_60px_-40px_hsl(var(--foreground)/0.35)]">
+        <h1 className="font-sans text-xl font-semibold tracking-tight mb-1">{title}</h1>
         {subtitle && <p className="text-sm text-muted-foreground mb-6">{subtitle}</p>}
         {!subtitle && <div className="mb-6" />}
         {children}

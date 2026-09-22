@@ -90,6 +90,8 @@ const SUPERVISOR_PERMS = new Set([
   'tag:create',
   'tag:update',
   'routing:read',
+  'routing:create',
+  'routing:update',
   'sla:read',
   'audit:read:limited',
   'knowledge:create',
@@ -128,6 +130,7 @@ const ADMIN_PERMS = new Set([
   'webhook:manage',
   'knowledge:delete',
   'analytics:read:all',
+  'consultant:read',
   'notification:send',
 ]);
 

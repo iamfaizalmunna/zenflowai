@@ -21,6 +21,7 @@ import {
   ipBlocklistMiddleware,
   botDetectionMiddleware,
   globalRateLimiter,
+  graphqlRateLimiter,
   authRateLimiter,
   speedLimiter,
   graphqlSecurityMiddleware,
@@ -163,26 +164,24 @@ async function bootstrap() {
   app.use(
     '/graphql',
     express.json({ limit: GRAPHQL_BODY_LIMIT }),
+    graphqlRateLimiter,
+    (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const body = req.body as { operationName?: string; query?: string } | undefined;
+      if (
+        body?.operationName === 'Login' ||
+        body?.operationName === 'Register' ||
+        body?.query?.includes('login(') ||
+        body?.query?.includes('register(')
+      ) {
+        return authRateLimiter(req, res, next);
+      }
+      next();
+    },
     graphqlSecurityMiddleware,
     expressMiddleware(server, {
       context: async ({ req }) => buildContext({ req }),
     })
   );
-
-  // ─── Auth-specific stricter rate limit on login/register mutations ─────────
-  // Applied at middleware level by inspecting the operation name
-  app.use('/graphql', (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const body = req.body;
-    if (
-      body?.operationName === 'Login' ||
-      body?.operationName === 'Register' ||
-      body?.query?.includes('login(') ||
-      body?.query?.includes('register(')
-    ) {
-      return authRateLimiter(req, res, next);
-    }
-    next();
-  });
 
   // ─── 404 Handler ──────────────────────────────────────────────────────────
   app.use((_req, res) => {

@@ -162,6 +162,10 @@ pnpm dev
 | Admin | admin@zenflowai.com | password123 |
 | Supervisor | supervisor@zenflowai.com | password123 |
 | Agent | agent@zenflowai.com | password123 |
+| Agent | jordan@zenflowai.com | password123 |
+| Agent | priya@zenflowai.com | password123 |
+| Agent | marcus@zenflowai.com | password123 |
+| Agent | lina@zenflowai.com | password123 |
 | Customer | customer@zenflowai.com | password123 |
 
 After login, **Appearance** is `/settings`: sounds, system/light/dark, accent + shade, matte/glossy/glass, font family/size, density, logo, default ticket view. Saved in `ui_preferences` via `myAppearance` / `saveAppearance`. Ticket queues also sort, filter (status + priority), and switch list / compact / card / icon views.
@@ -179,11 +183,25 @@ This project is built in 6 phases. Each phase = a working push to GitHub.
 | **3 — Workspace & Real-time** | 3-column workspace, graphql-ws, related articles, template replies | ✅ Merged to `main` |
 | **4 — Automation & Admin** | SLA cron, CSAT, admin screens, rule-based Help Center Q&A | ✅ Merged to `main` |
 | **5 — UI Customization** | Appearance studio, DB prefs, ticket sort/filter/views, click-only sounds | ✅ Merged to `main` |
-| **6 — Analytics & Polish** | Analytics + security dashboards, demo data (moved from old Phase 5) | 🔲 Planned |
+| **6 — Analytics & Polish** | Infographic analytics, consultant profiles, security review, demo seed | ✅ Implemented on `phase/6-analytics-polish` |
 
 See [`PLAN.md`](./PLAN.md) for the full architecture blueprint.
 
 ---
+
+## Phase 6 capabilities
+
+```
+Supervisor/Admin opens Analytics
+      ↓
+Range 7/30/90 days + chart-type switcher (line/area/bar/pie/donut/radial)
+      ↓
+Admin opens Consultants (ADMIN+ only) — progress, CSAT, completed tickets
+      ↓
+Security: audit log, block IP, spam confirm/dismiss
+      ↓
+Seed: 52 tickets, CSAT, spam queue, second agent
+```
 
 ## Phase 5 capabilities
 
@@ -339,13 +357,12 @@ ts init --agent cursor --yes
 
 ## Not implemented yet
 
-- Crawler / Firecrawl ingest and optional OpenAI/Ollama
+- Crawler / Firecrawl ingest and optional OpenAI/Ollama (Phase 7)
 - Webhooks + HMAC retry
-- Analytics and security dashboards (Phase 6)
 - Production refresh-token HTTP-only cookie transport
 - Cloud hosting (this repo is local + GitHub only)
 
-These are reserved for Phase 6 and later. The README is updated after each phase so it
+These are reserved for later. The README is updated after each phase so it
 describes the code that actually exists.
 
 ## Roadmap (post Phase 6)
@@ -360,4 +377,4 @@ describes the code that actually exists.
 
 ---
 
-*README updates with every phase. Last updated: Phase 5 UI customization merged to `main`.*
+*README updates with every phase. Last updated: Phase 6 analytics, consultants, security, unit tests.*

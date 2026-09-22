@@ -8,6 +8,7 @@ import { onError } from '@apollo/client/link/error';
 import { createPersistedQueryLink } from '@apollo/client/link/persisted-queries';
 import { createClient } from 'graphql-ws';
 import { sha256 } from 'crypto-hash';
+import { shouldClearSessionOnGraphqlError, shouldSurfaceGraphqlError } from '@/lib/apolloErrors';
 
 const graphqlHttp = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:4000/graphql';
 const graphqlWs = process.env.NEXT_PUBLIC_GRAPHQL_WS_URL || 'ws://localhost:4000/graphql';
@@ -29,24 +30,27 @@ const authLink = setContext((_, { headers }) => {
 const errorLink = onError(({ graphQLErrors, networkError }) => {
   if (graphQLErrors) {
     graphQLErrors.forEach(({ message, extensions }) => {
-      if (extensions?.code === 'UNAUTHENTICATED') {
+      const code = extensions?.code;
+      const hasToken = Boolean(typeof window !== 'undefined' && localStorage.getItem('zenflow_token'));
+      if (shouldClearSessionOnGraphqlError(code, hasToken)) {
         localStorage.removeItem('zenflow_token');
         localStorage.removeItem('zenflow-auth');
         if (!window.location.pathname.startsWith('/login')) {
           window.location.href = '/login';
         }
       }
-      console.error(`[GraphQL Error]: ${message}`);
+      if (shouldSurfaceGraphqlError(code)) {
+        console.error(`[GraphQL Error]: ${message}`);
+      }
     });
   }
-  if (networkError) {
+  if (networkError && !('statusCode' in networkError && networkError.statusCode === 429)) {
     console.error(`[Network Error]: ${networkError}`);
   }
 });
 
 const persistedQueriesLink = createPersistedQueryLink({
   sha256,
-  useGETForHashedQueries: true,
 });
 
 const httpChain = from([errorLink, persistedQueriesLink, authLink, httpLink]);

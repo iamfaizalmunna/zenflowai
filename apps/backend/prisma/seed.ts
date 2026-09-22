@@ -2,10 +2,10 @@
  * ZenFlowAI — Database Seed
  * Phase 1: Foundation & Auth
  *
- * Seeds: 5 users (one per role), teams, categories, SLA policies, routing rules
+ * Seeds: demo users, 52 tickets, CSAT, spam queue, blocked IP, KB articles
  */
 
-import { PrismaClient, Role, TicketPriority, RoutingRuleType } from '@prisma/client';
+import { PrismaClient, Role, TicketPriority, TicketType, RoutingRuleType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -44,6 +44,27 @@ async function main() {
     upsertTeamMember({ teamId: tier2Team.id,    userId: supervisor.id, isLead: true }),
     upsertTeamMember({ teamId: generalTeam.id,  userId: agent.id,      isLead: true }),
   ]);
+  const jordan = await upsertUser({ email: 'jordan@zenflowai.com', name: 'Jordan Agent', role: Role.AGENT, hash });
+  const priya = await upsertUser({ email: 'priya@zenflowai.com', name: 'Priya Patel', role: Role.AGENT, hash });
+  const marcus = await upsertUser({ email: 'marcus@zenflowai.com', name: 'Marcus Chen', role: Role.AGENT, hash });
+  const lina = await upsertUser({ email: 'lina@zenflowai.com', name: 'Lina Rossi', role: Role.AGENT, hash });
+  await Promise.all([
+    upsertTeamMember({ teamId: billingTeam.id, userId: jordan.id, isLead: false }),
+    upsertTeamMember({ teamId: itTeam.id, userId: priya.id, isLead: false }),
+    upsertTeamMember({ teamId: generalTeam.id, userId: marcus.id, isLead: false }),
+    upsertTeamMember({ teamId: tier2Team.id, userId: lina.id, isLead: false }),
+  ]);
+  await prisma.user.updateMany({
+    where: { email: { in: [
+      'agent@zenflowai.com',
+      'jordan@zenflowai.com',
+      'priya@zenflowai.com',
+      'marcus@zenflowai.com',
+      'lina@zenflowai.com',
+      'supervisor@zenflowai.com',
+    ] } },
+    data: { lastLoginAt: new Date() },
+  });
   console.log('✅ Team members assigned');
 
   // ── Categories ────────────────────────────────────────────────────────────
@@ -88,51 +109,161 @@ async function main() {
   });
   console.log('✅ Routing rules: 11 created');
 
-  const [, , , agentUser, customerUser] = users;
+  const customerUser = users[4];
   const sla = await prisma.slaPolicy.findUnique({ where: { priority: 'HIGH' } });
   const now = new Date();
 
-  await prisma.ticket.deleteMany({ where: { ticketNumber: { in: ['#ZEN-0001', '#ZEN-0002'] } } });
+  await prisma.ticket.deleteMany({ where: { ticketNumber: { startsWith: '#ZEN-' } } });
+  await prisma.spamReport.deleteMany({});
+  await prisma.blockedIp.deleteMany({ where: { ip: '203.0.113.50' } });
 
-  const sample1 = await prisma.ticket.create({
-    data: {
-      ticketNumber: '#ZEN-0001',
-      title: 'Cannot sign in on Safari',
-      description: 'Login fails with a 500 error on Safari 17. Happens every time after entering the password.',
-      status: 'OPEN',
-      priority: 'HIGH',
-      type: 'BUG',
-      customerId: customerUser.id,
-      assignedToId: agentUser.id,
-      teamId: itTeam.id,
-      categoryId: techCat.id,
-      slaResponseDueAt: new Date(now.getTime() + (sla?.responseTimeHours ?? 2) * 3600_000),
-      slaResolutionDueAt: new Date(now.getTime() + (sla?.resolutionTimeHours ?? 8) * 3600_000),
-      messages: {
-        create: [
-          { senderId: customerUser.id, body: 'Login fails with a 500 error on Safari 17.', type: 'REPLY' },
-          { senderId: agentUser.id, body: 'Thanks — I can reproduce this. Looking into it.', type: 'REPLY' },
-        ],
+  const statusMix = ['NEW', 'OPEN', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'RESOLVED', 'CLOSED', 'CLOSED'] as const;
+  const priorities = [TicketPriority.LOW, TicketPriority.MEDIUM, TicketPriority.HIGH, TicketPriority.URGENT];
+  const types = [TicketType.BUG, TicketType.QUESTION, TicketType.INCIDENT, TicketType.TASK, TicketType.FEATURE];
+  const cats = [techCat, billingCat, generalCat, incidentCat];
+  const teams = [itTeam, billingTeam, generalTeam, tier2Team];
+  const assignees = [agent, jordan, supervisor, priya, marcus, lina];
+  const csatRatings = [5, 5, 4, 5, 3, 4, 5, 2, 4, 5];
+  const titles = [
+    'Cannot sign in on Safari',
+    'Charged twice for last invoice',
+    'VPN drops every hour',
+    'Need refund for unused seats',
+    'Dashboard empty after deploy',
+    'Password reset never arrives',
+    'SSO login loop',
+    'Invoice PDF missing tax',
+    'Mobile app crash on send',
+    'Slow search on tickets',
+    'Outage on billing portal',
+    'Feature request: saved views',
+  ];
+
+  let spamTicketId = 0;
+  for (let i = 1; i <= 96; i += 1) {
+    const assignee = assignees[(i - 1) % assignees.length];
+    const status = statusMix[Math.floor((i - 1) / assignees.length) % statusMix.length];
+    const daysBack = 2 + ((i * 11) % 80);
+    const createdAt = new Date(now.getTime() - daysBack * 86_400_000 - (i % 9) * 3_600_000);
+    const cat = cats[(i - 1) % cats.length];
+    const team = teams[(i - 1) % teams.length];
+    const resolved = status === 'RESOLVED' || status === 'CLOSED';
+    const firstRespondedAt = status === 'NEW' ? null : new Date(createdAt.getTime() + (2 + (i % 5)) * 3_600_000);
+    const resolvedAt = resolved ? new Date(createdAt.getTime() + (18 + (i % 36)) * 3_600_000) : null;
+    const ticket = await prisma.ticket.create({
+      data: {
+        ticketNumber: `#ZEN-${String(i).padStart(4, '0')}`,
+        title: i <= titles.length ? titles[i - 1] : `${titles[(i - 1) % titles.length]} (${i})`,
+        description: `Demo ticket ${i} for analytics, SLA, and consultant history.`,
+        status,
+        priority: priorities[(i - 1) % priorities.length],
+        type: types[(i - 1) % types.length],
+        customerId: customerUser.id,
+        assignedToId: assignee.id,
+        teamId: team.id,
+        categoryId: cat.id,
+        createdAt,
+        firstRespondedAt,
+        resolvedAt,
+        closedAt: status === 'CLOSED' ? resolvedAt : null,
+        slaResponseDueAt: new Date(createdAt.getTime() + (sla?.responseTimeHours ?? 2) * 3_600_000),
+        slaResolutionDueAt: new Date(createdAt.getTime() + (sla?.resolutionTimeHours ?? 8) * 3_600_000),
+        slaResponseBreached: i % 11 === 0,
+        slaResolutionBreached: i % 13 === 0,
+        isSpamFlagged: i >= 88,
+        messages: {
+          create: [
+            { senderId: customerUser.id, body: `Customer update on ticket ${i}.`, type: 'REPLY' },
+            ...(status !== 'NEW'
+              ? [{ senderId: assignee.id, body: 'Thanks — I can reproduce this. Looking into it.', type: 'REPLY' as const }]
+              : []),
+          ],
+        },
+        ...(resolved
+          ? {
+              csatSurvey: {
+                create: {
+                  customerId: customerUser.id,
+                  rating: csatRatings[i % csatRatings.length],
+                  comment: [
+                    'Fixed quickly — thank you.',
+                    'Still a bit slow to first reply.',
+                    'Clear update, issue is gone.',
+                    'Did not fully solve it for me.',
+                    'Loved the follow-through.',
+                    'Please document the workaround.',
+                  ][i % 6],
+                  status: 'SUBMITTED',
+                  submittedAt: resolvedAt,
+                  expiresAt: new Date((resolvedAt ?? now).getTime() + 7 * 86_400_000),
+                },
+              },
+            }
+          : {}),
       },
+    });
+    if (i === 88) spamTicketId = ticket.id;
+  }
+
+  let extra = 97;
+  for (let a = 0; a < assignees.length; a += 1) {
+    for (let w = 0; w < 8; w += 1) {
+      const createdAt = new Date(now.getTime() - (w * 7 + a) * 86_400_000);
+      const resolvedAt = new Date(createdAt.getTime() + 10 * 3_600_000);
+      const status = w % 2 === 0 ? 'RESOLVED' : 'CLOSED';
+      await prisma.ticket.create({
+        data: {
+          ticketNumber: `#ZEN-${String(extra).padStart(4, '0')}`,
+          title: `${titles[w % titles.length]} (follow-up ${extra})`,
+          description: `Recent solved demo ticket ${extra}.`,
+          status,
+          priority: TicketPriority.MEDIUM,
+          type: TicketType.QUESTION,
+          customerId: customerUser.id,
+          assignedToId: assignees[a].id,
+          teamId: teams[a % teams.length].id,
+          categoryId: cats[a % cats.length].id,
+          createdAt,
+          firstRespondedAt: new Date(createdAt.getTime() + 1 * 3_600_000),
+          resolvedAt,
+          closedAt: status === 'CLOSED' ? resolvedAt : null,
+          slaResponseDueAt: new Date(createdAt.getTime() + 2 * 3_600_000),
+          slaResolutionDueAt: new Date(createdAt.getTime() + 8 * 3_600_000),
+          slaResponseBreached: a === 2 && w === 1,
+          slaResolutionBreached: a === 2 && w === 3,
+          messages: {
+            create: [
+              { senderId: customerUser.id, body: 'This is still happening this week.', type: 'REPLY' },
+              { senderId: assignees[a].id, body: 'Shipped a fix on this thread.', type: 'REPLY' },
+            ],
+          },
+          csatSurvey: {
+            create: {
+              customerId: customerUser.id,
+              rating: [5, 5, 4, 2, 5, 4, 3, 5][w],
+              comment: w === 3 ? 'Not resolved — I had to reopen.' : 'Recent case, rating captured.',
+              status: 'SUBMITTED',
+              submittedAt: resolvedAt,
+              expiresAt: new Date(resolvedAt.getTime() + 7 * 86_400_000),
+            },
+          },
+        },
+      });
+      extra += 1;
+    }
+  }
+
+  await prisma.spamReport.create({
+    data: {
+      targetType: 'Ticket',
+      targetId: spamTicketId,
+      reason: 'SPAM_CONTENT',
+      aiScore: 0.72,
+      status: 'PENDING',
     },
   });
-
-  await prisma.ticket.create({
-    data: {
-      ticketNumber: '#ZEN-0002',
-      title: 'Charged twice for last invoice',
-      description: 'I was billed twice for the same month. Please reverse the duplicate charge.',
-      status: 'NEW',
-      priority: 'HIGH',
-      type: 'QUESTION',
-      customerId: customerUser.id,
-      teamId: billingTeam.id,
-      categoryId: billingCat.id,
-      assignedToId: agentUser.id,
-      messages: {
-        create: [{ senderId: customerUser.id, body: 'I was billed twice for the same month.', type: 'REPLY' }],
-      },
-    },
+  await prisma.blockedIp.create({
+    data: { ip: '203.0.113.50', reason: 'demo block' },
   });
 
   await prisma.knowledgeArticle.deleteMany({
@@ -153,7 +284,7 @@ async function main() {
         title: 'How to reset your password',
         visibility: 'PUBLIC',
         isPublished: true,
-        authorId: agentUser.id,
+        authorId: agent.id,
         categoryId: generalCat.id,
         body: '1. Open the login page.\n2. Select Forgot password.\n3. Enter your email.\n4. Open the reset link and choose a new password (8+ characters).',
       },
@@ -161,7 +292,7 @@ async function main() {
         title: 'Cannot log in',
         visibility: 'PUBLIC',
         isPublished: true,
-        authorId: agentUser.id,
+        authorId: agent.id,
         categoryId: techCat.id,
         body: 'Try another browser, clear cache, and confirm Caps Lock is off. If the account is locked after failed attempts, wait 15 minutes or contact support.',
       },
@@ -169,7 +300,7 @@ async function main() {
         title: 'Duplicate charge or refund request',
         visibility: 'PUBLIC',
         isPublished: true,
-        authorId: agentUser.id,
+        authorId: agent.id,
         categoryId: billingCat.id,
         body: 'If you were billed twice, create a Billing ticket with the invoice date and amount. Finance reviews duplicate charges within one business day.',
       },
@@ -177,7 +308,7 @@ async function main() {
         title: 'How to create a support ticket',
         visibility: 'PUBLIC',
         isPublished: true,
-        authorId: agentUser.id,
+        authorId: agent.id,
         categoryId: generalCat.id,
         body: 'Go to New Ticket, add a short title, describe what you expected vs what happened, pick a category, then submit. You will receive a #ZEN-XXXX number.',
       },
@@ -185,7 +316,7 @@ async function main() {
         title: 'When to escalate a ticket',
         visibility: 'INTERNAL',
         isPublished: true,
-        authorId: agentUser.id,
+        authorId: agent.id,
         categoryId: incidentCat.id,
         body: 'Escalate to Tier-2 when there is an outage, a security concern, or SLA is past 80%. Add an internal note with impact and the last customer update.',
       },
@@ -193,7 +324,7 @@ async function main() {
         title: 'Writing a clear first response',
         visibility: 'INTERNAL',
         isPublished: true,
-        authorId: agentUser.id,
+        authorId: agent.id,
         categoryId: generalCat.id,
         body: 'Acknowledge the issue, confirm the ticket number, set the next step, and give a time window. Do not promise refunds unless Billing policy allows it.',
       },
@@ -201,14 +332,14 @@ async function main() {
         title: 'Draft: new refund FAQ',
         visibility: 'PUBLIC',
         isPublished: false,
-        authorId: agentUser.id,
+        authorId: agent.id,
         categoryId: billingCat.id,
         body: 'Draft: explain when refunds apply. Review before publishing.',
       },
     ],
   });
 
-  console.log(`✅ Sample tickets: ${sample1.ticketNumber} and #ZEN-0002`);
+  console.log('✅ Sample tickets: #ZEN-0001 through #ZEN-0144');
   console.log('✅ Knowledge articles: 4 public, 2 internal, 1 draft');
 
   console.log(`
@@ -221,6 +352,10 @@ async function main() {
   Admin         admin@zenflowai.com           password123
   Supervisor    supervisor@zenflowai.com      password123
   Agent         agent@zenflowai.com           password123
+  Agent         jordan@zenflowai.com          password123
+  Agent         priya@zenflowai.com           password123
+  Agent         marcus@zenflowai.com          password123
+  Agent         lina@zenflowai.com            password123
   Customer      customer@zenflowai.com        password123
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   `);
