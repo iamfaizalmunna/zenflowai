@@ -13,4 +13,19 @@ describe('public GraphQL errors', () => {
     assert.equal(result.message.includes('isAiConsultant'), false);
     assert.match(result.message, /database schema/i);
   });
+
+  it('leaves other internal errors unchanged', () => {
+    const result = publicGraphqlError({
+      message: 'Please wait 57 seconds before creating another ticket.',
+      extensions: { code: 'COOLDOWN_ACTIVE' },
+    });
+    assert.equal(result.message, 'Please wait 57 seconds before creating another ticket.');
+    assert.equal(result.extensions?.code, 'COOLDOWN_ACTIVE');
+
+    const internal = publicGraphqlError({
+      message: 'Unexpected failure in routing',
+      extensions: { code: 'INTERNAL_SERVER_ERROR' },
+    });
+    assert.equal(internal.message, 'Unexpected failure in routing');
+  });
 });

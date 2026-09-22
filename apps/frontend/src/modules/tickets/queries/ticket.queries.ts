@@ -46,6 +46,7 @@ export const GET_TICKET = gql`
         sender { id name role isAiConsultant }
       }
       lastConsult { id engine confidence createdAt }
+      attachments { id filename mimeType sizeBytes createdAt }
     }
   }
 `;
@@ -94,6 +95,18 @@ export const ADD_MESSAGE = gql`
       type
       createdAt
       sender { id name role isAiConsultant }
+    }
+  }
+`;
+
+export const UPLOAD_TICKET_ATTACHMENT = gql`
+  mutation UploadTicketAttachment($ticketId: Int!, $filename: String!, $mimeType: String!, $contentBase64: String!) {
+    uploadTicketAttachment(ticketId: $ticketId, filename: $filename, mimeType: $mimeType, contentBase64: $contentBase64) {
+      id
+      filename
+      mimeType
+      sizeBytes
+      createdAt
     }
   }
 `;

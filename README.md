@@ -1,405 +1,95 @@
 # ZenFlowAI
 
-> Phase 7 AI consultant for a clean, fast, AI-ready ticketing system.
-> Built with Next.js · Express · GraphQL · MySQL · Prisma.
-> Local MVP through Phase 7. Phase 8 is hardening, not a new product.
+Local service-desk demo: Next.js 15 · Express · GraphQL · MySQL · Prisma.
 
-[![Phase](https://img.shields.io/badge/Phase-7%20AI%20Consultant-blue)](#phases)
+Customers file tickets (`#ZEN-XXXX`). Nova answers first from the owned Help Center (optional local Ollama). Humans take over when confidence is low. Phases 1–8 are **this repo on your machine** — no cloud host, no email SaaS, no paid LLM.
+
 [![Stack](https://img.shields.io/badge/Stack-Next.js%2015%20%2B%20GraphQL%20%2B%20MySQL-6366f1)](#stack)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
----
-
-## What is ZenFlowAI?
-
-ZenFlowAI is a **medium-scale service desk and ticketing platform** — think Zendesk × Linear, simplified for real teams.
-
-- Customers submit tickets on the web, browse the Help Center, and rate CSAT after resolve
-- Agents work tickets in a **3-column workspace** with graphql-ws live updates
-- Supervisors watch SLA due times; admins edit users, teams, routing, SLA hours, and KB drafts
-- Signed-in users personalize the UI at **Appearance** (`/settings`); prefs persist **per user** in MySQL. Login and public pages always stay the default light iris look.
-- Mobile-first app chrome at ≤1024px, plus a PWA manifest
-- Every sensitive write is audit-logged. Every role sees only what they should.
-
-**AI consultant Nova is first responder.** Answers come from owned KB (optional local Ollama). Humans take over only if confidence is low. No API key required.
-
-**MVP status:** Phases 1–7 are a complete **local** ticketing MVP (demo MySQL, demo passwords). It is not internet-production until Phase 8 (HTTP-only cookies, migrations, email, attachments).
-
----
-
 ## Stack
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| **Frontend** | Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Framer Motion | Micro-frontend structure — each role is an isolated module |
-| **Backend** | Express.js, Apollo GraphQL (Apollo Server 4) | GraphQL Subscriptions = real-time built-in |
-| **Database** | MySQL + Prisma ORM | Type-safe, schema-first, easy migrations |
-| **Auth** | JWT access (15m) in `localStorage` + refresh token mutation (7d) | HTTP-only cookie transport is not wired yet |
-| **Real-time** | GraphQL Subscriptions via graphql-ws | `messageAdded`, `ticketUpdated`, `ticketCreated` |
-| **Background Jobs** | node-cron SLA sweep | Warnings, breaches, auto-close 48h after resolve |
-| **PWA** | `manifest.webmanifest` + `sw.js` | Installable; app chrome at ≤1024px |
-| **Monorepo** | pnpm workspaces + Turborepo | `apps/backend` + `apps/frontend` + `packages/shared` |
-| **Token Saving** | Apollo APQ + Token Savior MCP | -60–80% tokens per AI session |
+| Layer | What we use |
+|-------|-------------|
+| Frontend | Next.js 15, Tailwind, Apollo (`credentials: include`) |
+| Backend | Express, Apollo Server 4, graphql-ws |
+| DB | MySQL + Prisma (`pnpm db:migrate`) |
+| Auth | Access JWT 15m in `localStorage`; refresh cookie `zenflow_refresh` (HttpOnly, SameSite=Lax) |
+| Jobs | node-cron SLA sweep |
+| Files | Local `UPLOAD_DIR` (default `./uploads`, gitignored) |
 
----
+Roles: `CUSTOMER → AGENT → SUPERVISOR → ADMIN → SUPER_ADMIN`.
 
-## Role Hierarchy
+Request path: Helmet → rate limit → IP blocklist → bot detection → JWT → RBAC → data scope → Zod → spam → audit.
 
-```
-CUSTOMER → AGENT → SUPERVISOR → ADMIN → SUPER_ADMIN
-```
+## Quick start
 
-Each role sees a different layout, different data, different actions. Nothing leaks between roles.
-
----
-
-## Security — layers in use
-
-```
-Request → [L1 Helmet] → [L2 Rate Limit] → [L3 IP Blocklist] → [L4 Bot Detection]
-        → [L5 JWT Auth] → [L6 RBAC] → [L7 Data Scoping]
-        → [L8 Input Validation] → [L9 Spam Detection] → [L10 Audit Log] → Response
-```
-
-HTTP middleware is on from Phase 1. Ticket create also runs spam scoring, role
-quotas, and cooldowns before a `#ZEN-XXXX` ticket is saved.
-
----
-
-## Project Structure — actual (through Phase 7 on `main`)
-
-```
-ZenFlowAI/
-├── apps/
-│   ├── backend/
-│   │   ├── kb/                      # Owned how-tos + demo shards (seeded KB)
-│   │   ├── prisma/
-│   │   │   ├── schema.prisma        # Tickets, UiPreference, isAiConsultant, KnowledgeChunk, ConsultAttempt
-│   │   │   └── seed.ts              # Roles, Nova, consultants, tickets, CSAT, owned KB
-│   │   └── src/
-│   │       ├── graphql/schemas/     # auth, user, ticket, knowledge, admin, csat, appearance, analytics
-│   │       ├── graphql/resolvers/   # thin: auth + permission + service
-│   │       ├── services/            # tickets, routing, SLA, CSAT, appearance, analytics
-│   │       ├── services/ai/         # consult chain, Ollama probe, ingest, kb pack
-│   │       ├── jobs/slaCron.ts
-│   │       ├── security/            # RBAC, audit, spam, fair usage, HTTP stack
-│   │       └── utils/
-│   │
-│   └── frontend/
-│       └── src/
-│           ├── app/                 # (auth) (customer) (agent) (admin) analytics settings
-│           ├── modules/             # auth, tickets, admin, appearance, analytics
-│           ├── components/
-│           ├── lib/                 # Apollo, appearance, nav, charts
-│           └── store/               # Zustand auth only
-│
-├── .github/workflows/test.yml       # prisma generate + unit tests + optional Sonar
-├── sonar-project.properties
-├── PLAN.md
-└── turbo.json
-```
-
----
-
-## Quick Start
-
-### Prerequisites
-
-- Node.js ≥ 20
-- pnpm ≥ 9 — `npm i -g pnpm`
-- MySQL running locally
-
-### 1. Clone & install
+Need Node ≥ 20, pnpm ≥ 9, MySQL (demo often `localhost:3307`).
 
 ```bash
 git clone https://github.com/iamfaizalmunna/zenflowai.git
 cd zenflowai
 pnpm install
-```
-
-### 2. Environment setup
-
-```bash
-# Backend
-cp apps/backend/.env.example apps/backend/.env
-# Edit DATABASE_URL with your MySQL connection
-
-# Frontend
+cp apps/backend/.env.example apps/backend/.env          # set DATABASE_URL
 cp apps/frontend/.env.local.example apps/frontend/.env.local
-# Demo DB is often mysql://root@localhost:3307/zenflowai
+pnpm db:generate && pnpm db:migrate && pnpm db:seed
+pnpm dev   # http://localhost:3000  ·  GraphQL http://localhost:4000/graphql
 ```
 
-### 3. Database
+Already-pushed demo DBs (old `db push`): run once  
+`pnpm --filter backend exec prisma migrate resolve --applied 20260922150000_init`
 
-```bash
-pnpm db:generate   # generate Prisma client (also a backend postinstall; required in CI before tests)
-pnpm db:seed       # seed demo data
-pnpm test          # unit tests (tsx --test), Prisma-free, including appearance + Phase 7 consult math
-# prisma/migrations is gitignored; apply schema locally with `pnpm --filter backend exec prisma db push`
-```
+CI (`.github/workflows/test.yml`) only runs `pnpm db:generate` + unit tests. No hosted MySQL.
 
-CI (`.github/workflows/test.yml`) generates Prisma, runs unit tests, and uploads SonarQube/SonarCloud when the `SONAR_TOKEN` GitHub secret is set (`SONAR_HOST_URL` defaults to `https://sonarcloud.io`).
+## Demo logins
 
-### 4. Run
+Password for all: `password123`
 
-```bash
-pnpm dev
-# Frontend  → http://localhost:3000
-# GraphQL   → http://localhost:4000/graphql
-# DB Studio → pnpm db:studio → http://localhost:5555
-```
+| Role | Email |
+|------|-------|
+| Super Admin | superadmin@zenflowai.com |
+| Admin | admin@zenflowai.com |
+| Supervisor | supervisor@zenflowai.com |
+| Agent | agent@zenflowai.com, jordan@…, priya@…, marcus@…, lina@… |
+| AI (Nova) | nova@zenflowai.com |
+| Customer | customer@zenflowai.com |
 
----
+Appearance (`/settings`) is per signed-in user. Login/public pages stay the default light theme.
 
-## Demo Credentials
+## What ships
 
-| Role | Email | Password |
-|------|-------|----------|
-| Super Admin | superadmin@zenflowai.com | password123 |
-| Admin | admin@zenflowai.com | password123 |
-| Supervisor | supervisor@zenflowai.com | password123 |
-| Agent | agent@zenflowai.com | password123 |
-| Agent | jordan@zenflowai.com | password123 |
-| Agent | priya@zenflowai.com | password123 |
-| Agent | marcus@zenflowai.com | password123 |
-| Agent | lina@zenflowai.com | password123 |
-| AI consultant | nova@zenflowai.com | password123 |
-| Customer | customer@zenflowai.com | password123 |
+| | |
+|--|--|
+| Tickets | Create, queue, 3-column workspace, live thread (graphql-ws) |
+| Nova | First assignee; owned KB + optional Ollama; “Still need a person” |
+| Ops | SLA cron, CSAT, admin users/teams/routing/SLA/KB drafts |
+| UI | Per-user Appearance, ticket views, PWA chrome ≤1024px |
+| Analytics | `/analytics` (SUPERVISOR+); consultants ADMIN+ |
+| Phase 8 | Refresh cookie, committed Prisma migrations, local attachments, in-app bell |
 
-After login, **Appearance** is `/settings`: sounds, system/light/dark, accent + shade, matte/glossy/glass, font family/size, density, logo, default ticket view. Saved in `ui_preferences` **for that user only** via `myAppearance` / `saveAppearance`. Ticket queues also sort, filter (status + priority), and switch list / compact / card / icon views. Sign-out returns the guest shell to the product default.
+Not in this demo: email, S3/R2, Firecrawl, paid OpenAI, webhooks, SSO, hosting.
 
----
+KB markdown lives in `apps/backend/kb/` (seeded). Ollama is optional; retrieval still works without it. `pnpm --filter backend ai:doctor` prints the engine.
 
-## Phases
-
-This repo has **seven shipped phases** on `main` (local MVP). **Phase 8** is planned hardening.
-
-| Phase | What's built | Status |
-|-------|-------------|--------|
-| **1 — Foundation & Auth** | Auth screens, JWT, role layout, RBAC, 10 security layers | ✅ `main` (with Phase 2) |
-| **2 — Ticket Engine + Help Center** | Tickets `#ZEN-XXXX`, routing, SLA dates, messages, owned KB | ✅ `main` ([#1](https://github.com/iamfaizalmunna/zenflowai/pull/1)) |
-| **3 — Workspace & Real-time** | 3-column workspace, graphql-ws, related articles, template replies | ✅ `main` |
-| **4 — Automation & Admin** | SLA cron, CSAT, admin screens, extractive Help Q&A | ✅ `main` |
-| **5 — UI Customization** | Per-user Appearance, ticket views/sort/filter, click sounds | ✅ `main` ([#3](https://github.com/iamfaizalmunna/zenflowai/pull/3)) |
-| **6 — Analytics & Polish** | Infographic analytics, consultant profiles, security review, seed | ✅ `main` ([#2](https://github.com/iamfaizalmunna/zenflowai/pull/2)) |
-| **7 — AI Consultant** | Nova first assignee, grounded KB, optional Ollama, handoff | ✅ `main` ([#5](https://github.com/iamfaizalmunna/zenflowai/pull/5)) |
-| **CI / Sonar** | `prisma generate`, unit tests, optional SonarCloud | ✅ `main` ([#6](https://github.com/iamfaizalmunna/zenflowai/pull/6)) |
-| **8 — MVP hardening** | HTTP-only cookies, migrations, email, attachments | 📋 Planned — see [`PLAN.md`](./PLAN.md) |
-
-See [`PLAN.md`](./PLAN.md) for the full architecture blueprint.
-
----
-
-## Phase 7 capabilities
+## Layout
 
 ```
-Customer opens a ticket
-      ↓
-Assigned to Nova (AI consultant)
-      ↓
-Retrieve owned KB → optional tiny Ollama if healthy → else extractive answer
-      ↓
-Cited reply in the thread (ticket create does not wait)
-      ↓
-Low confidence or “Still need a person” → human consultant
+apps/backend/   prisma/  kb/  src/{graphql,services,security,jobs,utils}
+apps/frontend/  src/{app,modules,components,lib,store}
+PLAN.md         architecture snapshot
 ```
 
-`pnpm --filter backend ai:doctor` never fails install. `ai:setup` is opt-in (no signup). `AI_PROVIDER=auto`.
+Resolvers stay thin (auth + permission + service). Prisma stays in `services/`.
 
-## Phase 6 capabilities
-
-```
-Supervisor/Admin opens Analytics
-      ↓
-Range 7/30/90 days + chart-type switcher (line/area/bar/pie/donut/radial/radar)
-      ↓
-Leaderboard + customer feedback on resolved work
-      ↓
-Admin opens Consultants (ADMIN+ only) — progress, CSAT, assessment, completed tickets
-      ↓
-Security: audit log, block IP, spam confirm/dismiss
-      ↓
-Seed: 144 tickets, CSAT comments, spam queue, 6 consultants
-```
-
-## Phase 5 capabilities
-
-```
-Signed-in user opens Appearance (/settings)
-      ↓
-Sounds, light/dark, accent, finish, type, density, logo
-      ↓
-Prefs saved in MySQL (ui_preferences, unique userId) and restored on that login
-      ↓
-Ticket lists: sort, status/priority filter, list/compact/card/icon views
-      ↓
-Guest/login always stay the default ZenFlow light iris look
-```
-
-## Phase 4 capabilities
-
-```
-Ticket hits SLA warning / breach
-      ↓
-Cron notifies staff and flags the ticket
-      ↓
-Resolved tickets auto-close after 48h
-      ↓
-Customer rates CSAT (7-day window)
-      ↓
-Admin edits users, teams, routing, SLA hours, KB drafts
-      ↓
-Help Center Q&A cites owned articles (no API key)
-```
-
-## Phase 3 capabilities
-
-```
-Agent opens a ticket
-      ↓
-3-column workspace (info | thread | actions + related KB)
-      ↓
-SLA countdown from stored due dates
-      ↓
-Suggest Reply (category templates, no API key)
-      ↓
-graphql-ws: messageAdded / ticketUpdated / ticketCreated
-      ↓
-Customer create-ticket shows related Help Center hits
-```
-
-## Phase 2 capabilities (still in place)
-
-```
-Login (Phase 1)
-      ↓
-Customer creates a ticket
-      ↓
-Spam + quota checks, then #ZEN-XXXX
-      ↓
-Routing rule picks a team (and least-busy agent when possible)
-      ↓
-SLA first-response and resolve due dates stored
-      ↓
-Customer sees own tickets; agent sees the team queue
-      ↓
-Thread messages (reply / internal note)
-      ↓
-Help Center: public articles for customers, internal guides for staff
-```
-
-This is the light MVP through Phase 7: live workspace, SLA cron, CSAT, admin screens, Nova AI consultant (KB + optional Ollama), per-user Appearance, analytics/consultants/security, PWA. No Firecrawl, no paid LLM, no cloud host.
-
-### What is installed vs what runs in the background
-
-| Piece | On `pnpm install` | On GitHub | Runs in background |
-|-------|-------------------|-----------|--------------------|
-| Nova + consult chain (TypeScript) | Yes | Yes | With the API process |
-| Owned KB (`apps/backend/kb/` + `shards/pack-01.jsonl`) | Seeded into MySQL (how-tos + first 400 shard articles) | Yes — this **is** the demo KB (~88MB unique JSONL under the 100MB GitHub cap) | No extra process |
-| `ollama` **npm client** | Yes (tiny JS library) | Yes | No |
-| Ollama **app + model** (~0.4–2GB) | **No** | **No** | Only if you already installed Ollama |
-| Scraper / raw scrape cache | No | **No** (`data/kb/` gitignored) | No |
-
-Nova answers from the seeded KB even when Ollama is not installed. `pnpm --filter backend ai:doctor` prints `engine=retrieval` or `engine=ollama`. The demo knowledge base is `apps/backend/kb/` including `shards/pack-01.jsonl`. Do not commit Ollama models or scrape cache.
-
----
-
-## GraphQL API — Key Operations
+## GraphQL (common)
 
 ```graphql
-# Auth
-mutation Login($email: String!, $password: String!) {
-  login(email: $email, password: $password) {
-    accessToken
-    user { id name role }
-  }
-}
-
-query CurrentUser {
-  me { id email name role }
-}
-
-# Admin and Super Admin only
-query Users {
-  users { id email name role isActive isBanned }
-}
-
-# Tickets
-mutation CreateTicket($input: CreateTicketInput!) {
-  createTicket(input: $input) {
-    ticketNumber title status priority slaResponseDueAt slaResolutionDueAt
-  }
-}
-
-query Tickets($filter: TicketFilter) {
-  tickets(filter: $filter) { tickets { ticketNumber title status } total }
-}
-
-mutation AddMessage($input: AddMessageInput!) {
-  addMessage(input: $input) { id body type }
-}
-
-# Help Center
-query Knowledge($search: String) {
-  knowledgeArticles(search: $search) { id title visibility }
-}
-
-query Related($ticketId: Int!) {
-  relatedArticles(ticketId: $ticketId) { id title }
-}
-
-subscription OnMessage($ticketId: Int!) {
-  messageAdded(ticketId: $ticketId) { id body type }
-}
-
-# Appearance (signed-in)
-query MyAppearance {
-  myAppearance {
-    colorMode accentHex shade finish fontFamily fontSize
-    density ticketView ticketSort soundsMuted logoDataUrl
-  }
-}
-
-mutation SaveAppearance($input: AppearanceInput!) {
-  saveAppearance(input: $input) { accentHex finish ticketView }
-}
+mutation { login(email: "...", password: "...") { accessToken user { id role } } }
+mutation { refreshToken { accessToken } }          # cookie, not JSON refresh token
+query { me { id role } myNotifications { id title ticketId isRead } }
+mutation { createTicket(input: { title, description, type: QUESTION }) { ticketNumber } }
+mutation { uploadTicketAttachment(ticketId: 1, filename: "a.png", mimeType: "image/png", contentBase64: "...") { id } }
+subscription { messageAdded(ticketId: 1) { id body } }
 ```
 
----
-
-## Token Saving
-
-This project is set up to minimise AI token usage across every session.
-
-| Method | Saving | Setup |
-|--------|--------|-------|
-| **Token Savior MCP** | ~80% active tokens | See `.cursor/mcp.json` — restart Cursor |
-| **Apollo APQ** | Query bandwidth reduction | Client link exists; server-side persisted-query cache is planned |
-| **Cursor Rules** | Prevents full-file reads | Auto — `.cursor/rules/` |
-
-```bash
-# Activate Token Savior Bash compaction
-pip install "token-savior-recall[mcp]"
-export TS_BASH_COMPACT=1 && export TS_BASH_REWRITE=1
-ts init --agent cursor --yes
-```
-
----
-
-## Not in the local MVP (Phase 8 and later)
-
-**Phase 8 (next):** HTTP-only refresh cookies, committed Prisma migrations, transactional email, ticket attachments, honest GraphQL errors.
-
-**Later than Phase 8:** crawler / Firecrawl, paid OpenAI, webhooks, SSO/SAML, React Native, Apollo Federation, voice tickets, cloud host.
-
-## Roadmap (after Phase 8)
-
-- [ ] Email notifications (SendGrid / Resend) — starts in Phase 8
-- [ ] File attachments — local disk in Phase 8; R2 later
-- [ ] SSO / SAML
-- [ ] Mobile app (React Native)
-- [ ] Apollo Federation
-
----
-
-*README matches code on `main`. Last updated: Phases 1–7 shipped; Phase 8 planned; ticket create uses `customerId` in spam checks.*
+See [`PLAN.md`](./PLAN.md) for roles, env names, and file conventions.

@@ -12,6 +12,7 @@ import {
 } from '../../services/ticket.service';
 import { addMessage } from '../../services/message.service';
 import { handoffTicket } from '../../services/ai/consultTicket.service';
+import { listAttachments, uploadTicketAttachment } from '../../services/attachment.service';
 
 function mapZod(err: unknown): never {
   if (err instanceof ZodError) {
@@ -72,10 +73,20 @@ export const ticketResolvers = {
       requirePermission(ctx.role, 'ticket:handoff', ctx.permissionOverrides);
       return handoffTicket(ctx, ticketId);
     },
+
+    uploadTicketAttachment: async (
+      _: unknown,
+      args: { ticketId: number; filename: string; mimeType: string; contentBase64: string },
+      ctx: Context
+    ) => {
+      requirePermission(ctx.role, 'message:create', ctx.permissionOverrides);
+      return uploadTicketAttachment(ctx, args);
+    },
   },
 
   Ticket: {
     lastConsult: (parent: { consultAttempts?: Array<{ id: number; engine: string; confidence: number; createdAt: Date }> }) =>
       parent.consultAttempts?.[0] ?? null,
+    attachments: (parent: { id: number }, _: unknown, ctx: Context) => listAttachments(ctx, parent.id),
   },
 };

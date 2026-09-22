@@ -11,7 +11,7 @@ import { audit } from '../security/audit';
 import { Context } from '../types/context';
 import { pubsub, TICKET_CREATED_TOPIC, ticketUpdatedTopic } from '../utils/pubsub';
 import { openCsatForTicket } from './csat.service';
-import { scheduleAiConsult } from './ai/consultSchedule';
+import { notifyUser } from './notify.service';
 
 const createSchema = z.object({
   title: z.string().min(4).max(180),
@@ -167,15 +167,22 @@ export async function createTicket(ctx: Context, raw: unknown) {
 
   await saveRoutingDecision(ticket.id, routing);
 
-  await prisma.notification.create({
-    data: {
-      userId: routing.assignedUserId ?? ctx.userId,
-      type: routing.assignedUserId ? 'TICKET_ASSIGNED' : 'TICKET_CREATED',
-      ticketId: ticket.id,
-      title: routing.assignedUserId ? 'New ticket assigned' : 'Ticket created',
-      body: `${ticket.ticketNumber}: ${ticket.title}`,
-    },
-  }).catch(() => undefined);
+  await notifyUser(
+    ctx.userId,
+    'TICKET_CREATED',
+    `Ticket created ${ticket.ticketNumber}`,
+    ticket.title,
+    ticket.id
+  );
+  if (routing.assignedUserId && routing.assignedUserId !== ctx.userId) {
+    await notifyUser(
+      routing.assignedUserId,
+      'TICKET_ASSIGNED',
+      `New ticket assigned ${ticket.ticketNumber}`,
+      ticket.title,
+      ticket.id
+    );
+  }
 
   await audit({
     action: 'TICKET_CREATED',

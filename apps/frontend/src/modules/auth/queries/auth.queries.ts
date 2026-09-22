@@ -29,8 +29,8 @@ export const REGISTER_MUTATION = gql`
 `;
 
 export const REFRESH_TOKEN_MUTATION = gql`
-  mutation RefreshToken($refreshToken: String!) {
-    refreshToken(refreshToken: $refreshToken) {
+  mutation RefreshToken {
+    refreshToken {
       accessToken
       user {
         id

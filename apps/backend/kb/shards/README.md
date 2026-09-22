@@ -1,5 +1,3 @@
-# Temp testing shards (unique articles, not empty padding)
+# Demo article shard
 
-`pack-01.jsonl` is a **real article corpus** for temporary Q&A testing, kept under GitHub’s 100MB file cap (~88MB). Each line is a unique ZenFlow how-to (error code, browser, steps). Delete these files with the repo when testing is done.
-
-Seed loads the markdown pack plus the first 400 shard articles into MySQL so Nova can answer without importing the whole file.
+`pack-01.jsonl` is extra how-tos for Q&A (~88MB, under GitHub’s 100MB cap). Seed loads markdown plus the first 400 shard lines into MySQL.

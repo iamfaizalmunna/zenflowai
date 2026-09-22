@@ -11,6 +11,7 @@ import { isNavActive, navForRole } from '@/lib/nav';
 import { cn } from '@/lib/utils';
 import { isDarkColorMode, toggledColorMode } from '@/lib/appearance';
 import { ZenLogo } from '@/components/brand/ZenLogo';
+import { NotificationBell } from '@/components/layout/NotificationBell';
 import { NAV_ICONS } from '@/components/layout/navIcons';
 import { useUiSound } from '@/hooks/useUiSound';
 import { useAppearance } from '@/hooks/useAppearance';
@@ -28,8 +29,9 @@ export function Sidebar() {
 
   return (
     <aside className="hidden app:flex w-60 flex-col h-full border-r border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="h-16 flex items-center px-4 border-b border-border/60">
+      <div className="h-16 flex items-center justify-between px-4 border-b border-border/60">
         <ZenLogo size={32} />
+        <NotificationBell />
       </div>
 
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">

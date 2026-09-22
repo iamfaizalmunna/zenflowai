@@ -1,6 +1,7 @@
 import { GraphQLError } from 'graphql';
 import { Context } from '../../types/context';
 import { loginUser, registerUser, refreshAccessToken, logoutUser, getMe } from '../../services/auth.service';
+import { clearRefreshCookie, setRefreshCookie } from '../../utils/refreshCookie';
 
 export const authResolvers = {
   Query: {
@@ -22,9 +23,7 @@ export const authResolvers = {
         ctx.ip ?? 'unknown',
         ctx.userAgent
       );
-      // Note: refreshToken should be set as HTTP-only cookie in production.
-      // For now it's returned in payload for dev convenience.
-      // In Phase 3 we'll move refresh token to cookie via Express middleware.
+      setRefreshCookie(ctx.res, tokens.refreshToken);
       return { accessToken: tokens.accessToken, user };
     },
 
@@ -40,20 +39,25 @@ export const authResolvers = {
         ctx.ip ?? 'unknown',
         ctx.userAgent
       );
+      setRefreshCookie(ctx.res, tokens.refreshToken);
       return { accessToken: tokens.accessToken, user };
     },
 
     refreshToken: async (
       _: unknown,
-      { refreshToken }: { refreshToken: string },
+      { refreshToken }: { refreshToken?: string | null },
       ctx: Context
     ) => {
-      return refreshAccessToken(refreshToken, ctx.ip ?? 'unknown');
+      const token = refreshToken || ctx.refreshCookie;
+      if (!token) {
+        throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
+      }
+      return refreshAccessToken(token, ctx.ip ?? 'unknown');
     },
 
     logout: async (_: unknown, __: unknown, ctx: Context) => {
-      if (!ctx.userId) return true;
-      await logoutUser(ctx.userId);
+      if (ctx.userId) await logoutUser(ctx.userId, ctx.refreshCookie ?? undefined);
+      clearRefreshCookie(ctx.res);
       return true;
     },
   },

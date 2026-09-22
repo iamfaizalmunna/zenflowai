@@ -1,7 +1,5 @@
-# Owned knowledge pack
+# Demo Help Center
 
-This folder is the **demo Help Center**. It is committed so a clone can `pnpm db:seed` and Nova can answer without running a scraper.
+Markdown in this folder is seeded (`pnpm db:seed`) so Nova can answer without a scraper.
 
-Do not put scrape dumps, `.gguf` models, or the Ollama binary here. GitHub rejects files over 100MB. Splitting dummy data into ~90MB files still bloated every clone and is not how this pack ships. Keep articles as small markdown. If a future corpus is large, split **real** text under 90MB per file — never pad.
-
-Raw ingest cache (this machine only): `data/kb/` at the repo root (gitignored).
+Do not commit scrape dumps, Ollama models, or files over GitHub’s 100MB limit. Local ingest cache: `data/kb/` (gitignored).

@@ -1,9 +1,12 @@
+import type { Response } from 'express';
+
 export interface Context {
   userId: number | null;
   role: string | null;
   ip: string | null;
   userAgent: string | null;
   requestId: string | null;
-  // Permission overrides for this user (loaded from DB on demand)
+  res?: Response;
+  refreshCookie?: string | null;
   permissionOverrides?: Array<{ permission: string; granted: boolean }>;
 }

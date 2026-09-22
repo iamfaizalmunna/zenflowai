@@ -1,6 +1,7 @@
 import { NotificationType, TicketStatus } from '@prisma/client';
 import { prisma } from '../utils/prisma';
 import { isSlaBreached, isSlaWarning, shouldAutoClose } from './slaSweep';
+import { notifyUser } from './notify.service';
 
 const OPEN = ['NEW', 'OPEN', 'IN_PROGRESS', 'ON_HOLD'] as const;
 
@@ -9,9 +10,7 @@ async function notifyOnce(userId: number, type: NotificationType, ticketId: numb
     where: { userId, type, ticketId },
   });
   if (existing) return;
-  await prisma.notification.create({
-    data: { userId, type, ticketId, title, body },
-  });
+  await notifyUser(userId, type, title, body, ticketId);
 }
 
 async function staffRecipients(assignedToId: number | null): Promise<number[]> {

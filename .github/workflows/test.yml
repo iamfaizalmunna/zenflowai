@@ -22,6 +22,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --no-frozen-lockfile
+      # CI has no MySQL. Local demo uses `pnpm db:migrate` then `pnpm db:seed`.
       - run: pnpm db:generate
       - run: pnpm --filter backend test:coverage
       - name: SonarQube Scan

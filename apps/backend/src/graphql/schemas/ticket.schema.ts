@@ -69,6 +69,15 @@ export const ticketTypeDefs = gql`
     category: Category
     messages: [TicketMessage!]
     lastConsult: ConsultAttempt
+    attachments: [TicketAttachment!]
+  }
+
+  type TicketAttachment {
+    id: Int!
+    filename: String!
+    mimeType: String!
+    sizeBytes: Int!
+    createdAt: DateTime!
   }
 
   type ConsultAttempt {
@@ -139,6 +148,7 @@ export const ticketTypeDefs = gql`
     updateTicket(id: Int!, input: UpdateTicketInput!): Ticket!
     addMessage(input: AddMessageInput!): TicketMessage!
     handoffTicket(ticketId: Int!): Ticket!
+    uploadTicketAttachment(ticketId: Int!, filename: String!, mimeType: String!, contentBase64: String!): TicketAttachment!
   }
 
   extend type Subscription {

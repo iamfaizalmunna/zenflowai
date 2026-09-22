@@ -205,7 +205,7 @@ export const speedLimiter = slowDown({
 
 // ─── 9. Payload Size Limiter (applied in index.ts via express.json limit) ─────
 export const JSON_BODY_LIMIT = '100kb';    // Prevent huge request bodies
-export const GRAPHQL_BODY_LIMIT = '500kb'; // GraphQL queries can be larger
+export const GRAPHQL_BODY_LIMIT = '12mb';
 
 // ─── 10. GraphQL-specific security middleware ─────────────────────────────────
 
