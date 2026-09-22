@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-export const fieldLabelClass = 'block text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground mb-2';
+export const fieldLabelClass = 'block text-[12px] font-medium text-muted-foreground mb-1.5';
 
 export const controlClass = cn(
   'w-full min-h-12 rounded-2xl border border-border bg-card px-3.5 text-sm text-foreground',
@@ -15,7 +15,7 @@ export const controlClass = cn(
 export const buttonClass = {
   primary: cn(
     'inline-flex items-center justify-center gap-2 min-h-12 px-4 rounded-2xl text-sm font-medium',
-    'bg-primary text-primary-foreground shadow-lg shadow-iris/20',
+    'bg-primary text-primary-foreground shadow-sm shadow-iris/15',
     'hover:brightness-110 active:scale-[0.98] transition duration-200',
     'disabled:opacity-50 disabled:pointer-events-none',
   ),

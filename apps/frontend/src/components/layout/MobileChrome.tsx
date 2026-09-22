@@ -49,7 +49,7 @@ export function MobileChrome() {
                 }}
                 className={cn(
                   'w-full flex flex-col items-center gap-0.5 py-2.5 min-h-14 text-[10px]',
-                  moreOpen ? 'text-iris font-medium' : 'text-muted-foreground',
+                  moreOpen ? 'text-foreground font-medium' : 'text-muted-foreground',
                 )}
               >
                 <MoreHorizontal className="w-5 h-5" />
@@ -89,7 +89,7 @@ function MobileTab({
         onClick={onTap}
         className={cn(
           'flex flex-col items-center gap-0.5 py-2.5 min-h-14 text-[10px]',
-          active ? 'text-iris font-medium' : 'text-muted-foreground',
+          active ? 'text-foreground font-medium' : 'text-muted-foreground',
         )}
       >
         <Icon className="w-5 h-5" />

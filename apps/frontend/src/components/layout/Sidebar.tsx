@@ -42,14 +42,14 @@ export function Sidebar() {
               href={item.href}
               onClick={() => void play('tap')}
               className={cn(
-                'relative flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm transition-colors min-h-11',
+                'relative flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors min-h-10',
                 active ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground',
               )}
             >
               {active && (
                 <motion.div
                   layoutId="nav-active"
-                  className="absolute inset-0 rounded-2xl bg-iris/15 ring-1 ring-iris/30"
+                  className="absolute inset-0 rounded-xl bg-muted"
                   transition={{ type: 'spring', bounce: 0.18, duration: 0.4 }}
                 />
               )}

@@ -55,7 +55,7 @@ export function MoreSheet({
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted-foreground/25" />
             <div className="flex items-center justify-between px-1 mb-4">
               <div>
-                <p className="font-display text-xl tracking-tight">More</p>
+                <p className="text-lg font-semibold tracking-tight">More</p>
                 <p className="text-xs text-muted-foreground">Workspace and preferences</p>
               </div>
               <button
@@ -68,7 +68,7 @@ export function MoreSheet({
               </button>
             </div>
 
-            <p className="px-1 mb-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Workspace</p>
+            <p className="px-1 mb-2 text-xs text-muted-foreground">Workspace</p>
             <div className="rounded-3xl border border-border/60 bg-card/80 overflow-hidden mb-4">
               {items.map((item) => {
                 const Icon = NAV_ICONS[item.icon];
@@ -96,7 +96,7 @@ export function MoreSheet({
               })}
             </div>
 
-            <p className="px-1 mb-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Preferences</p>
+            <p className="px-1 mb-2 text-xs text-muted-foreground">Preferences</p>
             <div className="rounded-3xl border border-border/60 bg-card/80 overflow-hidden mb-4">
               <Link
                 href="/settings"

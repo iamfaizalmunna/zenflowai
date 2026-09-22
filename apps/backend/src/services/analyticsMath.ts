@@ -49,6 +49,36 @@ export function fillDayBuckets(end: Date, days: number, timestamps: Date[]): Cha
   return buckets;
 }
 
+export function startOfIsoWeekUtc(date: Date): Date {
+  const day = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const weekday = (day.getUTCDay() + 6) % 7;
+  day.setUTCDate(day.getUTCDate() - weekday);
+  return day;
+}
+
+export function emptyWeekBuckets(end: Date, weeks: number): ChartPoint[] {
+  const points: ChartPoint[] = [];
+  const start = startOfIsoWeekUtc(end);
+  for (let i = weeks - 1; i >= 0; i -= 1) {
+    const d = new Date(start);
+    d.setUTCDate(d.getUTCDate() - i * 7);
+    points.push({ key: dayKey(d), value: 0 });
+  }
+  return points;
+}
+
+export function fillWeekBuckets(end: Date, weeks: number, timestamps: Date[]): ChartPoint[] {
+  const buckets = emptyWeekBuckets(end, weeks);
+  const index = new Map(buckets.map((p, i) => [p.key, i]));
+  timestamps.forEach((ts) => {
+    const key = dayKey(startOfIsoWeekUtc(ts));
+    const i = index.get(key);
+    if (i === undefined) return;
+    buckets[i] = { key, value: buckets[i].value + 1 };
+  });
+  return buckets;
+}
+
 export function countBy(keys: string[]): ChartPoint[] {
   const map = new Map<string, number>();
   keys.forEach((key) => map.set(key, (map.get(key) ?? 0) + 1));

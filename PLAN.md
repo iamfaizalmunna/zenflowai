@@ -1033,7 +1033,7 @@ Keep `spamDetector` + `bad-words` + `isbot`. Behind it:
 - No cloud spam APIs
 
 #### Slice 4 — Polish
-- Seed 72 tickets, 6 consultants (Maya, Jordan, Priya, Marcus, Lina + supervisor), threads, CSAT, spam flags
+- Seed 96 tickets, 6 consultants (Maya, Jordan, Priya, Marcus, Lina + supervisor), threads, CSAT, spam flags
 - Skeletons, empty states
 - Permission pass
 

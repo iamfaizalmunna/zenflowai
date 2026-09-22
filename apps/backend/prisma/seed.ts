@@ -117,12 +117,13 @@ async function main() {
   await prisma.spamReport.deleteMany({});
   await prisma.blockedIp.deleteMany({ where: { ip: '203.0.113.50' } });
 
-  const statuses = ['NEW', 'OPEN', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'] as const;
+  const statusMix = ['NEW', 'OPEN', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'RESOLVED', 'CLOSED', 'CLOSED'] as const;
   const priorities = [TicketPriority.LOW, TicketPriority.MEDIUM, TicketPriority.HIGH, TicketPriority.URGENT];
   const types = [TicketType.BUG, TicketType.QUESTION, TicketType.INCIDENT, TicketType.TASK, TicketType.FEATURE];
   const cats = [techCat, billingCat, generalCat, incidentCat];
   const teams = [itTeam, billingTeam, generalTeam, tier2Team];
   const assignees = [agent, jordan, supervisor, priya, marcus, lina];
+  const csatRatings = [5, 5, 4, 5, 3, 4, 5, 2, 4, 5];
   const titles = [
     'Cannot sign in on Safari',
     'Charged twice for last invoice',
@@ -139,15 +140,16 @@ async function main() {
   ];
 
   let spamTicketId = 0;
-  for (let i = 1; i <= 72; i += 1) {
-    const assignee = assignees[Math.floor((i - 1) / statuses.length) % assignees.length];
-    const status = statuses[(i - 1) % statuses.length];
-    const createdAt = new Date(now.getTime() - (i % 70) * 86_400_000);
+  for (let i = 1; i <= 96; i += 1) {
+    const assignee = assignees[(i - 1) % assignees.length];
+    const status = statusMix[Math.floor((i - 1) / assignees.length) % statusMix.length];
+    const daysBack = 2 + ((i * 11) % 80);
+    const createdAt = new Date(now.getTime() - daysBack * 86_400_000 - (i % 9) * 3_600_000);
     const cat = cats[(i - 1) % cats.length];
     const team = teams[(i - 1) % teams.length];
     const resolved = status === 'RESOLVED' || status === 'CLOSED';
-    const firstRespondedAt = status === 'NEW' ? null : new Date(createdAt.getTime() + 2 * 3_600_000);
-    const resolvedAt = resolved ? new Date(createdAt.getTime() + 26 * 3_600_000) : null;
+    const firstRespondedAt = status === 'NEW' ? null : new Date(createdAt.getTime() + (2 + (i % 5)) * 3_600_000);
+    const resolvedAt = resolved ? new Date(createdAt.getTime() + (18 + (i % 36)) * 3_600_000) : null;
     const ticket = await prisma.ticket.create({
       data: {
         ticketNumber: `#ZEN-${String(i).padStart(4, '0')}`,
@@ -168,7 +170,7 @@ async function main() {
         slaResolutionDueAt: new Date(createdAt.getTime() + (sla?.resolutionTimeHours ?? 8) * 3_600_000),
         slaResponseBreached: i % 11 === 0,
         slaResolutionBreached: i % 13 === 0,
-        isSpamFlagged: i >= 51,
+        isSpamFlagged: i >= 88,
         messages: {
           create: [
             { senderId: customerUser.id, body: `Customer update on ticket ${i}.`, type: 'REPLY' },
@@ -182,7 +184,15 @@ async function main() {
               csatSurvey: {
                 create: {
                   customerId: customerUser.id,
-                  rating: (i % 5) + 1,
+                  rating: csatRatings[i % csatRatings.length],
+                  comment: [
+                    'Fixed quickly — thank you.',
+                    'Still a bit slow to first reply.',
+                    'Clear update, issue is gone.',
+                    'Did not fully solve it for me.',
+                    'Loved the follow-through.',
+                    'Please document the workaround.',
+                  ][i % 6],
                   status: 'SUBMITTED',
                   submittedAt: resolvedAt,
                   expiresAt: new Date((resolvedAt ?? now).getTime() + 7 * 86_400_000),
@@ -192,7 +202,55 @@ async function main() {
           : {}),
       },
     });
-    if (i === 51) spamTicketId = ticket.id;
+    if (i === 88) spamTicketId = ticket.id;
+  }
+
+  let extra = 97;
+  for (let a = 0; a < assignees.length; a += 1) {
+    for (let w = 0; w < 8; w += 1) {
+      const createdAt = new Date(now.getTime() - (w * 7 + a) * 86_400_000);
+      const resolvedAt = new Date(createdAt.getTime() + 10 * 3_600_000);
+      const status = w % 2 === 0 ? 'RESOLVED' : 'CLOSED';
+      await prisma.ticket.create({
+        data: {
+          ticketNumber: `#ZEN-${String(extra).padStart(4, '0')}`,
+          title: `${titles[w % titles.length]} (follow-up ${extra})`,
+          description: `Recent solved demo ticket ${extra}.`,
+          status,
+          priority: TicketPriority.MEDIUM,
+          type: TicketType.QUESTION,
+          customerId: customerUser.id,
+          assignedToId: assignees[a].id,
+          teamId: teams[a % teams.length].id,
+          categoryId: cats[a % cats.length].id,
+          createdAt,
+          firstRespondedAt: new Date(createdAt.getTime() + 1 * 3_600_000),
+          resolvedAt,
+          closedAt: status === 'CLOSED' ? resolvedAt : null,
+          slaResponseDueAt: new Date(createdAt.getTime() + 2 * 3_600_000),
+          slaResolutionDueAt: new Date(createdAt.getTime() + 8 * 3_600_000),
+          slaResponseBreached: a === 2 && w === 1,
+          slaResolutionBreached: a === 2 && w === 3,
+          messages: {
+            create: [
+              { senderId: customerUser.id, body: 'This is still happening this week.', type: 'REPLY' },
+              { senderId: assignees[a].id, body: 'Shipped a fix on this thread.', type: 'REPLY' },
+            ],
+          },
+          csatSurvey: {
+            create: {
+              customerId: customerUser.id,
+              rating: [5, 5, 4, 2, 5, 4, 3, 5][w],
+              comment: w === 3 ? 'Not resolved — I had to reopen.' : 'Recent case, rating captured.',
+              status: 'SUBMITTED',
+              submittedAt: resolvedAt,
+              expiresAt: new Date(resolvedAt.getTime() + 7 * 86_400_000),
+            },
+          },
+        },
+      });
+      extra += 1;
+    }
   }
 
   await prisma.spamReport.create({
@@ -281,7 +339,7 @@ async function main() {
     ],
   });
 
-  console.log('✅ Sample tickets: #ZEN-0001 through #ZEN-0072');
+  console.log('✅ Sample tickets: #ZEN-0001 through #ZEN-0144');
   console.log('✅ Knowledge articles: 4 public, 2 internal, 1 draft');
 
   console.log(`

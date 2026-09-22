@@ -10,8 +10,33 @@ import {
   countBy,
   csatBars,
   fillDayBuckets,
+  fillWeekBuckets,
 } from './analyticsMath';
-import { consultantStats, isConsultantRole } from './consultantStats';
+import { consultantAssessment, consultantStats, isConsultantRole, rankLeaderboard } from './consultantStats';
+
+function toConsultantRows(
+  tickets: Array<{
+    assignedToId: number | null;
+    status: string;
+    createdAt: Date;
+    firstRespondedAt: Date | null;
+    resolvedAt: Date | null;
+    slaResponseBreached: boolean;
+    slaResolutionBreached: boolean;
+    csatSurvey: { rating: number; status: string } | null;
+  }>,
+) {
+  return tickets.map((t) => ({
+    assignedToId: t.assignedToId,
+    status: t.status,
+    createdAt: t.createdAt,
+    firstRespondedAt: t.firstRespondedAt,
+    resolvedAt: t.resolvedAt,
+    csatRating: t.csatSurvey?.status === 'SUBMITTED' ? t.csatSurvey.rating : null,
+    slaResponseBreached: t.slaResponseBreached,
+    slaResolutionBreached: t.slaResolutionBreached,
+  }));
+}
 
 function requireUser(ctx: Context): number {
   if (!ctx.userId) {
@@ -66,17 +91,9 @@ export async function listConsultants(ctx: Context) {
     orderBy: { name: 'asc' },
   });
   return users.map((user) => {
-    const stats = consultantStats(
-      user.assignedTickets.map((t) => ({
-        assignedToId: t.assignedToId,
-        status: t.status,
-        createdAt: t.createdAt,
-        firstRespondedAt: t.firstRespondedAt,
-        resolvedAt: t.resolvedAt,
-        csatRating: t.csatSurvey?.status === 'SUBMITTED' ? t.csatSurvey.rating : null,
-      })),
-      user.id,
-    );
+    const rows = toConsultantRows(user.assignedTickets);
+    const stats = consultantStats(rows, user.id);
+    const assessment = consultantAssessment(rows, user.id);
     return {
       id: user.id,
       name: user.name,
@@ -85,6 +102,7 @@ export async function listConsultants(ctx: Context) {
       lastLoginAt: user.lastLoginAt,
       teams: user.teamMembers.map((m) => m.team.name),
       ...stats,
+      assessmentIndex: assessment.index,
     };
   });
 }
@@ -95,7 +113,7 @@ export async function getConsultantProfile(ctx: Context, id: number) {
     where: { id },
     include: {
       assignedTickets: {
-        include: { csatSurvey: { select: { rating: true, status: true } }, category: { select: { name: true } } },
+        include: { csatSurvey: { select: { rating: true, status: true, comment: true } }, category: { select: { name: true } } },
         orderBy: { updatedAt: 'desc' },
       },
       teamMembers: { include: { team: { select: { name: true } } } },
@@ -113,15 +131,9 @@ export async function getConsultantProfile(ctx: Context, id: number) {
     targetId: id,
     message: `Admin viewed consultant profile #${id}`,
   });
-  const rows = user.assignedTickets.map((t) => ({
-    assignedToId: t.assignedToId,
-    status: t.status,
-    createdAt: t.createdAt,
-    firstRespondedAt: t.firstRespondedAt,
-    resolvedAt: t.resolvedAt,
-    csatRating: t.csatSurvey?.status === 'SUBMITTED' ? t.csatSurvey.rating : null,
-  }));
+  const rows = toConsultantRows(user.assignedTickets);
   const stats = consultantStats(rows, user.id);
+  const assessment = consultantAssessment(rows, user.id);
   const completed = user.assignedTickets.filter((t) => t.status === 'RESOLVED' || t.status === 'CLOSED');
   return {
     id: user.id,
@@ -131,9 +143,23 @@ export async function getConsultantProfile(ctx: Context, id: number) {
     lastLoginAt: user.lastLoginAt,
     teams: user.teamMembers.map((m) => m.team.name),
     ...stats,
-    resolvedWeekly: fillDayBuckets(new Date(), 28, completed.map((t) => t.resolvedAt ?? t.updatedAt)),
+    assessmentIndex: assessment.index,
+    assessment: assessment.axes,
+    gaps: assessment.gaps,
+    resolvedWeekly: fillWeekBuckets(
+      new Date(),
+      16,
+      completed.map((t) => t.resolvedAt ?? t.updatedAt),
+    ),
+    createdWeekly: fillWeekBuckets(
+      new Date(),
+      16,
+      user.assignedTickets.map((t) => t.createdAt),
+    ),
     byStatus: countBy(user.assignedTickets.map((t) => t.status)),
+    byCategory: countBy(user.assignedTickets.map((t) => t.category?.name ?? 'None')),
     csatBars: csatBars(rows.map((r) => r.csatRating).filter((n): n is number => n !== null)),
+    sla: countBy(user.assignedTickets.map((t) => (t.slaResolutionBreached || t.slaResponseBreached ? 'Breached' : 'On track'))),
     completed: completed.slice(0, 20).map((t) => ({
       id: t.id,
       ticketNumber: t.ticketNumber,
@@ -141,8 +167,69 @@ export async function getConsultantProfile(ctx: Context, id: number) {
       status: t.status,
       csatRating: t.csatSurvey?.status === 'SUBMITTED' ? t.csatSurvey.rating : null,
       resolvedAt: t.resolvedAt,
+      csatComment: t.csatSurvey?.status === 'SUBMITTED' ? t.csatSurvey.comment : null,
     })),
   };
+}
+
+export async function getLeaderboard(ctx: Context) {
+  requirePermission(ctx.role, 'analytics:read:team', ctx.permissionOverrides);
+  const users = await prisma.user.findMany({
+    where: { role: { in: ['AGENT', 'SUPERVISOR'] } },
+    include: {
+      assignedTickets: {
+        include: { csatSurvey: { select: { rating: true, status: true } } },
+      },
+      teamMembers: { include: { team: { select: { name: true } } } },
+    },
+  });
+  const rows = users.map((user) => {
+    const tickets = toConsultantRows(user.assignedTickets);
+    const stats = consultantStats(tickets, user.id);
+    const assessment = consultantAssessment(tickets, user.id);
+    const ratings = tickets.map((t) => t.csatRating).filter((n): n is number => n !== null);
+    return {
+      id: user.id,
+      name: user.name,
+      teams: user.teamMembers.map((m) => m.team.name),
+      ...stats,
+      assessmentIndex: assessment.index,
+      detractors: ratings.filter((n) => n <= 2).length,
+      promoters: ratings.filter((n) => n >= 4).length,
+    };
+  });
+  return rankLeaderboard(rows);
+}
+
+export async function listCustomerFeedback(ctx: Context) {
+  requirePermission(ctx.role, 'analytics:read:team', ctx.permissionOverrides);
+  const surveys = await prisma.csatSurvey.findMany({
+    where: { status: 'SUBMITTED', rating: { not: null } },
+    include: {
+      ticket: {
+        select: {
+          id: true,
+          ticketNumber: true,
+          title: true,
+          status: true,
+          assignedTo: { select: { name: true } },
+        },
+      },
+    },
+    orderBy: { submittedAt: 'desc' },
+    take: 40,
+  });
+  return surveys.map((row) => ({
+    id: row.id,
+    ticketId: row.ticket.id,
+    ticketNumber: row.ticket.ticketNumber,
+    title: row.ticket.title,
+    status: row.ticket.status,
+    rating: row.rating ?? 0,
+    comment: row.comment,
+    consultantName: row.ticket.assignedTo?.name ?? null,
+    submittedAt: row.submittedAt,
+  }));
 }
 
 export async function listAuditLogs(ctx: Context, page = 1, pageSize = 30) {

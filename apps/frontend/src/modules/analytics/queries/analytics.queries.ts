@@ -18,7 +18,7 @@ export const CONSULTANTS = gql`
   query Consultants {
     consultants {
       id name email role lastLoginAt teams
-      openCount resolvedCount closedCount csatAverage csatCount
+      openCount resolvedCount closedCount csatAverage csatCount assessmentIndex
     }
   }
 `;
@@ -29,10 +29,30 @@ export const CONSULTANT_PROFILE = gql`
       id name email role lastLoginAt teams
       openCount resolvedCount closedCount csatAverage csatCount
       avgFirstResponseHours avgResolveHours
+      assessmentIndex assessment { key value } gaps
       resolvedWeekly { key value }
+      createdWeekly { key value }
       byStatus { key value }
+      byCategory { key value }
       csatBars { key value }
-      completed { id ticketNumber title status csatRating resolvedAt }
+      sla { key value }
+      completed { id ticketNumber title status csatRating csatComment resolvedAt }
+    }
+  }
+`;
+
+export const LEADERBOARD = gql`
+  query ConsultantLeaderboard {
+    consultantLeaderboard {
+      id rank name teams resolvedCount closedCount csatAverage csatCount detractors promoters assessmentIndex
+    }
+  }
+`;
+
+export const CUSTOMER_FEEDBACK = gql`
+  query CustomerFeedback {
+    customerFeedback {
+      id ticketId ticketNumber title status rating comment consultantName submittedAt
     }
   }
 `;

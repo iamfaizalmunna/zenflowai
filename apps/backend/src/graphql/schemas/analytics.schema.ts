@@ -34,6 +34,7 @@ export const analyticsTypeDefs = gql`
     closedCount: Int!
     csatAverage: Float!
     csatCount: Int!
+    assessmentIndex: Float!
   }
 
   type ConsultantTicket {
@@ -42,6 +43,7 @@ export const analyticsTypeDefs = gql`
     title: String!
     status: TicketStatus!
     csatRating: Int
+    csatComment: String
     resolvedAt: DateTime
   }
 
@@ -59,10 +61,42 @@ export const analyticsTypeDefs = gql`
     csatCount: Int!
     avgFirstResponseHours: Float!
     avgResolveHours: Float!
+    assessmentIndex: Float!
+    assessment: [ChartPoint!]!
+    gaps: [String!]!
     resolvedWeekly: [ChartPoint!]!
+    createdWeekly: [ChartPoint!]!
     byStatus: [ChartPoint!]!
+    byCategory: [ChartPoint!]!
     csatBars: [ChartPoint!]!
+    sla: [ChartPoint!]!
     completed: [ConsultantTicket!]!
+  }
+
+  type LeaderboardRow {
+    id: Int!
+    rank: Int!
+    name: String!
+    teams: [String!]!
+    resolvedCount: Int!
+    closedCount: Int!
+    csatAverage: Float!
+    csatCount: Int!
+    detractors: Int!
+    promoters: Int!
+    assessmentIndex: Float!
+  }
+
+  type FeedbackRow {
+    id: Int!
+    ticketId: Int!
+    ticketNumber: String!
+    title: String!
+    status: TicketStatus!
+    rating: Int!
+    comment: String
+    consultantName: String
+    submittedAt: DateTime
   }
 
   type AuditLogRow {
@@ -102,6 +136,8 @@ export const analyticsTypeDefs = gql`
     analytics(rangeDays: Int): AnalyticsSnapshot!
     consultants: [ConsultantSummary!]!
     consultantProfile(id: Int!): ConsultantProfile!
+    consultantLeaderboard: [LeaderboardRow!]!
+    customerFeedback: [FeedbackRow!]!
     auditLogs(page: Int, pageSize: Int): AuditLogPage!
     blockedIps: [BlockedIpRow!]!
     spamReports: [SpamReportRow!]!
