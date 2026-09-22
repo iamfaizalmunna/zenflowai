@@ -923,7 +923,7 @@ Give customers, agents, and admins a **solid, convenient** workspace: they choos
 
 #### Scope — Appearance studio (`/settings`)
 - [x] **Sounds:** on/off in Appearance; cues only on buttons, cancel, checkbox, radio, switch — never hover, typing, or every link
-- [x] **Color mode:** system / light / dark (global)
+- [x] **Color mode:** system / light / dark — **per signed-in user** (`UiPreference.userId`). Login/public pages always use the product default (light + iris). Another user’s save never restyles the guest shell.
 - [x] **Accent picker:** presets + custom hex + shade
 - [x] **Surface finish:** matte / glossy / glass
 - [x] **Type:** font family presets + size scale (S / M / L)

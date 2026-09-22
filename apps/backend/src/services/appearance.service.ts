@@ -36,6 +36,7 @@ function toPrefs(row: Partial<AppearancePrefs> | null): AppearancePrefs {
   return mergeAppearance(row);
 }
 
+/** Row is unique on userId — never a shared workspace theme. */
 export async function getMyAppearance(ctx: Context): Promise<AppearancePrefs> {
   const userId = requireUser(ctx);
   const row = await prisma.uiPreference.findUnique({ where: { userId } });
