@@ -1,7 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { hashChunk } from './consultMath';
-import { skipIfUnchanged } from './ingestKb';
+import { hashChunk, skipIfUnchanged } from './consultMath';
 
 describe('Phase 7 KB ingest', () => {
   it('skips unchanged article bodies', () => {

@@ -4,6 +4,7 @@ import {
   buildGroundedPrompt,
   confidenceFromScore,
   hashChunk,
+  skipIfUnchanged,
   HANDOFF_THRESHOLD,
   isGrounded,
   formatConsultReply,
@@ -29,6 +30,8 @@ describe('Phase 7 consult math', () => {
     const b = hashChunk('same body');
     assert.equal(a, b);
     assert.notEqual(a, hashChunk('other'));
+    assert.equal(skipIfUnchanged(a, 'same body'), true);
+    assert.equal(skipIfUnchanged(a, 'other'), false);
   });
 
   it('splits articles and builds a grounded prompt', () => {

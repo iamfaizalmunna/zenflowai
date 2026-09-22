@@ -8,6 +8,7 @@
  * - Violations logged to DB + audit log
  */
 
+import { Prisma } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../utils/prisma';
 import { ROLE_LIMITS, getRandomCooldownMs } from './rbac';
@@ -53,7 +54,7 @@ export async function checkCooldown(userId: number, role: string, action: Action
   }
 
   // Apply new cooldown for this action
-  const cooldownMs = getRandomCooldownMs(role, cooldownAction as any);
+  const cooldownMs = getRandomCooldownMs(role, cooldownAction);
   if (cooldownMs > 0) {
     const endsAt = new Date(Date.now() + cooldownMs);
     await prisma.cooldownPeriod.create({
@@ -101,7 +102,7 @@ export async function checkQuota(userId: number, role: string, action: ActionTyp
   const dayExpired = now.getTime() - quota.dayWindowStart.getTime() > 24 * 60 * 60 * 1000;
   const minExpired = now.getTime() - quota.minuteWindowStart.getTime() > 60 * 1000;
 
-  const updateData: Record<string, unknown> = {};
+  const updateData: Prisma.UsageQuotaUpdateInput = {};
   if (hourExpired) {
     updateData.ticketsThisHour = 0;
     updateData.messagesThisHour = 0;
@@ -120,7 +121,7 @@ export async function checkQuota(userId: number, role: string, action: ActionTyp
   if (Object.keys(updateData).length > 0) {
     quota = await prisma.usageQuota.update({
       where: { userId },
-      data: updateData as any,
+      data: updateData,
     });
   }
 

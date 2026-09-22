@@ -4,18 +4,10 @@
  * Never throws — logging failures must not crash the app.
  */
 
+import { AuditCategory, AuditSeverity } from '@prisma/client';
 import { prisma } from '../utils/prisma';
 
-export type AuditCategory =
-  | 'AUTH'
-  | 'ACCESS'
-  | 'TICKET'
-  | 'MODERATION'
-  | 'SECURITY'
-  | 'ADMIN'
-  | 'FAIR_USAGE';
-
-export type AuditSeverity = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'CRITICAL';
+export type { AuditCategory, AuditSeverity };
 
 interface AuditPayload {
   action: string;
@@ -35,8 +27,8 @@ export async function audit(payload: AuditPayload): Promise<void> {
     await prisma.auditLog.create({
       data: {
         action: payload.action,
-        category: payload.category as any,
-        severity: (payload.severity ?? 'INFO') as any,
+        category: payload.category,
+        severity: payload.severity ?? 'INFO',
         actorId: payload.actorId ?? null,
         actorIp: payload.actorIp ?? null,
         actorAgent: payload.actorAgent ?? null,

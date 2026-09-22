@@ -1,6 +1,7 @@
-import { createHash } from 'node:crypto';
 import { prisma } from '../../utils/prisma';
-import { hashChunk, splitArticleBody } from './consultMath';
+import { hashChunk, skipIfUnchanged, splitArticleBody } from './consultMath';
+
+export { skipIfUnchanged };
 
 const ALLOWLIST: Array<{ url: string; licenseNote: string }> = [
   {
@@ -41,10 +42,6 @@ export async function upsertChunksForArticle(
   return created;
 }
 
-export function skipIfUnchanged(previousHash: string, body: string): boolean {
-  return previousHash === hashChunk(body);
-}
-
 export async function ingestAllowlist(fetchImpl?: typeof fetch): Promise<{ ingested: number; skipped: number }> {
   const doFetch = fetchImpl ?? fetch;
   let ingested = 0;
@@ -65,7 +62,6 @@ export async function ingestAllowlist(fetchImpl?: typeof fetch): Promise<{ inges
         continue;
       }
       const title = `Ingested: ${new URL(source.url).hostname}`;
-      const hash = createHash('sha256').update(text).digest('hex');
       let article = await prisma.knowledgeArticle.findFirst({
         where: { title, authorId: author.id },
       });

@@ -13,6 +13,7 @@
  * - PermissionOverride table allows per-user grants/revocations beyond role baseline
  */
 
+import { randomInt } from 'node:crypto';
 import { GraphQLError } from 'graphql';
 
 // ─── Role Hierarchy ───────────────────────────────────────────────────────────
@@ -252,7 +253,9 @@ export function getRandomCooldownMs(role: string, action: 'ticket' | 'message'):
   const limits = ROLE_LIMITS[role] ?? ROLE_LIMITS.CUSTOMER;
   const [min, max] = action === 'ticket' ? limits.ticketCooldownMs : limits.messageCooldownMs;
   if (min === 0 && max === 0) return 0;
-  const base = min + Math.random() * (max - min);
-  const jitter = base * 0.2 * (Math.random() - 0.5) * 2;
+  const span = Math.max(0, max - min);
+  const base = min + (span === 0 ? 0 : randomInt(span + 1));
+  const jitterRange = Math.round(base * 0.2);
+  const jitter = jitterRange === 0 ? 0 : randomInt(jitterRange * 2 + 1) - jitterRange;
   return Math.max(0, Math.round(base + jitter));
 }
