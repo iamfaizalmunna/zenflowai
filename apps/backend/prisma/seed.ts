@@ -1,8 +1,8 @@
 /**
  * ZenFlowAI — Database Seed
- * Phase 1: Foundation & Auth
+ * Demo data through Phase 6.
  *
- * Seeds: demo users, 52 tickets, CSAT, spam queue, blocked IP, KB articles
+ * Seeds: demo users, 144 tickets, CSAT, spam queue, blocked IP, KB articles
  */
 
 import { PrismaClient, Role, TicketPriority, TicketType, RoutingRuleType } from '@prisma/client';
