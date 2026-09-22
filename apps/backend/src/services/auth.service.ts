@@ -29,6 +29,7 @@ export interface AuthUser {
   email: string;
   name: string;
   role: string;
+  isAiConsultant?: boolean;
   avatar?: string | null;
 }
 
@@ -40,6 +41,7 @@ const LOGIN_USER_SELECT = {
   name: true,
   password: true,
   role: true,
+  isAiConsultant: true,
   isActive: true,
   isBanned: true,
 } as const;
@@ -101,7 +103,7 @@ export async function loginUser(
 
   return {
     tokens,
-    user: { id: user.id, email: user.email, name: user.name, role: user.role },
+    user: { id: user.id, email: user.email, name: user.name, role: user.role, isAiConsultant: 'isAiConsultant' in user ? user.isAiConsultant : false },
   };
 }
 
@@ -153,7 +155,7 @@ export async function registerUser(
 
   return {
     tokens,
-    user: { id: user.id, email: user.email, name: user.name, role: user.role },
+    user: { id: user.id, email: user.email, name: user.name, role: user.role, isAiConsultant: 'isAiConsultant' in user ? user.isAiConsultant : false },
   };
 }
 
@@ -191,7 +193,7 @@ export async function refreshAccessToken(
 
   return {
     accessToken,
-    user: { id: user.id, email: user.email, name: user.name, role: user.role },
+    user: { id: user.id, email: user.email, name: user.name, role: user.role, isAiConsultant: 'isAiConsultant' in user ? user.isAiConsultant : false },
   };
 }
 
@@ -225,7 +227,7 @@ export async function logoutUser(userId: number, refreshToken?: string): Promise
 export async function getMe(userId: number): Promise<AuthUser | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, name: true, role: true },
+    select: { id: true, email: true, name: true, role: true, isAiConsultant: true },
   });
   return user;
 }

@@ -75,7 +75,7 @@ Prefer targeted edits over full-file rewrites.
 
 > **ZenFlowAI** — A clean, fast, AI-ready service desk. Think Zendesk × Linear.
 >
-> General IT/customer support. Medium scale. Rule-engine first. AI adapter ready.
+> General IT/customer support. Phases 1–7 are the **local MVP** (tickets, live workspace, SLA, CSAT, appearance, analytics, Nova AI-first with KB fallback). Phase 8 is **MVP hardening** (cookies, migrations, email, attachments) — not a new product surface.
 
 ---
 
@@ -1078,6 +1078,25 @@ Nova (seeded `nova@zenflowai.com`, `isAiConsultant`) is first assignee. Consult 
 
 **Not in this phase:** paid LLM, Firecrawl keys, HTTP-only cookies, cloud, webhooks.
 
+**Git push:** `git push origin phase/7-ai-consultant` → merge `main` as PR #5. CI/Sonar follow-up is PR #6.
+
+---
+
+### PHASE 8 — MVP hardening (planned)
+**Branch:** `phase/8-mvp-hardening`
+
+Phases 1–7 are a complete **local MVP ticketing system**. Phase 8 does not add a new role or screen set. It makes the same product safe to run as a real MVP (secrets, sessions, schema, mail, files).
+
+- [ ] HTTP-only refresh cookie (stop access JWT as the long-lived browser secret)
+- [ ] Commit Prisma migrations; CI `migrate deploy` (stop gitignored `db push` drift)
+- [ ] Align env names: `JWT_ACCESS_EXPIRES`, `JWT_REFRESH_SECRET`; no demo secrets in prod
+- [ ] GraphQL errors: hide internals, but do not label every Prisma failure as a login/schema issue
+- [ ] Transactional email: ticket created, agent/Nova reply, SLA warning (Resend or SMTP)
+- [ ] Ticket attachments: local `UPLOAD_DIR` first; object storage later
+- [ ] Demo seed stays; production bootstrap is empty org + first SUPER_ADMIN
+
+**Not in this phase:** Crawl4AI/Firecrawl, paid OpenAI, webhooks, SSO/SAML, React Native, Apollo Federation, voice tickets, cloud vendor lock-in.
+
 ---
 
 ### Branch Strategy Summary
@@ -1091,6 +1110,7 @@ main                    ← always stable, always deployable
   └── phase/5-ui-customization
   └── phase/6-analytics-polish
   └── phase/7-ai-consultant
+  └── phase/8-mvp-hardening   ← next; not started
 ```
 
 Each phase branch is created fresh from `main`:
@@ -1110,11 +1130,13 @@ git push origin phase/2-ticket-engine
 |-------|--------|--------|----|
 | Phase 1 — Foundation & Auth | ✅ Implemented | `phase/1-foundation` | merged with Phase 2 |
 | Phase 2 — Ticket Engine + KB Foundation | ✅ Merged | `phase/2-ticket-engine` | #1 merged |
-| Phase 3 — Workspace, Real-Time, KB in Tickets | ✅ Implemented (light) | `phase/3-workspace-realtime` | GitHub only |
-| Phase 4 — Automation, Legal Ingest, Optional AI | ✅ Implemented (light, no crawler/LLM) | `phase/4-automation-admin` | GitHub |
+| Phase 3 — Workspace, Real-Time, KB in Tickets | ✅ Merged to `main` | `phase/3-workspace-realtime` | shipped with later mains |
+| Phase 4 — Automation, Admin, CSAT, extractive Q&A | ✅ Merged to `main` | `phase/4-automation-admin` | shipped with later mains |
 | Phase 5 — UI Customization | ✅ Merged to `main` (Appearance + per-user prefs) | `phase/5-ui-customization` | #3 isolation |
 | Phase 6 — Analytics, UI fit, consultant profiles, security | ✅ Merged to `main` (unit tests; AI is Phase 7) | `phase/6-analytics-polish` | #2 |
-| Phase 7 — AI consultant | ✅ Merged to `main` (CI tests + SonarQube config on `fix/ci-unit-tests-and-sonar`) | `phase/7-ai-consultant` | #5 |
+| Phase 7 — AI consultant | ✅ Merged to `main` | `phase/7-ai-consultant` | #5 |
+| CI / SonarQube (not a product phase) | ✅ Merged to `main` | `fix/ci-unit-tests-and-sonar` | #6 |
+| Phase 8 — MVP hardening | 📋 Planned | `phase/8-mvp-hardening` | — |
 
 ---
 
@@ -1126,8 +1148,9 @@ DATABASE_URL="mysql://root:password@localhost:3306/zenflowai"
 
 # JWT
 JWT_SECRET="..."          # min 32 chars, random
-JWT_ACCESS_EXPIRES="15m"
-JWT_REFRESH_EXPIRES="7d"
+JWT_REFRESH_SECRET="..."  # optional; falls back to JWT_SECRET
+JWT_ACCESS_EXPIRES="15m"  # used by auth.service (not JWT_EXPIRES_IN)
+JWT_REFRESH_EXPIRES="7d"  # documented; refresh lifetime is currently 7d in code
 
 # Server
 PORT=4000
@@ -1153,90 +1176,40 @@ KB_DATA_DIR=./data/kb     # gitignored
 
 # Frontend
 NEXT_PUBLIC_GRAPHQL_URL=http://localhost:4000/graphql
-NEXT_PUBLIC_WS_URL=ws://localhost:4000/graphql
+NEXT_PUBLIC_GRAPHQL_WS_URL=ws://localhost:4000/graphql
 NEXT_PUBLIC_APP_NAME=ZenFlowAI
 ```
 
 ---
 
-## 21. Knowledge Base, Legal Ingest, and AI
+## 21. Knowledge Base (what Phase 7 actually ships)
 
-### Crawler choice: do not use both as the default
+**Source of truth:** owned markdown + demo JSONL under `apps/backend/kb/` (seeded into `KnowledgeArticle` / `KnowledgeChunk`). Scrape cache `data/kb/` is gitignored. **No crawler runs at answer time.**
 
-| Tool | License | Best for | Use in ZenFlowAI |
-|------|---------|----------|------------------|
-| **Crawl4AI** | Apache 2.0 | Local crawl → clean Markdown, `robots.txt` | **Default ingest fetcher** |
-| **Firecrawl** | AGPL-3.0 self-host / hosted API | Production scrape API, JS pages, PDFs | Optional later adapter if we have a key |
-| **Scrapling** | BSD-3-Clause | Adaptive selectors, spiders | Not default. Do **not** use StealthyFetcher |
+Allowlist ingest (`ingestKb.ts`, IETF RFC sample) is optional and truncated. Crawl4AI / Firecrawl are **not** the default and are out of Phase 7–8.
 
-Firecrawl is nicer as a hosted scrape API, but self-hosting AGPL-3.0 inside our app is a license risk. Scrapling is powerful, but its stealth / Cloudflare-bypass features are the wrong default for a legal KB pipeline.
+| Tool | Status in this repo |
+|------|---------------------|
+| Owned `apps/backend/kb/*.md` + `shards/pack-01.jsonl` | ✅ Seeded demo KB |
+| Allowlist HTTP ingest | ✅ Code present, not required for MVP |
+| Crawl4AI / Firecrawl | ❌ Not wired (later than Phase 8) |
 
-Decision:
-
-```text
-FetcherAdapter
-  ├── Crawl4AI  (default, local, robots.txt, rate-limited)
-  └── Firecrawl (optional, approved sources only)
-```
-
-Never enable CAPTCHA solving, login bypass, paywall bypass, or stealth fingerprinting.
-
-### What we scrape — and what we do not
-
-**Useful:**
-
-- Our own help docs and product pages
-- Our own internal playbooks, written by us
-- Official vendor docs we are allowed to reuse, with source URL and license note
-- Public RFC / standard docs when license allows
-
-**Not useful / not allowed:**
-
-- Random internet dumps
-- Other companies' full help centers copied wholesale
-- Login-only, paywalled, or CAPTCHA-blocked pages
-- Scraped customer tickets from other products
-- Anything we cannot cite and remove later
-
-A solid KB is mostly **owned content**. Scraping is a refresh pipeline, not the source of truth.
-
-### Why this helps AI / local AI
-
-AI is only useful here if it answers from **retrieved, permitted chunks**.
+Consult chain (shipped): retrieve published articles → optional Ollama if `AI_PROVIDER` is not `retrieval` and the probe is healthy → else extractive `buildKbAnswer` → human handoff.
 
 ```text
 Question or ticket
         ↓
-Search MySQL FULLTEXT on published chunks
+Rank published articles (role-filtered)
         ↓
-Keep 3–8 chunks, role-filtered
+Keep top hits
         ↓
-Rule-based extract  OR  local Ollama / optional OpenAI
+Extractive answer  OR  grounded Ollama if healthy
         ↓
-Answer + article citations + confidence
+Answer + citations + ConsultAttempt + engine badge
 ```
 
-That is helpful because:
-
-- Local Ollama can run with no paid key
-- The model never sees the whole KB, so tokens stay small
-- Answers can be audited and unpublished
-- The product still works if AI is offline
-
-Unstructured scraped HTML dumped into GitHub is **not** helpful for AI.
-
-### Storage
-
-```text
-data/kb/                gitignored
-MySQL KnowledgeArticle  published content
-MySQL KnowledgeChunk    search/retrieval units
-sourceUrl + contentHash + licenseNote
-DRAFT → REVIEW → PUBLISHED
-```
-
-Never commit scraped corpora to the repo.
+Unstructured scraped HTML dumped into GitHub is **not** the product KB. The demo shard is temporary owned content for retrieval tests.
 
 ---
 
-*Last updated: Phase 7 AI consultant chain on `phase/7-ai-consultant`. Retrieval always; Ollama optional; human last. No cloud, no HTTP-only cookie.*
+*Last updated: Phases 1–7 on `main`. Phase 8 planned (hardening). Local MVP; no cloud, no HTTP-only cookie yet.*

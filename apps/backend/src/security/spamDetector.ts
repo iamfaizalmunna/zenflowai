@@ -169,7 +169,7 @@ export async function analyzeContent(opts: ContentCheckOptions): Promise<SpamAna
   if (userId) {
     const recentTickets = await prisma.ticket.findMany({
       where: {
-        createdById: userId,
+        customerId: userId,
         createdAt: { gte: new Date(Date.now() - 60 * 60 * 1000) }, // last hour
       },
       select: { title: true, description: true },
@@ -190,7 +190,7 @@ export async function analyzeContent(opts: ContentCheckOptions): Promise<SpamAna
   if (userId) {
     const recentCount = await prisma.ticket.count({
       where: {
-        createdById: userId,
+        customerId: userId,
         createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) }, // last 10 min
       },
     });
