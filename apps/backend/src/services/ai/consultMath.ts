@@ -26,6 +26,10 @@ export function hashChunk(body: string): string {
   return createHash('sha256').update(body.trim()).digest('hex');
 }
 
+export function skipIfUnchanged(previousHash: string, body: string): boolean {
+  return previousHash === hashChunk(body);
+}
+
 export function splitArticleBody(body: string): string[] {
   const parts = body
     .split(/\n{2,}/)

@@ -7,11 +7,12 @@
 
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { type SignOptions } from 'jsonwebtoken';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../utils/prisma';
 import { auditAuth } from '../security/audit';
 import { recordFailedLogin, recordSuccessfulLogin, checkAccountLock } from '../security/httpSecurity';
+import { parseExpiresToSeconds } from '../utils/jwtExpires';
 
 const ACCESS_SECRET  = process.env.JWT_SECRET!;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET!;
@@ -264,7 +265,8 @@ async function createTokenPair(
 }
 
 function signAccessToken(userId: number, role: string): string {
-  return jwt.sign({ userId, role }, ACCESS_SECRET, { expiresIn: ACCESS_EXPIRES as any });
+  const options: SignOptions = { expiresIn: parseExpiresToSeconds(ACCESS_EXPIRES) };
+  return jwt.sign({ userId, role }, ACCESS_SECRET, options);
 }
 
 function hashToken(token: string): string {

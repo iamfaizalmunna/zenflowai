@@ -708,6 +708,9 @@ What NOT to test:
 ```
 
 Runner: **`tsx --test`** from the backend package (`pnpm test`), including `apps/frontend/src/lib/*.test.ts`. Not Vitest.
+CI (`.github/workflows/test.yml`) runs **`pnpm db:generate`** before tests so Prisma client exists. Unit tests must stay Prisma-free: do not import services that construct `PrismaClient`.
+
+**SonarQube / SonarCloud:** `sonar-project.properties` is the project key. CI uploads coverage (`apps/backend/coverage/lcov.info`) when `SONAR_TOKEN` is set on the GitHub repo. `SONAR_HOST_URL` defaults to `https://sonarcloud.io`. KB shards and generated folders are excluded so the quality gate is not poisoned by demo JSONL.
 
 ---
 
@@ -1111,7 +1114,7 @@ git push origin phase/2-ticket-engine
 | Phase 4 — Automation, Legal Ingest, Optional AI | ✅ Implemented (light, no crawler/LLM) | `phase/4-automation-admin` | GitHub |
 | Phase 5 — UI Customization | ✅ Merged to `main` (Appearance + per-user prefs) | `phase/5-ui-customization` | #3 isolation |
 | Phase 6 — Analytics, UI fit, consultant profiles, security | ✅ Merged to `main` (unit tests; AI is Phase 7) | `phase/6-analytics-polish` | #2 |
-| Phase 7 — AI consultant | ✅ Implemented on `phase/7-ai-consultant` | `phase/7-ai-consultant` | — |
+| Phase 7 — AI consultant | ✅ Merged to `main` (CI tests + SonarQube config on `fix/ci-unit-tests-and-sonar`) | `phase/7-ai-consultant` | #5 |
 
 ---
 
@@ -1138,17 +1141,14 @@ MAX_FILE_SIZE_MB=10
 # SLA Cron
 SLA_CHECK_INTERVAL_CRON="*/2 * * * *"
 
-# AI (optional, defaults to rule-based)
-AI_PROVIDER=rule_based    # rule_based | openai | groq | ollama
-OPENAI_API_KEY=
-GROQ_API_KEY=
+# AI (optional local Ollama; default is retrieval)
+AI_PROVIDER=auto          # auto | retrieval | ollama
 OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=llama3.1
+OLLAMA_MODEL=smollm2:360m
 
-# KB ingest (local tool only)
-KB_FETCHER=crawl4ai       # crawl4ai | firecrawl (optional later)
-FIRECRAWL_API_KEY=
-KB_ALLOWLIST_PATH=./tools/kb-ingest/sources/allowlist.yml
+# SonarQube / SonarCloud (GitHub Actions secret; optional locally)
+SONAR_TOKEN=
+SONAR_HOST_URL=https://sonarcloud.io
 KB_DATA_DIR=./data/kb     # gitignored
 
 # Frontend

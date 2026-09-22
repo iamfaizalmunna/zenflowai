@@ -138,11 +138,13 @@ cp apps/frontend/.env.local.example apps/frontend/.env.local
 ### 3. Database
 
 ```bash
-pnpm db:generate   # generate Prisma client
+pnpm db:generate   # generate Prisma client (also a backend postinstall; required in CI before tests)
 pnpm db:seed       # seed demo data
-pnpm test          # unit tests (tsx --test), including appearance session + analytics
+pnpm test          # unit tests (tsx --test), Prisma-free, including appearance + Phase 7 consult math
 # prisma/migrations is gitignored; apply schema locally with `pnpm --filter backend exec prisma db push`
 ```
+
+CI (`.github/workflows/test.yml`) generates Prisma, runs unit tests, and uploads SonarQube/SonarCloud when the `SONAR_TOKEN` GitHub secret is set (`SONAR_HOST_URL` defaults to `https://sonarcloud.io`).
 
 ### 4. Run
 
@@ -176,7 +178,7 @@ After login, **Appearance** is `/settings`: sounds, system/light/dark, accent + 
 
 ## Phases
 
-This project is built in 6 phases. Each phase = a working push to GitHub.
+This project is built in 7 phases. Each phase = a working push to GitHub.
 
 | Phase | What's built | Status |
 |-------|-------------|--------|
@@ -186,7 +188,7 @@ This project is built in 6 phases. Each phase = a working push to GitHub.
 | **4 — Automation & Admin** | SLA cron, CSAT, admin screens, rule-based Help Center Q&A | ✅ Merged to `main` |
 | **5 — UI Customization** | Appearance studio, per-user DB prefs, ticket sort/filter/views, click-only sounds | ✅ Merged to `main` ([#3](https://github.com/iamfaizalmunna/zenflowai/pull/3) isolation) |
 | **6 — Analytics & Polish** | Infographic analytics, consultant profiles, security review, demo seed | ✅ Merged to `main` ([#2](https://github.com/iamfaizalmunna/zenflowai/pull/2)) |
-| **7 — AI Consultant** | Nova AI-first tickets, grounded KB, optional Ollama, human handoff | ✅ On `phase/7-ai-consultant` |
+| **7 — AI Consultant** | Nova AI-first tickets, grounded KB, optional Ollama, human handoff | ✅ Merged to `main` ([#5](https://github.com/iamfaizalmunna/zenflowai/pull/5)) |
 
 See [`PLAN.md`](./PLAN.md) for the full architecture blueprint.
 

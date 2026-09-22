@@ -1,15 +1,23 @@
 import { GraphQLError } from 'graphql';
+import { Role } from '@prisma/client';
 import { Context } from '../../types/context';
 import { requirePermission } from '../../security/rbac';
 import { prisma } from '../../utils/prisma';
 import { auditModeration } from '../../security/audit';
+
+function parseRole(role: string): Role {
+  for (const value of Object.values(Role)) {
+    if (value === role) return value;
+  }
+  throw new GraphQLError('Invalid role', { extensions: { code: 'BAD_USER_INPUT' } });
+}
 
 export const userResolvers = {
   Query: {
     users: async (_: unknown, { role }: { role?: string }, ctx: Context) => {
       requirePermission(ctx.role, 'user:read:all', ctx.permissionOverrides);
       return prisma.user.findMany({
-        where: role ? { role: role as any } : undefined,
+        where: role ? { role: parseRole(role) } : undefined,
         orderBy: { name: 'asc' },
       });
     },
@@ -70,8 +78,9 @@ export const userResolvers = {
     },
 
     changeUserRole: async (_: unknown, { id, role }: { id: number; role: string }, ctx: Context) => {
-      requirePermission(ctx.role, `user:role:set:${role.toLowerCase()}`, ctx.permissionOverrides);
-      const updated = await prisma.user.update({ where: { id }, data: { role: role as any } });
+      const nextRole = parseRole(role);
+      requirePermission(ctx.role, `user:role:set:${nextRole.toLowerCase()}`, ctx.permissionOverrides);
+      const updated = await prisma.user.update({ where: { id }, data: { role: nextRole } });
       await auditModeration('USER_ROLE_CHANGED', {
         actorId: ctx.userId, actorIp: ctx.ip,
         targetType: 'User', targetId: id,
