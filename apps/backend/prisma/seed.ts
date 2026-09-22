@@ -140,9 +140,9 @@ async function main() {
 
   let spamTicketId = 0;
   for (let i = 1; i <= 72; i += 1) {
+    const assignee = assignees[Math.floor((i - 1) / statuses.length) % assignees.length];
     const status = statuses[(i - 1) % statuses.length];
     const createdAt = new Date(now.getTime() - (i % 70) * 86_400_000);
-    const assignee = assignees[(i - 1) % assignees.length];
     const cat = cats[(i - 1) % cats.length];
     const team = teams[(i - 1) % teams.length];
     const resolved = status === 'RESOLVED' || status === 'CLOSED';
