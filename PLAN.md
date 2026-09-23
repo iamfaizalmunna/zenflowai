@@ -81,6 +81,15 @@ Copy `apps/backend/.env.example`. Demo users stay `*@zenflowai.com` / `password1
 | 6 Analytics, consultants | [#2](https://github.com/iamfaizalmunna/zenflowai/pull/2) |
 | 7 Nova | [#5](https://github.com/iamfaizalmunna/zenflowai/pull/5) |
 | CI / Sonar | [#6](https://github.com/iamfaizalmunna/zenflowai/pull/6) |
-| 8 Cookie, migrations, attachments, notices | this branch → `main` |
+| 8 Cookie, migrations, attachments, notices | [#8](https://github.com/iamfaizalmunna/zenflowai/pull/8) |
+| 9 UI polish + QA | this branch |
 
-Not planned here: email, object storage, crawler, SSO, mobile app, federation, empty-org bootstrap.
+## Phase 9 (this work)
+
+Scope only: bug fixes, lighter mobile, calmer desktop, QA that CI can run without MySQL.
+
+- Mobile: solid chrome (less blur), stacked ticket workspace, no horizontal overflow
+- Desktop: quieter surfaces, login card, sidebar
+- QA: role → screen contract tests; `pnpm test:e2e` hits live GraphQL when the API is up (skipped in CI)
+
+Not in this phase: new roles, email, hosting.

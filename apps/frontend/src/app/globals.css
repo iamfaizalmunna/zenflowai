@@ -73,6 +73,12 @@
     --surface-blur: 18px;
     --surface-alpha: 0.88;
   }
+  @media (max-width: 1024px) {
+    html {
+      --surface-blur: 0px;
+      --surface-alpha: 1;
+    }
+  }
   html[data-finish='matte'] {
     --surface-blur: 0px;
     --surface-alpha: 0.98;
@@ -97,6 +103,7 @@
     letter-spacing: var(--tracking-body);
     font-feature-settings: "ss01" 1, "kern" 1;
     line-height: 1.5;
+    overflow-x: hidden;
   }
   h1, h2, h3 {
     letter-spacing: var(--tracking-display);
@@ -130,14 +137,19 @@
 
 @layer utilities {
   .bg-mesh {
-    background:
-      radial-gradient(720px 280px at 0% -30%, hsl(var(--iris) / 0.05), transparent 58%),
-      hsl(var(--background));
+    background: hsl(var(--background));
   }
-  html.dark .bg-mesh {
-    background:
-      radial-gradient(900px 380px at 6% -18%, hsl(var(--iris) / 0.22), transparent 58%),
-      radial-gradient(640px 280px at 100% 0%, hsl(280 40% 40% / 0.12), transparent 55%),
-      hsl(var(--background));
+  @media (min-width: 1025px) {
+    .bg-mesh {
+      background:
+        radial-gradient(720px 280px at 0% -30%, hsl(var(--iris) / 0.05), transparent 58%),
+        hsl(var(--background));
+    }
+    html.dark .bg-mesh {
+      background:
+        radial-gradient(900px 380px at 6% -18%, hsl(var(--iris) / 0.22), transparent 58%),
+        radial-gradient(640px 280px at 100% 0%, hsl(280 40% 40% / 0.12), transparent 55%),
+        hsl(var(--background));
+    }
   }
 }

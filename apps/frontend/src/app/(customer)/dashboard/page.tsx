@@ -38,11 +38,11 @@ export default function CustomerDashboardPage() {
 
           <CsatBanner />
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 app:gap-3">
             {stats.map((stat) => (
-              <div key={stat.label} className="bg-card/80 backdrop-blur-sm border border-white/40 dark:border-white/10 rounded-2xl p-5">
-                <p className="text-sm text-slate-500">{stat.label}</p>
-                <p className={`text-3xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>
+              <div key={stat.label} className="rounded-xl border border-border bg-card p-3 app:p-5">
+                <p className="text-[11px] app:text-sm text-muted-foreground">{stat.label}</p>
+                <p className={`text-xl app:text-3xl font-semibold mt-1 ${stat.color}`}>{stat.value}</p>
               </div>
             ))}
           </div>

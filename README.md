@@ -25,7 +25,7 @@ Run ZenFlowAI for local testing.
 3. pnpm install
 4. pnpm db:generate && pnpm db:migrate && pnpm db:seed
    If migrate fails on an old demo DB: prisma migrate resolve --applied 20260922150000_init then migrate again.
-5. pnpm test
+5. pnpm test && pnpm test:e2e
 6. pnpm dev
 7. Tell me when the UI is up at http://localhost:3000 and GraphQL at http://localhost:4000/graphql.
 ```
@@ -99,6 +99,7 @@ Appearance (`/settings`) is per signed-in user. Login/public pages stay the defa
 | UI | Per-user Appearance, ticket views, PWA chrome ≤1024px |
 | Analytics | `/analytics` (SUPERVISOR+); consultants ADMIN+ |
 | Phase 8 | Refresh cookie, committed Prisma migrations, local attachments, in-app bell |
+| Phase 9 | Lighter mobile, calmer desktop, role/screen QA + optional live GraphQL e2e |
 
 Not in this demo: email, S3/R2, Firecrawl, paid OpenAI, webhooks, SSO, hosting.
 

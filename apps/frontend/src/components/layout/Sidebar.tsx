@@ -28,7 +28,7 @@ export function Sidebar() {
   const dark = isDarkColorMode(prefs.colorMode, prefersDark);
 
   return (
-    <aside className="hidden app:flex w-60 flex-col h-full border-r border-border/60 bg-background/80 backdrop-blur-xl">
+    <aside className="hidden app:flex w-60 flex-col h-full border-r border-border bg-card">
       <div className="h-16 flex items-center justify-between px-4 border-b border-border/60">
         <ZenLogo size={32} />
         <NotificationBell />
