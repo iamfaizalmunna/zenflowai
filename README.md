@@ -27,48 +27,32 @@
   <img src="https://img.shields.io/badge/React%2018-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 18">
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
-  <img src="https://img.shields.io/badge/Turbopack-000000?style=flat-square&logo=vercel&logoColor=white" alt="Turbopack">
-  <img src="https://img.shields.io/badge/Apollo%20Client-311C87?style=flat-square&logo=apollographql&logoColor=white" alt="Apollo Client">
-  <img src="https://img.shields.io/badge/Zustand-433E38?style=flat-square&logo=react&logoColor=white" alt="Zustand">
+  <img src="https://img.shields.io/badge/Apollo-311C87?style=flat-square&logo=apollographql&logoColor=white" alt="Apollo">
+  <img src="https://img.shields.io/badge/GraphQL-E10098?style=flat-square&logo=graphql&logoColor=white" alt="GraphQL">
   <img src="https://img.shields.io/badge/Framer%20Motion-0055FF?style=flat-square&logo=framer&logoColor=white" alt="Framer Motion">
   <img src="https://img.shields.io/badge/shadcn%2Fui-000000?style=flat-square&logo=shadcnui&logoColor=white" alt="shadcn/ui">
   <img src="https://img.shields.io/badge/Radix%20UI-161618?style=flat-square&logo=radixui&logoColor=white" alt="Radix UI">
-  <img src="https://img.shields.io/badge/Recharts-8884d8?style=flat-square&logo=chartdotjs&logoColor=white" alt="Recharts">
   <img src="https://img.shields.io/badge/Lucide-F56565?style=flat-square&logo=lucide&logoColor=white" alt="Lucide">
-  <img src="https://img.shields.io/badge/next--themes-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="next-themes">
   <img src="https://img.shields.io/badge/PWA-5A0FC8?style=flat-square&logo=pwa&logoColor=white" alt="PWA">
   <br>
   <img src="https://img.shields.io/badge/Node.js%2020-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js 20">
   <img src="https://img.shields.io/badge/Express-000000?style=flat-square&logo=express&logoColor=white" alt="Express">
-  <img src="https://img.shields.io/badge/Apollo%20Server%204-311C87?style=flat-square&logo=apollographql&logoColor=white" alt="Apollo Server 4">
-  <img src="https://img.shields.io/badge/GraphQL-E10098?style=flat-square&logo=graphql&logoColor=white" alt="GraphQL">
-  <img src="https://img.shields.io/badge/graphql--ws-E10098?style=flat-square&logo=graphql&logoColor=white" alt="graphql-ws">
   <img src="https://img.shields.io/badge/Prisma-2D3748?style=flat-square&logo=prisma&logoColor=white" alt="Prisma">
   <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white" alt="MySQL">
   <img src="https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT">
-  <img src="https://img.shields.io/badge/Helmet-000000?style=flat-square&logo=helmet&logoColor=white" alt="Helmet">
   <img src="https://img.shields.io/badge/Zod-3E67B1?style=flat-square&logo=zod&logoColor=white" alt="Zod">
-  <img src="https://img.shields.io/badge/bcrypt-338A3E?style=flat-square" alt="bcrypt">
-  <img src="https://img.shields.io/badge/node--cron-D4002A?style=flat-square&logo=nodedotjs&logoColor=white" alt="node-cron">
   <img src="https://img.shields.io/badge/Ollama-000000?style=flat-square&logo=ollama&logoColor=white" alt="Ollama">
   <br>
   <img src="https://img.shields.io/badge/pnpm-F69220?style=flat-square&logo=pnpm&logoColor=white" alt="pnpm">
   <img src="https://img.shields.io/badge/Turbo-EF4444?style=flat-square&logo=turbo&logoColor=white" alt="Turbo">
   <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions">
-  <img src="https://img.shields.io/badge/c8-F3DF49?style=flat-square&logo=v8&logoColor=black" alt="c8 coverage">
   <img src="https://img.shields.io/badge/ESLint-4B32C3?style=flat-square&logo=eslint&logoColor=white" alt="ESLint">
   <img src="https://img.shields.io/badge/SonarQube-CB2431?style=flat-square&logo=sonarqube&logoColor=white" alt="SonarQube">
 </p>
 
 ## Run in Cursor (Agent)
 
-Open this repo in **Cursor**. The Agent can copy env files, migrate MySQL, run tests, and start both servers.
-
-<p>
-  <img src="https://img.shields.io/badge/Need-Node.js%2020+-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Need Node.js 20+">
-  <img src="https://img.shields.io/badge/Need-pnpm%209+-F69220?style=flat-square&logo=pnpm&logoColor=white" alt="Need pnpm 9+">
-  <img src="https://img.shields.io/badge/Need-MySQL%20(often%20:3307)-4479A1?style=flat-square&logo=mysql&logoColor=white" alt="Need MySQL">
-</p>
+Open this repo in **Cursor**. Need **Node 20+**, **pnpm 9+**, and **MySQL** (demo often port **3307**). The Agent can copy env files, migrate, run tests, and start both servers.
 
 **Paste this into Agent chat**
 
