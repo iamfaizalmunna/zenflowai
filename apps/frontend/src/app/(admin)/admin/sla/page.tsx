@@ -12,12 +12,12 @@ export default function AdminSlaPage() {
 
   return (
     <RoleGuard minRole="ADMIN">
-        <div className="space-y-5 max-w-xl">
+        <div className="page-stack">
           <PageTitle title="SLA policies" hint="Hours to first response / full resolution per priority." />
           {loading && !data ? <PageSkeleton /> : (
-          <ul className="space-y-3">
+          <ul className="grid gap-3 app:grid-cols-2">
             {data?.slaPolicies?.map((p: { id: number; priority: string; responseTimeHours: number; resolutionTimeHours: number }) => (
-              <li key={p.id} className="rounded-2xl border border-border/70 bg-card/70 p-4 text-sm space-y-3">
+              <li key={p.id} className="surface-card p-4 text-sm space-y-3">
                 <p className="font-medium">{p.priority}</p>
                 <form
                   className="flex flex-wrap gap-2"

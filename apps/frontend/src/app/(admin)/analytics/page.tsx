@@ -31,14 +31,14 @@ export default function AnalyticsPage() {
 
   return (
     <RoleGuard minRole="SUPERVISOR">
-        <div className="space-y-5">
+        <div className="page-stack">
           <div className="flex flex-col app:flex-row app:items-end justify-between gap-3">
             <PageTitle title="Analytics" hint="Leaderboard, CSAT notes, volume, and mix — find gaps, then coach." />
             <Select
               aria-label="Date range"
               value={String(rangeDays)}
               onValueChange={(value) => setRangeDays(Number(value))}
-              className="app:w-40 min-h-11 rounded-xl"
+              className="min-h-10 app:w-40"
               options={[
                 { value: '7', label: '7 days' },
                 { value: '30', label: '30 days' },

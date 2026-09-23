@@ -34,8 +34,10 @@ function ChipRow<T extends string>({
           type="button"
           onClick={() => onChange(item.id)}
           className={cn(
-            'min-h-12 rounded-2xl border text-sm font-medium transition-all',
-            value === item.id ? 'border-iris bg-iris/10 text-iris shadow-sm' : 'border-border bg-background/60 text-foreground',
+            'min-h-10 rounded-2xl border text-sm font-medium transition-colors',
+            value === item.id
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-border bg-card text-foreground',
           )}
         >
           {item.label}
@@ -47,10 +49,10 @@ function ChipRow<T extends string>({
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <section className="surface rounded-3xl border border-border/70 p-5 space-y-4">
+    <section className="surface-card p-5 space-y-4">
       <div>
-        <h2 className="font-display text-lg tracking-tight">{title}</h2>
-        {hint && <p className="text-sm text-muted-foreground mt-1">{hint}</p>}
+        <h2 className="text-[15px] font-medium tracking-tight">{title}</h2>
+        {hint && <p className="type-meta mt-1">{hint}</p>}
       </div>
       {children}
     </section>
@@ -83,13 +85,13 @@ export default function AppearanceSettingsPage() {
 
   return (
     <RoleGuard>
-        <div className="max-w-2xl space-y-6">
+        <div className="page-stack max-w-2xl">
           <PageTitle
             title="Appearance"
-            hint="Yours only — saved to your account. Login and public pages always stay the default ZenFlow look."
+            hint="Yours only — saved to your account. Page text and backgrounds stay readable; accent only tints actions."
           />
 
-          <div className="surface rounded-3xl border border-iris/20 p-5">
+          <div className="surface-card border-iris/20 p-5">
             <p className="text-xs uppercase tracking-widest text-muted-foreground">Live preview</p>
             <p className="font-display text-2xl mt-1 tracking-tight">
               ZenFlow<span className="text-iris">AI</span>
@@ -124,7 +126,7 @@ export default function AppearanceSettingsPage() {
             />
           </Section>
 
-          <Section title="Accent color" hint="Presets or any hex. Washed-out colors are blocked so text stays readable.">
+          <Section title="Accent color" hint="Used on buttons and highlights. Label color is chosen automatically so type stays readable.">
             <div className="flex flex-wrap gap-2">
               {ACCENT_PRESETS.map((preset) => (
                 <button
@@ -133,8 +135,8 @@ export default function AppearanceSettingsPage() {
                   aria-label={preset.label}
                   onClick={() => update({ accentHex: preset.hex })}
                   className={cn(
-                    'h-11 w-11 rounded-2xl border-2 transition-transform active:scale-95',
-                    prefs.accentHex === preset.hex ? 'border-foreground scale-105' : 'border-transparent',
+                    'h-11 w-11 rounded-2xl border-2',
+                    prefs.accentHex === preset.hex ? 'border-foreground' : 'border-transparent',
                   )}
                   style={{ backgroundColor: preset.hex }}
                 />

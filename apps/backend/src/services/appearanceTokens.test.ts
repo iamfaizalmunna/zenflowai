@@ -31,6 +31,8 @@ describe('Phase 5 appearance tokens', () => {
     assert.equal(isReadableAccent('#7C5CFC'), true);
     assert.equal(isReadableAccent('#ZZZZZZ'), false);
     assert.equal(accentForeground('#7C5CFC'), '#FFFFFF');
+    assert.equal(accentForeground('#2B8CEE'), '#FFFFFF');
+    assert.equal(accentForeground('#E8A317'), '#111111');
   });
 
   it('falls back to defaults for invalid combos', () => {

@@ -6,7 +6,7 @@ import { useAppearance } from '@/hooks/useAppearance';
 export function ZenLogo({ className, size = 36 }: { className?: string; size?: number }) {
   const { prefs } = useAppearance();
   return (
-    <span className={cn('inline-flex items-center gap-2.5', className)}>
+    <span className={cn('inline-flex min-w-0 items-center gap-2.5', className)}>
       {prefs.logoDataUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -42,7 +42,7 @@ export function ZenLogo({ className, size = 36 }: { className?: string; size?: n
         </defs>
       </svg>
       )}
-      <span className="font-display text-lg tracking-tight leading-none">
+      <span className="min-w-0 truncate font-display text-lg tracking-tight leading-none">
         ZenFlow<span className="text-iris">AI</span>
       </span>
     </span>

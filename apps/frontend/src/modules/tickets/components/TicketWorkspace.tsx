@@ -246,7 +246,7 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
 
   return (
     <div className="flex flex-col gap-3 min-w-0 app:grid app:grid-cols-[220px_minmax(0,1fr)_240px] app:items-start">
-      <aside className="rounded-xl border border-border bg-card p-4 space-y-3 order-1 min-w-0">
+      <aside className="surface-card order-1 min-w-0 space-y-3 p-4">
         <p className="text-xs font-mono text-muted-foreground">{ticket.ticketNumber}</p>
         <h1 className="text-lg font-semibold leading-snug">{ticket.title}</h1>
         <p className="text-sm text-muted-foreground whitespace-pre-wrap">{ticket.description}</p>
@@ -261,11 +261,11 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
         {slaBlock}
       </aside>
 
-      <section className="rounded-xl border border-border bg-card p-4 flex flex-col min-h-[50vh] app:min-h-[70vh] min-w-0 order-2">
+      <section className="surface-card order-2 flex min-h-[50vh] min-w-0 flex-col p-4 app:min-h-[70vh]">
         {thread}
       </section>
 
-      <aside className="rounded-xl border border-border bg-card p-4 space-y-4 order-3 min-w-0">
+      <aside className="surface-card order-3 min-w-0 space-y-4 p-4">
         <div>
           <p className="text-xs font-medium text-slate-500 mb-2">Actions</p>
           <Select

@@ -15,7 +15,7 @@ export default function KnowledgeArticlePage() {
     <RoleGuard minRole="CUSTOMER">
         {loading && !article ? <PageSkeleton /> : null}
         {article && (
-          <article className="max-w-2xl space-y-3 surface rounded-3xl border border-border/70 p-6">
+          <article className="max-w-2xl space-y-3 surface-card p-6">
             <p className="text-xs text-muted-foreground">{article.category?.name}</p>
             <h1 className="font-display text-2xl tracking-tight">{article.title}</h1>
             <pre className="whitespace-pre-wrap text-sm leading-6 font-sans text-foreground/90">

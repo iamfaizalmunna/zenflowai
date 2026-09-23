@@ -46,7 +46,7 @@ export default function ConsultantsPage() {
 
   return (
     <RoleGuard minRole="ADMIN">
-        <div className="space-y-5">
+        <div className="page-stack">
           <PageTitle title="Consultants" hint="Leaderboard plus profiles. CSAT is customer-only — no peer reviews." />
           <ListSearch value={query} onChange={setQuery} placeholder="Search this 90-day pack…" />
           {loading && !data ? <PageSkeleton /> : (

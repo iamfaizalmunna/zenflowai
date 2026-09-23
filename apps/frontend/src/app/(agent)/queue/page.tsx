@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery, useSubscription } from '@apollo/client';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { GET_TICKETS, TICKET_CREATED } from '@/modules/tickets/queries/ticket.queries';
-import { TicketBrowseBar } from '@/modules/tickets/components/TicketBrowseBar';
+import { TicketBrowseBar, TicketViewSwitch } from '@/modules/tickets/components/TicketBrowseBar';
 import { TicketCard, ticketGridClass, type TicketListItem } from '@/modules/tickets/components/TicketCard';
 import { ListSearch } from '@/components/ui/ListSearch';
 import { PageSkeleton } from '@/components/ui/PageSkeleton';
@@ -41,9 +41,13 @@ export default function AgentQueuePage() {
 
   return (
     <RoleGuard minRole="AGENT">
-        <div className="space-y-4">
-          <div className="flex flex-col gap-3">
+        <div className="page-stack">
+          <div className="flex min-w-0 items-start justify-between gap-4">
             <PageTitle title="Ticket queue" hint={`${data?.tickets?.total ?? 0} tickets`} />
+            <TicketViewSwitch view={prefs.ticketView} onView={(value: TicketView) => update({ ticketView: value })} />
+          </div>
+          <div className="flex min-w-0 flex-col gap-2 app:flex-row app:flex-wrap app:items-center">
+            <ListSearch className="min-w-0 flex-1" value={query} onChange={setQuery} placeholder="Search this pack…" />
             <TicketBrowseBar
               status={status}
               priority={priority}
@@ -53,8 +57,8 @@ export default function AgentQueuePage() {
               onPriority={setPriority}
               onSort={(value: TicketSort) => update({ ticketSort: value })}
               onView={(value: TicketView) => update({ ticketView: value })}
+              showView={false}
             />
-            <ListSearch value={query} onChange={setQuery} placeholder="Search this pack…" />
           </div>
           {loading && !data ? <PageSkeleton /> : (
           <div className={ticketGridClass(prefs.ticketView)}>

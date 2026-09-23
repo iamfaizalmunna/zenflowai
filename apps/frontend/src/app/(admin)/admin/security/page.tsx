@@ -37,12 +37,12 @@ export default function SecurityPage() {
 
   return (
     <RoleGuard minRole="ADMIN">
-        <div className="space-y-6">
+        <div className="page-stack">
           <PageTitle title="Security" hint="Audit, blocked IPs, and spam queue. Heuristics stay local." />
-          <section className="surface rounded-3xl border border-border/70 p-4 space-y-3">
-            <h2 className="font-display text-lg">Block an IP</h2>
+          <section className="surface-card p-4 space-y-3">
+            <h2 className="text-[15px] font-medium">Block an IP</h2>
             <form
-              className="flex flex-col app:flex-row gap-2"
+              className="flex min-w-0 flex-col gap-2 app:flex-row app:items-center"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!ip.trim()) return;
@@ -50,8 +50,8 @@ export default function SecurityPage() {
                 setIp('');
               }}
             >
-              <Input value={ip} onChange={(e) => setIp(e.target.value)} placeholder="203.0.113.10" />
-              <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason" />
+              <Input className="w-auto min-w-0 flex-1" value={ip} onChange={(e) => setIp(e.target.value)} placeholder="203.0.113.10" />
+              <Input className="w-auto min-w-0 flex-1" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason" />
               <Button type="submit">Block</Button>
             </form>
             <ul className="space-y-2">
@@ -63,8 +63,8 @@ export default function SecurityPage() {
               ))}
             </ul>
           </section>
-          <section className="surface rounded-3xl border border-border/70 p-4 space-y-3">
-            <h2 className="font-display text-lg">Spam queue</h2>
+          <section className="surface-card p-4 space-y-3">
+            <h2 className="text-[15px] font-medium">Spam queue</h2>
             {(spam?.spamReports as { id: number; targetType: string; targetId: number; status: string; reason: string }[] | undefined)?.map((row) => (
               <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/50 px-3 py-2 text-sm">
                 <p>{row.targetType} #{row.targetId} · {row.reason} · {row.status}</p>
@@ -77,8 +77,8 @@ export default function SecurityPage() {
               </div>
             ))}
           </section>
-          <section className="surface rounded-3xl border border-border/70 p-4 space-y-2">
-            <h2 className="font-display text-lg">Audit log</h2>
+          <section className="surface-card p-4 space-y-2">
+            <h2 className="text-[15px] font-medium">Audit log</h2>
             <ListSearch value={query} onChange={setQuery} placeholder="Search this pack…" />
             {loading && !audits ? <PageSkeleton /> : auditRows.map((row) => (
               <p key={row.id} className="text-xs border-b border-border/40 py-2">

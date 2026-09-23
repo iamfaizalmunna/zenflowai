@@ -12,6 +12,39 @@ const VIEWS: { id: TicketView; label: string; icon: typeof List }[] = [
   { id: 'ICON', label: 'Icons', icon: LayoutGrid },
 ];
 
+export function TicketViewSwitch({
+  view,
+  onView,
+}: {
+  view: TicketView;
+  onView: (value: TicketView) => void;
+}) {
+  return (
+    <div className="flex min-w-0 w-fit max-w-full shrink-0 rounded-2xl border border-border/60 bg-card p-1" role="radiogroup" aria-label="Ticket view">
+      {VIEWS.map((item) => {
+        const Icon = item.icon;
+        const active = view === item.id;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            aria-label={item.label}
+            onClick={() => onView(item.id)}
+            className={cn(
+              'min-h-10 min-w-10 inline-flex items-center justify-center rounded-xl px-2.5 text-muted-foreground',
+              active && 'bg-primary text-primary-foreground',
+            )}
+          >
+            <Icon className="h-4 w-4" />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function TicketBrowseBar({
   status,
   priority,
@@ -21,6 +54,7 @@ export function TicketBrowseBar({
   onPriority,
   onSort,
   onView,
+  showView = true,
 }: {
   status: string;
   priority: string;
@@ -30,15 +64,16 @@ export function TicketBrowseBar({
   onPriority: (value: string) => void;
   onSort: (value: TicketSort) => void;
   onView: (value: TicketView) => void;
+  showView?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-3 app:flex-row app:items-center app:justify-end">
+    <div className="flex min-w-0 flex-col gap-2 app:flex-row app:flex-wrap app:items-center app:justify-end">
       <div className="grid grid-cols-2 gap-2 app:flex app:w-auto">
         <Select
           aria-label="Filter by status"
           value={status || 'ALL'}
           onValueChange={(value) => onStatus(value === 'ALL' ? '' : value)}
-          className="app:w-44"
+          className="min-h-10 app:w-40"
           options={[
             { value: 'ALL', label: 'All statuses' },
             { value: 'NEW', label: 'New' },
@@ -53,7 +88,7 @@ export function TicketBrowseBar({
           aria-label="Filter by priority"
           value={priority || 'ALL'}
           onValueChange={(value) => onPriority(value === 'ALL' ? '' : value)}
-          className="app:w-40"
+          className="min-h-10 app:w-36"
           options={[
             { value: 'ALL', label: 'All priorities' },
             { value: 'URGENT', label: 'Urgent' },
@@ -66,7 +101,7 @@ export function TicketBrowseBar({
           aria-label="Sort tickets"
           value={sort}
           onValueChange={(value) => onSort(value as TicketSort)}
-          className="app:w-40 col-span-2 app:col-span-1"
+          className="min-h-10 col-span-2 app:col-span-1 app:w-40"
           options={[
             { value: 'UPDATED', label: 'Recently updated' },
             { value: 'CREATED', label: 'Newest' },
@@ -75,28 +110,7 @@ export function TicketBrowseBar({
           ]}
         />
       </div>
-      <div className="flex rounded-2xl border border-border/70 p-1 bg-card/50" role="radiogroup" aria-label="Ticket view">
-        {VIEWS.map((item) => {
-          const Icon = item.icon;
-          const active = view === item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              aria-label={item.label}
-              onClick={() => onView(item.id)}
-              className={cn(
-                'flex-1 app:flex-none min-h-10 min-w-10 inline-flex items-center justify-center rounded-xl px-2.5 text-muted-foreground',
-                active && 'bg-iris/15 text-iris',
-              )}
-            >
-              <Icon className="h-4 w-4" />
-            </button>
-          );
-        })}
-      </div>
+      {showView ? <TicketViewSwitch view={view} onView={onView} /> : null}
     </div>
   );
 }

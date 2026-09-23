@@ -15,6 +15,7 @@ import {
   isAllowedLogo,
   isDarkColorMode,
   isReadableAccent,
+  irisTextChannels,
   mergeAppearance,
   normalizeHex,
   relativeLuminance,
@@ -81,6 +82,11 @@ describe('Phase 5 appearance tokens', () => {
     assert.equal(isAllowedLogo(`data:image/png;base64,${'a'.repeat(180_001)}`), false);
     assert.equal(accentForeground('#111111'), '#FFFFFF');
     assert.equal(accentForeground('#F5F5F5'), '#111111');
+    assert.equal(accentForeground('#2B8CEE'), '#FFFFFF');
+    assert.equal(accentForeground('#E8A317'), '#111111');
+    assert.equal(accentForeground('#2B8CEE', 24), '#111111');
+    assert.match(irisTextChannels('#2B8CEE', false), /38%$/);
+    assert.match(irisTextChannels('#2B8CEE', true), /76%$/);
     assert.equal(mergeAppearance(null).colorMode, 'SYSTEM');
     assert.equal(mergeAppearance({ colorMode: 'NOPE' }).colorMode, 'SYSTEM');
     assert.equal(mergeAppearance({ soundsMuted: true }).soundsMuted, true);

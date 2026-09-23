@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { LogOut, Moon, Settings2, Sun, Volume2, VolumeX } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useLogout } from '@/modules/auth/hooks/useAuth';
@@ -29,10 +28,10 @@ export function Sidebar() {
   const dark = isDarkColorMode(prefs.colorMode, prefersDark);
 
   return (
-    <aside className="hidden app:flex w-60 flex-col h-full border-r border-border bg-card">
-      <div className="h-16 flex items-center justify-between px-4 border-b border-border/60">
+    <aside className="hidden app:flex w-60 shrink-0 flex-col h-full border-r border-border bg-card overflow-hidden">
+      <div className="h-16 flex items-center justify-between px-4 border-b border-border/60 shrink-0">
         <ZenLogo size={32} />
-        <NotificationBell />
+        <NotificationBell side="bottom" align="start" />
       </div>
 
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
@@ -51,13 +50,9 @@ export function Sidebar() {
                 active ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              {active && (
-                <motion.div
-                  layoutId="nav-active"
-                  className="absolute inset-0 rounded-xl bg-muted"
-                  transition={{ type: 'spring', bounce: 0.18, duration: 0.4 }}
-                />
-              )}
+              {active ? (
+                <span className="absolute inset-0 rounded-xl bg-muted" aria-hidden />
+              ) : null}
               <Icon className="w-4 h-4 relative z-10 shrink-0" />
               <span className="relative z-10">{item.label}</span>
             </Link>

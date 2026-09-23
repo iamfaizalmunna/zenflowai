@@ -26,7 +26,7 @@ export default function HelpCenterPage() {
 
   return (
     <RoleGuard minRole="CUSTOMER">
-        <div className="space-y-5 max-w-2xl">
+        <div className="page-stack">
           <PageTitle title="Help Center" hint="Search owned articles or ask a question." />
           <HelpAskBox />
           <ListSearch
@@ -37,10 +37,10 @@ export default function HelpCenterPage() {
           {loading && !data ? <PageSkeleton /> : (
           <div className="space-y-2">
             {articles.map((article) => (
-              <Link key={article.id} href={`/knowledge/${article.id}`} className="block surface rounded-3xl border border-border/70 p-4 hover:border-iris/40">
-                <h2 className="font-medium text-sm">{article.title}</h2>
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{article.body}</p>
-                {article.category && <p className="text-xs text-muted-foreground mt-2">{article.category.name}</p>}
+              <Link key={article.id} href={`/knowledge/${article.id}`} className="block min-w-0 surface-card p-4 transition-colors hover:border-iris/35">
+                <h2 className="break-words text-[15px] font-semibold leading-snug tracking-tight">{article.title}</h2>
+                <p className="type-meta mt-1.5 line-clamp-2 break-words">{article.body}</p>
+                {article.category && <p className="type-meta mt-2">{article.category.name}</p>}
               </Link>
             ))}
           </div>

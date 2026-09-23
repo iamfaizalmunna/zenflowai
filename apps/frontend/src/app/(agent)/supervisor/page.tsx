@@ -29,22 +29,22 @@ export default function SupervisorHome() {
 
   return (
     <RoleGuard minRole="SUPERVISOR">
-        <div className="space-y-5">
+        <div className="page-stack">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <PageTitle title="SLA watch" hint="Open tickets due within 8 hours. Charts live on Analytics." />
             <Link href="/analytics" className="text-sm font-medium text-iris">Open analytics</Link>
           </div>
           <div className="grid grid-cols-2 app:grid-cols-4 gap-3">
             {snap?.analytics?.kpis?.slice(0, 4).map((kpi: { id: string; label: string; value: number }) => (
-              <div key={kpi.id} className="surface rounded-3xl border border-border/70 p-4">
-                <p className="text-xs text-muted-foreground">{kpi.label}</p>
-                <p className="font-display text-2xl mt-1">{kpi.value}</p>
+              <div key={kpi.id} className="surface-card p-4">
+                <p className="type-meta">{kpi.label}</p>
+                <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight">{kpi.value}</p>
               </div>
             ))}
             {csat?.csatSummary && (
-              <div className="surface rounded-3xl border border-border/70 p-4">
-                <p className="text-xs text-muted-foreground">CSAT pending</p>
-                <p className="font-display text-2xl mt-1">{csat.csatSummary.pending}</p>
+              <div className="surface-card p-4">
+                <p className="type-meta">CSAT pending</p>
+                <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight">{csat.csatSummary.pending}</p>
               </div>
             )}
           </div>
