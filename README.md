@@ -44,7 +44,7 @@
 
 ## Completed phases
 
-Nine slices, in order. Each row is a title plus what shipped. Journey and algorithm charts live on the phase page — not cramped into this README.
+Nine slices, in order. Open a title for the full story (intro, who it is for, screens, steps, then the chart). Journey pictures in the browser gallery.
 
 | | Phase | What shipped |
 |:--:|:------|:-------------|
