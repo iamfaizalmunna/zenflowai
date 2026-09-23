@@ -15,7 +15,7 @@
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit",
     "test": "tsx --test src/security/*.test.ts src/utils/*.test.ts src/services/*.test.ts src/services/ai/*.test.ts src/qa/*.test.ts ../frontend/src/lib/*.test.ts",
-    "test:coverage": "c8 --src=src --exclude='**/*.test.ts' --exclude='**/scripts/**' --reporter=lcov --reporter=text tsx --test src/security/*.test.ts src/utils/*.test.ts src/services/*.test.ts src/services/ai/*.test.ts src/qa/*.test.ts ../frontend/src/lib/*.test.ts",
+    "test:coverage": "c8 tsx --test src/security/*.test.ts src/utils/*.test.ts src/services/*.test.ts src/services/ai/*.test.ts src/qa/*.test.ts ../frontend/src/lib/*.test.ts",
     "test:e2e": "tsx src/scripts/e2eLocal.ts",
     "ai:doctor": "tsx src/scripts/aiDoctor.ts",
     "ai:setup": "tsx src/scripts/aiSetup.ts",

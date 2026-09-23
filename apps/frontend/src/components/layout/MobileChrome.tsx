@@ -13,6 +13,7 @@ import { ZenLogo } from '@/components/brand/ZenLogo';
 import { NAV_ICONS } from '@/components/layout/navIcons';
 import { MoreSheet } from '@/components/layout/MoreSheet';
 import { useUiSound } from '@/hooks/useUiSound';
+import { prefetchAppRoute } from '@/lib/prefetchRoute';
 
 export function MobileChrome() {
   const pathname = usePathname();
@@ -90,6 +91,7 @@ function MobileTab({
     <li>
       <Link
         href={item.href}
+        onMouseEnter={() => prefetchAppRoute(item.href)}
         onClick={onTap}
         className={cn(
           'flex flex-col items-center gap-0.5 py-2 min-h-14 text-[11px]',

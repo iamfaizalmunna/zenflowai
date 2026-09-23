@@ -29,5 +29,5 @@ export function applyAppearanceToDocument(prefs: AppearancePrefs, root: HTMLElem
   root.classList.remove('light', 'dark');
   root.classList.add(theme);
   root.style.colorScheme = theme;
-  if (typeof window !== 'undefined') localStorage.removeItem('theme');
+  if (typeof window !== 'undefined') window.localStorage.removeItem('theme');
 }

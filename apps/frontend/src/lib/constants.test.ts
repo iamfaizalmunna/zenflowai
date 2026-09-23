@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { ROLE_HOME, ROLE_HIERARCHY, meetsMinRole } from './constants';
+import { ROLE_COLOR, ROLE_HOME, ROLE_HIERARCHY, ROLE_LABEL, meetsMinRole } from './constants';
 
 describe('Phase 1 role home routes', () => {
   it('sends each role to its home path', () => {
@@ -9,6 +9,8 @@ describe('Phase 1 role home routes', () => {
     assert.equal(ROLE_HOME.SUPERVISOR, '/supervisor');
     assert.equal(ROLE_HOME.ADMIN, '/admin/users');
     assert.equal(ROLE_HOME.SUPER_ADMIN, '/admin/users');
+    assert.match(ROLE_COLOR.SUPER_ADMIN, /red/);
+    assert.equal(ROLE_LABEL.SUPER_ADMIN, 'Super Admin');
   });
 
   it('keeps the locked role ladder', () => {
@@ -19,5 +21,7 @@ describe('Phase 1 role home routes', () => {
     assert.equal(meetsMinRole('ADMIN', 'SUPERVISOR'), true);
     assert.equal(meetsMinRole('SUPERVISOR', 'ADMIN'), false);
     assert.equal(meetsMinRole(undefined, 'CUSTOMER'), false);
+    assert.equal(meetsMinRole('GHOST', 'CUSTOMER'), false);
+    assert.equal(meetsMinRole('ADMIN', 'NOPE'), true);
   });
 });

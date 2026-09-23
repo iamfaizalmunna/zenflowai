@@ -8,6 +8,7 @@ describe('Phase 4 knowledge Q&A', () => {
     assert.equal(result.confidence, 0);
     assert.match(result.answer, /do not know/i);
     assert.equal(result.citations.length, 0);
+    assert.equal(buildKbAnswer([]).confidence, 0);
   });
 
   it('returns a cited snippet for a strong match', () => {
@@ -17,5 +18,13 @@ describe('Phase 4 knowledge Q&A', () => {
     assert.ok(result.confidence > 0);
     assert.match(result.answer, /Reset password/);
     assert.equal(result.citations[0]?.id, 2);
+    const many = buildKbAnswer([
+      { id: 1, title: 'A', body: 'body one is long enough', score: 8 },
+      { id: 2, title: 'B', body: 'body two is long enough', score: 7 },
+      { id: 3, title: 'C', body: 'body three is long enough', score: 6 },
+      { id: 4, title: 'D', body: 'body four is long enough', score: 5 },
+    ]);
+    assert.equal(many.confidence, 1);
+    assert.equal(many.citations.length, 3);
   });
 });

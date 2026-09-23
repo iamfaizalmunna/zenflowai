@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { NAV_ICONS } from '@/components/layout/navIcons';
 import { isDarkColorMode, toggledColorMode } from '@/lib/appearance';
 import { useAppearance } from '@/hooks/useAppearance';
+import { prefetchAppRoute } from '@/lib/prefetchRoute';
 
 export function MoreSheet({
   open,
@@ -77,6 +78,7 @@ export function MoreSheet({
                   <Link
                     key={item.href}
                     href={item.href}
+                    onMouseEnter={() => prefetchAppRoute(item.href)}
                     onClick={() => {
                       onTap();
                       onClose();

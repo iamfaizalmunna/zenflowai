@@ -1,0 +1,56 @@
+{
+  "version": "v1",
+  "runAt": "2026-09-23T04:21:05Z",
+  "unit": { "tests": 140, "suites": 47, "pass": 140, "fail": 0, "passPct": 100 },
+  "phases": [
+    { "id": 1, "name": "Auth, RBAC, security", "pass": 13, "total": 13 },
+    { "id": 2, "name": "Tickets, routing, SLA dates", "pass": 7, "total": 7 },
+    { "id": 3, "name": "Workspace helpers", "pass": 8, "total": 8 },
+    { "id": 4, "name": "SLA sweep, CSAT, Q&A", "pass": 8, "total": 8 },
+    { "id": 5, "name": "Appearance", "pass": 17, "total": 17 },
+    { "id": 6, "name": "Analytics and consultants", "pass": 15, "total": 15 },
+    { "id": 7, "name": "Nova / Help Center", "pass": 17, "total": 17 },
+    { "id": 8, "name": "Cookie, uploads, errors", "pass": 10, "total": 10 },
+    { "id": 9, "name": "UI, speed, QA", "pass": 39, "total": 39 },
+    { "id": "regression", "name": "Regression locks", "pass": 6, "total": 6 }
+  ],
+  "coverageInstrumented": {
+    "statements": 100,
+    "branches": 89.41,
+    "functions": 91.72,
+    "lines": 100,
+    "scope": "backend Prisma-free modules + frontend src/lib (not app/modules/components, not GraphQL, not *.service.ts)"
+  },
+  "coverageBackendInstrumented": {
+    "statements": 100,
+    "branches": 89.41,
+    "functions": 91.72,
+    "lines": 100
+  },
+  "e2eLive": {
+    "status": "ok",
+    "role": "CUSTOMER",
+    "tickets": 144,
+    "notices": 0,
+    "knowledge": 40,
+    "sla": 4,
+    "consultants": 6,
+    "steps": 10,
+    "passPct": 100
+  },
+  "journeys": { "count": 11, "pass": 11, "passPct": 100 },
+  "regression": { "count": 3, "pass": 3, "passPct": 100 },
+  "depths": {
+    "code": "10 security layers; resolver→service→Prisma; JWT verify then 8s identity cache; Turbopack in next dev only",
+    "functional": "11 journeys; 10 live GraphQL steps; 90-day consultant pack; client pack search; new-ticket KB still server search",
+    "ui": "4 route-group skeletons; RouteFade on page slot; lazy Infographic; persistent AppShell"
+  },
+  "sonar": {
+    "projectKey": "iamfaizalmunna_zenflowai",
+    "lcov": "apps/backend/coverage/lcov.info",
+    "qualityGateWait": true,
+    "localScan": "skipped without SONAR_TOKEN",
+    "instrumentedLineCoverage": 100,
+    "note": "100% lines on the CI unit pack. Next.js app/modules/components, GraphQL, and Prisma services stay on live e2e — same exclusions as Sonar."
+  }
+}

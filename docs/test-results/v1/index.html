@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ZenFlowAI tests · v1</title>
+  <link rel="stylesheet" href="../assets/report.css" />
+  <link rel="stylesheet" href="/qa/assets/report.css" />
+</head>
+<body>
+  <header>
+    <p class="kicker"><a href="../index.html">All versions</a> · v1 · 23 Sep 2026</p>
+    <h1>What the test pack covers</h1>
+    <p class="muted">Last run: 140 / 140 unit tests, 11 journeys, live GraphQL e2e. Lines on the CI pack are 100%. Open with the app at <a href="http://localhost:3000/qa/v1/">localhost:3000/qa/v1/</a>.</p>
+    <nav class="nav">
+      <a href="#overview">Overview</a>
+      <a href="#phases">Phases 1–9</a>
+      <a href="#journeys">Journeys</a>
+      <a href="#e2e">Live e2e</a>
+      <a href="#coverage">Coverage</a>
+      <a href="#out">Out of LCOV</a>
+    </nav>
+  </header>
+
+  <div class="wrap">
+    <section id="overview">
+      <div class="grid four">
+        <article class="card">
+          <div class="metric-head"><span>Unit pack</span><span class="pct">100%</span></div>
+          <div class="track"><span class="fill g" style="--p:100%"></span></div>
+          <p class="muted">140 / 140 · 47 suites</p>
+        </article>
+        <article class="card">
+          <div class="metric-head"><span>Lines (c8)</span><span class="pct">100%</span></div>
+          <div class="track"><span class="fill g" style="--p:100%"></span></div>
+          <p class="muted">Backend units + frontend lib</p>
+        </article>
+        <article class="card">
+          <div class="metric-head"><span>Journeys</span><span class="pct">100%</span></div>
+          <div class="track"><span class="fill i" style="--p:100%"></span></div>
+          <p class="muted">J01–J11</p>
+        </article>
+        <article class="card">
+          <div class="metric-head"><span>Live e2e</span><span class="pct">100%</span></div>
+          <div class="track"><span class="fill i" style="--p:100%"></span></div>
+          <p class="muted">10 GraphQL steps</p>
+        </article>
+      </div>
+      <div class="grid two" style="margin-top:0.75rem">
+        <article class="card">
+          <div class="metric-head"><span>Branches</span><span class="pct" style="color:#fbbf24">89.41%</span></div>
+          <div class="track"><span class="fill a" style="--p:89.41%"></span></div>
+          <p class="muted">tsx CJS helpers and env <code>??</code> arms — not missing ticket/RBAC paths</p>
+        </article>
+        <article class="card">
+          <div class="metric-head"><span>Functions</span><span class="pct" style="color:#fbbf24">91.72%</span></div>
+          <div class="track"><span class="fill a" style="--p:91.72%"></span></div>
+          <p class="muted">Same helpers on line 1 of every instrumented file</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="phases">
+      <h2>By phase <span class="chip">all pass</span></h2>
+
+      <article class="card phase">
+        <div class="phase-head">
+          <h3>Phase 1 — Auth, RBAC, security</h3>
+          <span class="count">13 / 13</span>
+        </div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Role home</strong><span>Each role lands on a path it can open</span></div><div class="n">2/2</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>RBAC</strong><span>Ladder, FORBIDDEN, overrides, cooldown jitter</span></div><div class="n">7/7</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Spam verdicts</strong><span>Score bands CLEAN → BLOCK</span></div><div class="n">1/1</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Auth context cache</strong><span>8s TTL, no cross-token leak</span></div><div class="n">3/3</div></div>
+      </article>
+
+      <article class="card phase">
+        <div class="phase-head">
+          <h3>Phase 2 — Tickets, routing, SLA dates</h3>
+          <span class="count">7 / 7</span>
+        </div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Routing</strong><span>Keyword, category, priority, fallback</span></div><div class="n">3/3</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>SLA due dates</strong><span>Response + resolution hours from start</span></div><div class="n">1/1</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Ticket numbers</strong><span><code>#ZEN-0001</code> and <code>#ZEN-1042</code></span></div><div class="n">3/3</div></div>
+      </article>
+
+      <article class="card phase">
+        <div class="phase-head">
+          <h3>Phase 3 — Workspace helpers</h3>
+          <span class="count">8 / 8</span>
+        </div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>SLA countdown</strong><span>Overdue, hours, days</span></div><div class="n">3/3</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Related articles</strong><span>Keyword + category rank</span></div><div class="n">2/2</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Suggest reply</strong><span>Category templates and Help Center snippet</span></div><div class="n">3/3</div></div>
+      </article>
+
+      <article class="card phase">
+        <div class="phase-head">
+          <h3>Phase 4 — SLA sweep, CSAT, Q&amp;A</h3>
+          <span class="count">8 / 8</span>
+        </div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>SLA sweep math</strong><span>Warning window, breach, auto-close</span></div><div class="n">3/3</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>CSAT rules</strong><span>7-day expiry, clamp 1–5</span></div><div class="n">3/3</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>KB Q&amp;A</strong><span>Low score = I do not know; citations</span></div><div class="n">2/2</div></div>
+      </article>
+
+      <article class="card phase">
+        <div class="phase-head">
+          <h3>Phase 5 — Appearance</h3>
+          <span class="count">17 / 17</span>
+        </div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Tokens (frontend + backend)</strong><span>Hex, contrast, sort, merge defaults</span></div><div class="n">12/12</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Session + document</strong><span>Public pages stay light; signed-in theme is that user</span></div><div class="n">4/4</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Theme boot</strong><span>Login forces light and clears leftover theme</span></div><div class="n">1/1</div></div>
+      </article>
+
+      <article class="card phase">
+        <div class="phase-head">
+          <h3>Phase 6 — Analytics and consultants</h3>
+          <span class="count">15 / 15</span>
+        </div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Chart types</strong><span>Polar vs cartesian, pretty keys</span></div><div class="n">4/4</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Math, similarity, ranks</strong><span>Buckets, dice, leaderboard ties</span></div><div class="n">9/9</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Ticket packs</strong><span>90-day list · 112-day profile</span></div><div class="n">2/2</div></div>
+      </article>
+
+      <article class="card phase">
+        <div class="phase-head">
+          <h3>Phase 7 — Nova / Help Center</h3>
+          <span class="count">17 / 17</span>
+        </div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Consult math</strong><span>Handoff, grounded text, Ollama vs retrieval</span></div><div class="n">6/6</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Owned KB pack</strong><span>Front matter, shards, untitled files</span></div><div class="n">3/3</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Draft from ticket</strong><span>Staff reply only; never auto-public</span></div><div class="n">4/4</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Ollama probe + ingest skip</strong><span>Circuit after 3 fails; hash skip</span></div><div class="n">4/4</div></div>
+      </article>
+
+      <article class="card phase">
+        <div class="phase-head">
+          <h3>Phase 8 — Cookie, uploads, errors</h3>
+          <span class="count">10 / 10</span>
+        </div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Refresh cookie</strong><span>HttpOnly Lax; Secure only in production</span></div><div class="n">3/3</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Upload paths</strong><span>No traversal; size cap; path jail</span></div><div class="n">4/4</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>JWT expiry + public errors</strong><span>15m default; hide Prisma schema drift</span></div><div class="n">3/3</div></div>
+      </article>
+
+      <article class="card phase">
+        <div class="phase-head">
+          <h3>Phase 9 — UI, speed, QA</h3>
+          <span class="count">39 / 39</span>
+        </div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Nav + PWA</strong><span>1024px chrome, More slot, standalone</span></div><div class="n">7/7</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Splash</strong><span>Three scenes, skip if seen or reduced motion</span></div><div class="n">4/4</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>List search + perf</strong><span>Pack filter, Turbopack, skeletons</span></div><div class="n">6/6</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Access, sounds, errors, utils</strong><span>Role paths, mute, GraphQL noise</span></div><div class="n">11/11</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Journeys + surfaces + prefetch</strong><span>J01–J11 catalog, 23 screens, 8 admin hrefs</span></div><div class="n">11/11</div></div>
+      </article>
+
+      <article class="card phase">
+        <div class="phase-head">
+          <h3>Regression locks</h3>
+          <span class="count">6 / 6</span>
+        </div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Permission chain</strong><span>Customer / agent / admin edges used in e2e</span></div><div class="n">3/3</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Ladder + packs + TTL</strong><span>Roles, <code>#ZEN-XXXX</code>, 90/112 days, 8s cache</span></div><div class="n">3/3</div></div>
+      </article>
+    </section>
+
+    <section id="journeys">
+      <article class="card">
+        <h2>User journeys</h2>
+        <div class="track" style="margin-bottom:0.85rem"><span class="fill i" style="--p:100%"></span></div>
+        <ul class="steps">
+          <li><span class="dot"></span><span><strong>J01</strong> Customer first visit shows splash</span><span class="chip">pass</span></li>
+          <li><span class="dot"></span><span><strong>J02</strong> Returning visit skips splash</span><span class="chip">pass</span></li>
+          <li><span class="dot"></span><span><strong>J03</strong> Reduced motion never plays splash</span><span class="chip">pass</span></li>
+          <li><span class="dot"></span><span><strong>J04</strong> Customer home is tickets; admin blocked</span><span class="chip">pass</span></li>
+          <li><span class="dot"></span><span><strong>J05</strong> Agent queue without user admin</span><span class="chip">pass</span></li>
+          <li><span class="dot"></span><span><strong>J06</strong> Supervisor can open analytics</span><span class="chip">pass</span></li>
+          <li><span class="dot"></span><span><strong>J07</strong> Admin can open users</span><span class="chip">pass</span></li>
+          <li><span class="dot"></span><span><strong>J08</strong> Super admin at top of the ladder</span><span class="chip">pass</span></li>
+          <li><span class="dot"></span><span><strong>J09</strong> Signed-in groups ship a skeleton, not an empty pane</span><span class="chip">pass</span></li>
+          <li><span class="dot"></span><span><strong>J10</strong> List search filters the loaded pack only</span><span class="chip">pass</span></li>
+          <li><span class="dot"></span><span><strong>J11</strong> New ticket waits 4 characters before Help Center GraphQL</span><span class="chip">pass</span></li>
+        </ul>
+        <p class="muted" style="margin:0.8rem 0 0"><code>apps/frontend/src/lib/journeys.test.ts</code></p>
+      </article>
+    </section>
+
+    <section id="e2e">
+      <article class="card">
+        <h2>Live GraphQL walk</h2>
+        <p class="muted">This run hit a running API. CI skips the script if GraphQL is down (no MySQL in GitHub Actions).</p>
+        <div class="track" style="margin:0.7rem 0 0.85rem"><span class="fill i" style="--p:100%"></span></div>
+        <ul class="steps">
+          <li><span class="dot"></span><span>Health on <code>localhost:4000</code></span><span class="chip">ok</span></li>
+          <li><span class="dot"></span><span>Login <code>customer@zenflowai.com</code></span><span class="chip">ok</span></li>
+          <li><span class="dot"></span><span>Query <code>me</code> — email matches</span><span class="chip">ok</span></li>
+          <li><span class="dot"></span><span>Query tickets — <strong>144</strong></span><span class="chip">ok</span></li>
+          <li><span class="dot"></span><span>Query notices — array (0 this run)</span><span class="chip">ok</span></li>
+          <li><span class="dot"></span><span>Help Center pack — <strong>40</strong></span><span class="chip">ok</span></li>
+          <li><span class="dot"></span><span>Help Center search <code>password</code></span><span class="chip">ok</span></li>
+          <li><span class="dot"></span><span>Admin SLA policies — <strong>4</strong></span><span class="chip">ok</span></li>
+          <li><span class="dot"></span><span>Admin consultants (90-day pack) — <strong>6</strong></span><span class="chip">ok</span></li>
+          <li><span class="dot"></span><span>Admin <code>me</code> again — auth cache path</span><span class="chip">ok</span></li>
+        </ul>
+        <p class="muted" style="margin:0.8rem 0 0"><code>pnpm test:e2e</code></p>
+      </article>
+    </section>
+
+    <section id="coverage">
+      <article class="card">
+        <h2>Instrumented coverage (c8)</h2>
+        <p class="muted">What CI measures: Prisma-free backend modules + frontend <code>src/lib</code>. Gate: lines and statements must stay at 100%.</p>
+        <div class="suite"><div><strong>Lines</strong><span>Every statement in the pack ran</span></div><div class="n">100%</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Statements</strong></div><div class="n">100%</div></div>
+        <div class="track"><span class="fill g" style="--p:100%"></span></div>
+        <div class="suite"><div><strong>Branches</strong><span>Helpers + env fallbacks</span></div><div class="n">89.41%</div></div>
+        <div class="track"><span class="fill a" style="--p:89.41%"></span></div>
+        <div class="suite"><div><strong>Functions</strong><span>tsx interop on line 1</span></div><div class="n">91.72%</div></div>
+        <div class="track"><span class="fill a" style="--p:91.72%"></span></div>
+        <p class="muted" style="margin:0.85rem 0 0">Trees: <code>backend/src/security</code>, <code>utils</code>, pure <code>services</code>, <code>frontend/src/lib</code> (not Apollo prefetch).</p>
+      </article>
+    </section>
+
+    <section id="out">
+      <article class="card out">
+        <h2>Not in LCOV — same as CI / Sonar</h2>
+        <p class="muted">These are real product files. They are not counted toward the 100% line gate because GitHub Actions has no MySQL and does not render React.</p>
+        <div class="suite"><div><strong>Next.js <code>app/</code> pages</strong><span>23 screens inventoried; exercised in the browser, not c8</span></div><div class="n">e2e</div></div>
+        <div class="suite"><div><strong><code>modules/</code> + <code>components/</code></strong><span>Apollo views, shell, charts</span></div><div class="n">e2e</div></div>
+        <div class="suite"><div><strong>GraphQL + <code>*.service.ts</code></strong><span>Resolvers and Prisma I/O</span></div><div class="n">e2e</div></div>
+        <p class="muted" style="margin:0.85rem 0 0">That split is intentional. Do not read 100% lines as “every JSX line ran.”</p>
+      </article>
+    </section>
+  </div>
+  <footer class="muted">ZenFlowAI test results v1 · <a href="results.json">results.json</a> · <code>pnpm test</code> then <code>pnpm test:e2e</code></footer>
+</body>
+</html>

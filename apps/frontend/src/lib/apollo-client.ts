@@ -5,9 +5,7 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
-import { createPersistedQueryLink } from '@apollo/client/link/persisted-queries';
 import { createClient } from 'graphql-ws';
-import { sha256 } from 'crypto-hash';
 import { shouldSurfaceGraphqlError } from '@/lib/apolloErrors';
 
 const graphqlHttp = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:4000/graphql';
@@ -98,11 +96,7 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
   }
 });
 
-const persistedQueriesLink = createPersistedQueryLink({
-  sha256,
-});
-
-const httpChain = from([errorLink, persistedQueriesLink, authLink, httpLink]);
+const httpChain = from([errorLink, authLink, httpLink]);
 
 function makeWsLink() {
   return new GraphQLWsLink(
@@ -145,7 +139,7 @@ export const apolloClient = new ApolloClient({
     },
   }),
   defaultOptions: {
-    watchQuery: { errorPolicy: 'all' },
-    query: { errorPolicy: 'all' },
+    watchQuery: { fetchPolicy: 'cache-first', errorPolicy: 'all' },
+    query: { fetchPolicy: 'cache-first', errorPolicy: 'all' },
   },
 });

@@ -231,5 +231,5 @@ export const FONT_STACK: Record<FontFamily, string> = {
   FRAUNCES: 'var(--font-fraunces), Georgia, serif',
   SYSTEM: 'system-ui, -apple-system, sans-serif',
   SERIF: 'Georgia, "Times New Roman", ui-serif, serif',
-  MONO: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-};
+  MONO: 'ui-monospace, SFMono-Regular, Menlo, monospace' };
+

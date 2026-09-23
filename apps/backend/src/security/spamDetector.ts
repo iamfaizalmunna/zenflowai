@@ -304,6 +304,10 @@ export function sanitizeContent(input: string): string {
 // ─── IP Reputation Check ──────────────────────────────────────────────────────
 
 export async function isIpBlocked(ip: string): Promise<{ blocked: boolean; reason?: string }> {
+  const now = Date.now();
+  const hit = ipBlockCache.get(ip);
+  if (hit && hit.until > now) return hit.value;
+
   const blocked = await prisma.blockedIp.findFirst({
     where: {
       ip,
@@ -313,5 +317,9 @@ export async function isIpBlocked(ip: string): Promise<{ blocked: boolean; reaso
       ],
     },
   });
-  return blocked ? { blocked: true, reason: blocked.reason } : { blocked: false };
+  const value = blocked ? { blocked: true as const, reason: blocked.reason } : { blocked: false as const };
+  ipBlockCache.set(ip, { until: now + 15_000, value });
+  return value;
 }
+
+const ipBlockCache = new Map<string, { until: number; value: { blocked: boolean; reason?: string } }>();

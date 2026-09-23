@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
-import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { Button, Input, PageTitle } from '@/components/ui/Field';
+import { ListSearch } from '@/components/ui/ListSearch';
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
 import {
   AUDIT_LOGS,
   BLOCKED_IPS,
@@ -14,6 +15,9 @@ import {
   UNBLOCK_IP,
 } from '@/modules/analytics/queries/analytics.queries';
 import { formatRelativeTime } from '@/lib/utils';
+import { filterByQuery } from '@/lib/listSearch';
+
+type AuditRow = { id: number; action: string; message: string; createdAt: string };
 
 export default function SecurityPage() {
   const { data: audits, loading } = useQuery(AUDIT_LOGS);
@@ -24,10 +28,15 @@ export default function SecurityPage() {
   const [review] = useMutation(REVIEW_SPAM, { onCompleted: () => refetchSpam() });
   const [ip, setIp] = useState('');
   const [reason, setReason] = useState('manual block');
+  const [query, setQuery] = useState('');
+  const auditRows = filterByQuery(
+    (audits?.auditLogs?.rows ?? []) as AuditRow[],
+    query,
+    (row) => `${row.action} ${row.message}`,
+  );
 
   return (
     <RoleGuard minRole="ADMIN">
-      <AppShell>
         <div className="space-y-6">
           <PageTitle title="Security" hint="Audit, blocked IPs, and spam queue. Heuristics stay local." />
           <section className="surface rounded-3xl border border-border/70 p-4 space-y-3">
@@ -70,15 +79,14 @@ export default function SecurityPage() {
           </section>
           <section className="surface rounded-3xl border border-border/70 p-4 space-y-2">
             <h2 className="font-display text-lg">Audit log</h2>
-            {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
-            {audits?.auditLogs?.rows?.map((row: { id: number; action: string; message: string; createdAt: string }) => (
+            <ListSearch value={query} onChange={setQuery} placeholder="Search this pack…" />
+            {loading && !audits ? <PageSkeleton /> : auditRows.map((row) => (
               <p key={row.id} className="text-xs border-b border-border/40 py-2">
                 <span className="font-medium">{row.action}</span> · {row.message} · {formatRelativeTime(row.createdAt)}
               </p>
             ))}
           </section>
         </div>
-      </AppShell>
     </RoleGuard>
   );
 }

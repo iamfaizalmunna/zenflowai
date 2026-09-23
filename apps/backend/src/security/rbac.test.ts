@@ -12,6 +12,7 @@ describe('Phase 1 RBAC', () => {
   it('orders roles by hierarchy', () => {
     assert.equal(hasHigherOrEqualRole('ADMIN', 'CUSTOMER'), true);
     assert.equal(hasHigherOrEqualRole('CUSTOMER', 'AGENT'), false);
+    assert.equal(hasHigherOrEqualRole('GHOST', 'CUSTOMER'), false);
   });
 
   it('grants SUPER_ADMIN every permission', () => {
@@ -30,6 +31,7 @@ describe('Phase 1 RBAC', () => {
     assert.equal(hasPermission('ADMIN', 'consultant:read'), true);
     assert.equal(hasPermission('AGENT', 'knowledge:draft'), true);
     assert.equal(hasPermission('CUSTOMER', 'knowledge:draft'), false);
+    assert.equal(hasPermission('GHOST', 'ticket:create'), false);
   });
 
   it('applies explicit overrides before role perms', () => {
@@ -46,9 +48,25 @@ describe('Phase 1 RBAC', () => {
   it('throws FORBIDDEN when permission is missing', () => {
     assert.throws(() => requirePermission('CUSTOMER', 'user:ban'), GraphQLError);
     assert.throws(() => requirePermission(null, 'ticket:create'), GraphQLError);
+    assert.doesNotThrow(() => requirePermission('ADMIN', 'consultant:read'));
+    assert.doesNotThrow(() =>
+      requirePermission('CUSTOMER', 'ticket:read:all', [{ permission: 'ticket:read:all', granted: true }]),
+    );
   });
 
   it('returns zero cooldown for SUPER_ADMIN', () => {
     assert.equal(getRandomCooldownMs('SUPER_ADMIN', 'ticket'), 0);
+    assert.equal(getRandomCooldownMs('SUPER_ADMIN', 'message'), 0);
+  });
+
+  it('rolls a positive cooldown for customers and unknown roles', () => {
+    const ticket = getRandomCooldownMs('CUSTOMER', 'ticket');
+    const message = getRandomCooldownMs('CUSTOMER', 'message');
+    const unknown = getRandomCooldownMs('GHOST', 'ticket');
+    assert.ok(ticket >= 24_000 && ticket <= 144_000);
+    assert.ok(message >= 4_000);
+    assert.ok(unknown >= 24_000);
+    assert.ok(getRandomCooldownMs('ADMIN', 'ticket') >= 0);
+    assert.ok(getRandomCooldownMs('ADMIN', 'message') >= 0);
   });
 });

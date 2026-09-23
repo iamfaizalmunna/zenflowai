@@ -1,0 +1,27 @@
+{
+  "all": false,
+  "allowExternal": true,
+  "check-coverage": true,
+  "lines": 100,
+  "statements": 100,
+  "include": [
+    "**/apps/backend/src/security/**",
+    "**/apps/backend/src/utils/**",
+    "**/apps/backend/src/services/**",
+    "**/apps/backend/src/qa/**",
+    "**/apps/frontend/src/lib/**"
+  ],
+  "exclude": [
+    "**/*.test.ts",
+    "**/scripts/**",
+    "**/node_modules/**",
+    "**/*.service.ts",
+    "**/graphql/**",
+    "**/middleware/**",
+    "**/jobs/**",
+    "**/apollo-client.ts",
+    "**/prefetchMap.ts",
+    "**/prefetchRoute.ts"
+  ],
+  "reporter": ["lcov", "text", "text-summary"]
+}

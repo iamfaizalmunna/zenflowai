@@ -1,7 +1,6 @@
 'use client';
 
 import { type ReactNode, useRef } from 'react';
-import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { Button, PageTitle } from '@/components/ui/Field';
 import { useAppearance } from '@/hooks/useAppearance';
@@ -84,7 +83,6 @@ export default function AppearanceSettingsPage() {
 
   return (
     <RoleGuard>
-      <AppShell>
         <div className="max-w-2xl space-y-6">
           <PageTitle
             title="Appearance"
@@ -243,7 +241,6 @@ export default function AppearanceSettingsPage() {
             />
           </Section>
         </div>
-      </AppShell>
     </RoleGuard>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
-import { useMutation, useQuery, useApolloClient } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { useAuthStore } from '@/store/auth.store';
 import { useUiSound } from '@/hooks/useUiSound';
 import { MY_APPEARANCE, SAVE_APPEARANCE } from '@/modules/appearance/queries/appearance.queries';
@@ -42,8 +42,11 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const signedIn = Boolean(token && userId);
   const { setMuted } = useUiSound();
-  const client = useApolloClient();
-  const { data } = useQuery(MY_APPEARANCE, { skip: !signedIn, fetchPolicy: 'network-only' });
+  const { data } = useQuery(MY_APPEARANCE, {
+    skip: !signedIn,
+    fetchPolicy: 'cache-first',
+    nextFetchPolicy: 'cache-first',
+  });
   const [save] = useMutation(SAVE_APPEARANCE);
   const [localPatch, setLocalPatch] = useState<Partial<AppearancePrefs>>({});
 
@@ -51,12 +54,10 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined') localStorage.removeItem(LEGACY_APPEARANCE_KEY);
     if (!userId) {
       setLocalPatch({});
-      client.cache.evict({ fieldName: 'myAppearance' });
-      client.cache.gc();
       return;
     }
     setLocalPatch(readUserPatch(userId));
-  }, [userId, client]);
+  }, [userId]);
 
   const prefs = useMemo(
     () =>

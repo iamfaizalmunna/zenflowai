@@ -2,7 +2,7 @@
 
 Local service-desk demo: Next.js 15 · Express · GraphQL · MySQL · Prisma.
 
-Customers file tickets (`#ZEN-XXXX`). Nova answers first from the owned Help Center (optional local Ollama). Humans take over when confidence is low. Phases 1–8 are **this repo on your machine** — no cloud host, no email SaaS, no paid LLM.
+Customers file tickets (`#ZEN-XXXX`). Nova answers first from the owned Help Center (optional local Ollama). Humans take over when confidence is low. Phases 1–9 are **this repo on your machine** — no cloud host, no email SaaS, no paid LLM.
 
 [![Stack](https://img.shields.io/badge/Stack-Next.js%2015%20%2B%20GraphQL%20%2B%20MySQL-6366f1)](#stack)
 [![App](https://img.shields.io/badge/UI-localhost%3A3000-0ea5e9)](#run-in-cursor)
@@ -26,6 +26,7 @@ Run ZenFlowAI for local testing.
 4. pnpm db:generate && pnpm db:migrate && pnpm db:seed
    If migrate fails on an old demo DB: prisma migrate resolve --applied 20260922150000_init then migrate again.
 5. pnpm test && pnpm test:e2e
+   Open docs/test-results/v1/index.html for the versioned results sheet.
 6. pnpm dev
 7. Tell me when the UI is up at http://localhost:3000 and GraphQL at http://localhost:4000/graphql.
 ```
@@ -33,6 +34,7 @@ Run ZenFlowAI for local testing.
 | After it runs | Open |
 |---------------|------|
 | **App UI** | [http://localhost:3000](http://localhost:3000) |
+| **Test report v1** | [http://localhost:3000/qa/v1/](http://localhost:3000/qa/v1/) (also [docs/test-results](docs/test-results/README.md)) |
 | **GraphQL** | [http://localhost:4000/graphql](http://localhost:4000/graphql) |
 | **Login** | `customer@zenflowai.com` / `password123` (all demo users use `password123`) |
 
@@ -44,7 +46,7 @@ Manual steps are in [Quick start](#quick-start).
 
 | Layer | What we use |
 |-------|-------------|
-| Frontend | Next.js 15, Tailwind, Apollo (`credentials: include`) |
+| Frontend | Next.js 15 (`pnpm dev` uses **Turbopack**), Tailwind, Apollo (`credentials: include`) |
 | Backend | Express, Apollo Server 4, graphql-ws |
 | DB | MySQL + Prisma (`pnpm db:migrate`) |
 | Auth | Access JWT 15m in `localStorage`; refresh cookie `zenflow_refresh` (HttpOnly, SameSite=Lax) |
@@ -97,9 +99,10 @@ Appearance (`/settings`) is per signed-in user. Login/public pages stay the defa
 | Nova | First assignee; owned KB + optional Ollama; “Still need a person” |
 | Ops | SLA cron, CSAT, admin users/teams/routing/SLA/KB drafts |
 | UI | Per-user Appearance, ticket views, PWA chrome ≤1024px |
+| Speed | Turbopack in `pnpm dev`, route skeletons, 90-day consultant packs, client list search |
 | Analytics | `/analytics` (SUPERVISOR+); consultants ADMIN+ |
 | Phase 8 | Refresh cookie, committed Prisma migrations, local attachments, in-app bell |
-| Phase 9 | Lighter mobile, calmer desktop, role/screen QA + optional live GraphQL e2e |
+| Phase 9 | Lighter mobile, calmer desktop, Turbopack, skeletons, 140 unit tests, HTML report at `/qa/v1/` |
 
 Not in this demo: email, S3/R2, Firecrawl, paid OpenAI, webhooks, SSO, hosting.
 
@@ -127,3 +130,26 @@ subscription { messageAdded(ticketId: 1) { id body } }
 ```
 
 See [`PLAN.md`](./PLAN.md) for roles, env names, and file conventions.
+
+## UI speed (what changed, what did not)
+
+Admin tab lag was **on-demand compile** of each `'use client'` page, then GraphQL auth hitting MySQL twice. The SLA form itself was not the bottleneck.
+
+| Layer | Change | Side effect |
+|-------|--------|-------------|
+| Dev compile | `next dev --turbopack` | Production `next build` is unchanged |
+| First paint | `loading.tsx` skeletons on admin, agent, customer, and settings | Sidebar/`AppShell` stay mounted |
+| Tab change | CSS `animate-route-in` on the page slot only | Reduced-motion still disables animation |
+| Auth | JWT still verified every request; user + permission rows cached **8s** | Ban / role change can lag up to 8s |
+| Consultants / leaderboard | Assigned tickets limited to **90 days** (profile **112 days**) | Solved/CSAT KPIs are the pack, not lifetime |
+| Lists | `filterByQuery` on the loaded pack | Substring match: `admin` hits `SUPER_ADMIN` |
+| Help Center | Search filters the **40-article** pack in the browser | Create-ticket related articles still query GraphQL after 4 characters |
+| Charts | `Infographic` / Recharts load lazily | First chart shows a pulse, then the plot |
+
+Unchanged on purpose: role ladder, ticket `#ZEN-XXXX`, resolver → service → Prisma, login/refresh cookies, SLA policy math, queue subscriptions, Nova handoff.
+
+```bash
+pnpm test          # 140 Prisma-free units + journeys + regression (100% c8 lines on that pack)
+pnpm test:e2e      # live GraphQL: customer pack + admin SLA/consultants
+pnpm test:report   # docs/test-results/v1/index.html  (phase bars, not one table)
+```

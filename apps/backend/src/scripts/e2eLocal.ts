@@ -68,10 +68,55 @@ async function main(): Promise<void> {
   );
   if (!Array.isArray(notices.data?.myNotifications)) throw new Error('notices failed');
 
+  const kb = await gql<{ knowledgeArticles: Array<{ id: number }> }>(
+    `query { knowledgeArticles(internal: false) { id title } }`,
+    undefined,
+    token
+  );
+  if (!Array.isArray(kb.data?.knowledgeArticles)) throw new Error('knowledge pack failed');
+
+  const kbSearch = await gql<{ knowledgeArticles: Array<{ id: number }> }>(
+    `query($search: String) { knowledgeArticles(search: $search, internal: false) { id title } }`,
+    { search: 'password' },
+    token
+  );
+  if (!Array.isArray(kbSearch.data?.knowledgeArticles)) throw new Error('knowledge search failed');
+
+  const adminLogin = await gql<{ login: { accessToken: string; user: { role: string } } }>(
+    `mutation Login($email: String!, $password: String!) {
+      login(email: $email, password: $password) { accessToken user { role } }
+    }`,
+    { email: 'admin@zenflowai.com', password: PASSWORD }
+  );
+  const adminToken = adminLogin.data?.login.accessToken;
+  if (!adminToken) throw new Error(`admin login failed: ${JSON.stringify(adminLogin.errors ?? adminLogin)}`);
+
+  const sla = await gql<{ slaPolicies: Array<{ priority: string }> }>(
+    `query { slaPolicies { priority responseTimeHours resolutionTimeHours } }`,
+    undefined,
+    adminToken
+  );
+  if (!Array.isArray(sla.data?.slaPolicies) || sla.data.slaPolicies.length === 0) {
+    throw new Error('slaPolicies failed');
+  }
+
+  const consultants = await gql<{ consultants: Array<{ id: number; name: string }> }>(
+    `query { consultants { id name openCount resolvedCount } }`,
+    undefined,
+    adminToken
+  );
+  if (!Array.isArray(consultants.data?.consultants)) throw new Error('consultants pack failed');
+
+  const meAgain = await gql<{ me: { email: string } }>(`query { me { email } }`, undefined, adminToken);
+  if (meAgain.data?.me?.email !== 'admin@zenflowai.com') throw new Error('auth cache me mismatch');
+
   console.log('e2e ok', {
     role: login.data?.login.user.role,
     tickets: tickets.data?.tickets.total,
     notices: notices.data?.myNotifications.length,
+    knowledge: kb.data?.knowledgeArticles.length,
+    sla: sla.data.slaPolicies.length,
+    consultants: consultants.data.consultants.length,
   });
 }
 

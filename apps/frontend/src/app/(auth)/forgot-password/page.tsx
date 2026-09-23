@@ -26,12 +26,12 @@ export default function ForgotPasswordPage() {
       <AuthCard title="Check your email">
         <div className="text-center py-4">
           <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto mb-3" />
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            If an account exists for <strong>{email}</strong>, we sent a reset link.
+          <p className="text-sm text-white/60">
+            If an account exists for <strong className="text-white">{email}</strong>, we sent a reset link.
           </p>
           <Link
             href="/login"
-            className="mt-6 block text-sm font-medium text-slate-900 dark:text-white hover:underline"
+            className="mt-6 block text-sm font-medium text-white hover:underline"
           >
             Back to sign in
           </Link>
@@ -60,8 +60,8 @@ export default function ForgotPasswordPage() {
         </AuthButton>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500">
-        <Link href="/login" className="font-medium text-slate-900 dark:text-white hover:underline">
+      <p className="mt-6 text-center text-sm text-white/50">
+        <Link href="/login" className="font-medium text-white hover:underline">
           ← Back to sign in
         </Link>
       </p>

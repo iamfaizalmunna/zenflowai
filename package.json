@@ -11,6 +11,7 @@
     "lint": "pnpm run --parallel lint",
     "test": "pnpm --filter backend test",
     "test:e2e": "pnpm --filter backend test:e2e",
+    "test:report": "open docs/test-results/v1/index.html",
     "db:migrate": "pnpm --filter backend db:migrate",
     "db:generate": "pnpm --filter backend db:generate",
     "db:seed": "pnpm --filter backend db:seed",

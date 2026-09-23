@@ -32,6 +32,21 @@ describe('KB draft from ticket', () => {
     assert.equal(draft.body.includes('Nova guess'), false);
   });
 
+  it('ignores notes and short staff replies', () => {
+    assert.equal(
+      buildKbDraftFromTicket({
+        ticketNumber: '#ZEN-0003',
+        title: 'VPN',
+        description: 'Down',
+        replies: [
+          { body: 'Internal note only, not a customer reply', type: 'NOTE', isStaff: true },
+          { body: 'too short', type: 'REPLY', isStaff: true },
+        ],
+      }),
+      null,
+    );
+  });
+
   it('falls back to a staff AI reply only when no human reply exists', () => {
     const draft = buildKbDraftFromTicket({
       ticketNumber: '#ZEN-0002',

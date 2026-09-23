@@ -2,7 +2,6 @@
 
 import { useQuery } from '@apollo/client';
 import Link from 'next/link';
-import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { TICKET_COUNTS, GET_TICKETS } from '@/modules/tickets/queries/ticket.queries';
 import { TicketCard, ticketGridClass } from '@/modules/tickets/components/TicketCard';
@@ -24,7 +23,6 @@ export default function CustomerDashboardPage() {
 
   return (
     <RoleGuard minRole="CUSTOMER">
-      <AppShell>
         <div className="space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -57,7 +55,6 @@ export default function CustomerDashboardPage() {
             )}
           </div>
         </div>
-      </AppShell>
     </RoleGuard>
   );
 }

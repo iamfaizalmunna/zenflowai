@@ -29,12 +29,22 @@ describe('Phase 2 routing engine', () => {
     assert.equal(hit?.id, 2);
   });
 
-  it('falls back when nothing else matches', () => {
-    const hit = matchRoutingRule(rules, {
-      title: 'Hello',
-      description: 'general question',
-      priority: 'LOW',
+  it('matches priority then falls back', () => {
+    const urgent = matchRoutingRule(rules, {
+      title: 'Outage',
+      description: 'site down',
+      priority: 'URGENT',
     });
-    assert.equal(hit?.id, 4);
+    assert.equal(urgent?.id, 3);
+    const none = matchRoutingRule(
+      [{ id: 9, type: 'KEYWORD', keyword: null, categoryId: null, priority: null }],
+      { title: 'Hello', description: 'general', priority: 'LOW' },
+    );
+    assert.equal(none, null);
+    const fallback = matchRoutingRule(
+      [{ id: 4, type: 'FALLBACK', keyword: null, categoryId: null, priority: null }],
+      { title: 'Hello', description: 'general', priority: 'LOW' },
+    );
+    assert.equal(fallback?.id, 4);
   });
 });

@@ -33,5 +33,11 @@ describe('per-user appearance session', () => {
     assert.equal(mine.colorMode, 'DARK');
     assert.equal(mine.accentHex, '#2B8CEE');
     assert.equal(mine.density, 'COMPACT');
+    const fallback = resolveSessionAppearance({
+      isSignedIn: true,
+      dbPrefs: null,
+      localPatch: null,
+    });
+    assert.equal(fallback.colorMode, DEFAULT_APPEARANCE.colorMode);
   });
 });

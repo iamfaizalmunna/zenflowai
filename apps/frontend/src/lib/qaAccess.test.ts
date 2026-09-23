@@ -22,9 +22,19 @@ describe('Phase 9 QA access map', () => {
       assert.equal(canRoleOpenPath('AGENT', href), false);
     }
     assert.equal(canRoleOpenPath('ADMIN', '/admin/users'), true);
+    assert.equal(canRoleOpenPath('CUSTOMER', '/login'), true);
+    assert.equal(canRoleOpenPath('CUSTOMER', '/settings'), true);
+    assert.equal(canRoleOpenPath('SUPERVISOR', '/admin/routing'), true);
+    assert.equal(canRoleOpenPath('CUSTOMER', '/register'), true);
+    assert.equal(canRoleOpenPath('CUSTOMER', '/qa/v1'), true);
+    assert.equal(canRoleOpenPath('ADMIN', '/admin/knowledge'), true);
+    assert.equal(canRoleOpenPath('CUSTOMER', '/queue'), false);
   });
 
   it('covers the GraphQL happy path used in live e2e', () => {
-    assert.deepEqual([...E2E_GRAPHQL_STEPS], ['login', 'me', 'tickets', 'myNotifications']);
+    assert.deepEqual(
+      [...E2E_GRAPHQL_STEPS],
+      ['login', 'me', 'tickets', 'myNotifications', 'knowledgeArticles', 'slaPolicies', 'consultants'],
+    );
   });
 });
