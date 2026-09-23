@@ -1,17 +1,16 @@
-# Test results (open these)
+# Test results
 
-GitHub shows this Markdown. The **progress bars** need the HTML files opened in a browser.
+Progress bars need a browser. GitHub Markdown only lists the files.
 
-## Open the live pages
-
-1. **From the running app** (best): [http://localhost:3000/qa/v1/](http://localhost:3000/qa/v1/)
-2. **From the repo file**: [v1/index.html](v1/index.html) → Open in Browser / Live Preview
-3. **CLI**: `pnpm test:report`
+| Open | Where |
+|------|--------|
+| Live report | [http://localhost:3000/qa/v1/](http://localhost:3000/qa/v1/) |
+| Repo file | [v1/index.html](v1/index.html) |
+| CLI | `pnpm test:report` |
+| Phase charts | [http://localhost:3000/qa/phases](http://localhost:3000/qa/phases) · [../phases](../phases/README.md) |
 
 | Version | Date | Unit | Lines (c8) | E2E |
 |---------|------|------|------------|-----|
 | [v1](v1/index.html) | 2026-09-23 | 140/140 | 100% lines | ok (144 tickets, 40 KB, 4 SLA, 6 consultants) |
 
-v1 is a **phase-by-phase** sheet (not one table): Overview bars → Phases 1–9 → Journeys J01–J11 → live GraphQL steps → coverage → what stays out of LCOV.
-
-Journey / data / algorithm charts for each phase: [docs/phases](../phases/README.md) · HTML gallery [docs/phases/index.html](../phases/index.html) · app [http://localhost:3000/qa/phases](http://localhost:3000/qa/phases).
+v1 layout: overview bars → phases 1–9 → journeys J01–J11 → live GraphQL → coverage → out of LCOV.
