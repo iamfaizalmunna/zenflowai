@@ -28,7 +28,8 @@ describe('Phase 1 RBAC', () => {
     assert.equal(hasPermission('SUPERVISOR', 'routing:create'), true);
     assert.equal(hasPermission('AGENT', 'routing:create'), false);
     assert.equal(hasPermission('ADMIN', 'consultant:read'), true);
-    assert.equal(hasPermission('CUSTOMER', 'ticket:read:all'), false);
+    assert.equal(hasPermission('AGENT', 'knowledge:draft'), true);
+    assert.equal(hasPermission('CUSTOMER', 'knowledge:draft'), false);
   });
 
   it('applies explicit overrides before role perms', () => {

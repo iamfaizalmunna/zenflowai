@@ -111,6 +111,17 @@ export const UPLOAD_TICKET_ATTACHMENT = gql`
   }
 `;
 
+export const PROMOTE_TICKET_KB_DRAFT = gql`
+  mutation PromoteTicketToKbDraft($ticketId: Int!) {
+    promoteTicketToKbDraft(ticketId: $ticketId) {
+      id
+      title
+      visibility
+      isPublished
+    }
+  }
+`;
+
 export const RELATED_ARTICLES = gql`
   query RelatedArticles($ticketId: Int!) {
     relatedArticles(ticketId: $ticketId) {

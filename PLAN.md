@@ -91,5 +91,6 @@ Scope only: bug fixes, lighter mobile, calmer desktop, QA that CI can run withou
 - Mobile: solid chrome (less blur), stacked ticket workspace, no horizontal overflow
 - Desktop: quieter surfaces, login card, sidebar
 - QA: role → screen contract tests; `pnpm test:e2e` hits live GraphQL when the API is up (skipped in CI)
+- KB: staff can **Save as help draft** from a ticket (Internal + unpublished). Admin publishes. Never auto-public.
 
 Not in this phase: new roles, email, hosting.

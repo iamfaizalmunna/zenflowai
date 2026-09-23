@@ -8,6 +8,7 @@ import {
   HANDOFF_TICKET,
   GET_TICKET,
   MESSAGE_ADDED,
+  PROMOTE_TICKET_KB_DRAFT,
   RELATED_ARTICLES,
   SUGGEST_REPLY,
   TICKET_UPDATED,
@@ -64,6 +65,7 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
   const [uploadAttachment] = useMutation(UPLOAD_TICKET_ATTACHMENT, { onCompleted: () => refetch() });
   const [handoffTicket, { loading: handing }] = useMutation(HANDOFF_TICKET, { onCompleted: () => refetch() });
   const [updateTicket] = useMutation(UPDATE_TICKET, { onCompleted: () => refetch() });
+  const [promoteKb, { loading: promoting }] = useMutation(PROMOTE_TICKET_KB_DRAFT);
   const [fetchSuggest, { loading: suggesting }] = useLazyQuery(SUGGEST_REPLY);
   const [fetchSnippet] = useLazyQuery(ARTICLE_SNIPPET);
 
@@ -284,6 +286,20 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
           disabled={suggesting}
         >
           {suggesting ? 'Loading…' : 'Suggest reply'}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          disabled={promoting}
+          onClick={() =>
+            void promoteKb({ variables: { ticketId: id } }).then((res) => {
+              const title = res.data?.promoteTicketToKbDraft?.title as string | undefined;
+              if (title) window.alert(`Saved internal draft (not public): ${title}`);
+            })
+          }
+        >
+          {promoting ? 'Saving…' : 'Save as help draft'}
         </Button>
         <div>
           <p className="text-xs font-medium text-slate-500 mb-2">Related articles</p>
