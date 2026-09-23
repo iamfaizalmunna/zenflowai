@@ -1,34 +1,42 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { ROLE_HOME, meetsMinRole } from '@/lib/constants';
 
 interface RoleGuardProps {
-  children: React.ReactNode;
-  /** Minimum role required to access this route */
+  children: ReactNode;
   minRole?: string;
-  /** Redirect if not authenticated */
   requireAuth?: boolean;
+}
+
+function subscribeHydration(onStoreChange: () => void): () => void {
+  return useAuthStore.persist.onFinishHydration(onStoreChange);
 }
 
 export function RoleGuard({ children, minRole, requireAuth = true }: RoleGuardProps) {
   const { isAuthenticated, user } = useAuthStore();
   const router = useRouter();
+  const hydrated = useSyncExternalStore(
+    subscribeHydration,
+    () => useAuthStore.persist.hasHydrated(),
+    () => false,
+  );
   const denied = Boolean(minRole && user && !meetsMinRole(user.role, minRole));
 
   useEffect(() => {
+    if (!hydrated) return;
     if (requireAuth && !isAuthenticated) {
       router.replace('/login');
       return;
     }
-
     if (denied && user) {
       router.replace(ROLE_HOME[user.role] ?? '/login');
     }
-  }, [isAuthenticated, user, denied, requireAuth, router]);
+  }, [hydrated, isAuthenticated, user, denied, requireAuth, router]);
 
+  if (!hydrated) return <>{children}</>;
   if (requireAuth && !isAuthenticated) return null;
   if (minRole && !user) return null;
   if (denied) return null;

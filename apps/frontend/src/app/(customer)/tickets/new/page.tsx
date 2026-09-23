@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { CATEGORIES, CREATE_TICKET, KNOWLEDGE_ARTICLES } from '@/modules/tickets/queries/ticket.queries';
 import { Button, Field, Input, PageTitle, Textarea } from '@/components/ui/Field';
 import { Select } from '@/components/ui/Select';
+import { NEW_TICKET_KB_SEARCH_MIN } from '@/lib/uiPerf';
 
 export default function NewTicketPage() {
   const router = useRouter();
@@ -20,7 +20,7 @@ export default function NewTicketPage() {
   const [search, setSearch] = useState('');
   const { data: kbData } = useQuery(KNOWLEDGE_ARTICLES, {
     variables: { search, internal: false },
-    skip: search.length < 4,
+    skip: search.length < NEW_TICKET_KB_SEARCH_MIN,
   });
 
   useEffect(() => {
@@ -44,7 +44,6 @@ export default function NewTicketPage() {
 
   return (
     <RoleGuard minRole="CUSTOMER">
-      <AppShell>
         <div className="max-w-xl space-y-5">
           <PageTitle title="Create ticket" hint="We’ll route this to the right team." />
           {error && <p className="text-sm text-destructive">{error.message}</p>}
@@ -106,7 +105,6 @@ export default function NewTicketPage() {
             </Button>
           </form>
         </div>
-      </AppShell>
     </RoleGuard>
   );
 }

@@ -1,32 +1,56 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@apollo/client';
-import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
+import { ListSearch } from '@/components/ui/ListSearch';
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
 import { PageTitle } from '@/components/ui/Field';
 import { KpiTile } from '@/modules/analytics/components/KpiTile';
 import { LeaderboardTable } from '@/modules/analytics/components/LeaderboardTable';
 import { CONSULTANTS, LEADERBOARD } from '@/modules/analytics/queries/analytics.queries';
+import { filterByQuery } from '@/lib/listSearch';
 import { formatRelativeTime } from '@/lib/utils';
 
+type ConsultantRow = {
+  id: number;
+  name: string;
+  email: string;
+  teams: string[];
+  openCount: number;
+  resolvedCount: number;
+  csatAverage: number;
+  csatCount: number;
+  assessmentIndex: number;
+  isAiConsultant?: boolean;
+  lastLoginAt?: string | null;
+};
+
 export default function ConsultantsPage() {
+  const [query, setQuery] = useState('');
   const { data, loading } = useQuery(CONSULTANTS);
   const { data: board } = useQuery(LEADERBOARD);
-  const people = data?.consultants ?? [];
-  const resolved = people.reduce((s: number, p: { resolvedCount: number }) => s + p.resolvedCount, 0);
+  const people = filterByQuery(
+    (data?.consultants ?? []) as ConsultantRow[],
+    query,
+    (person) => `${person.name} ${person.email} ${person.teams.join(' ')}`,
+  );
+  const resolved = people.reduce((s, p) => s + p.resolvedCount, 0);
   const csat = people.length
-    ? Math.round((people.reduce((s: number, p: { csatAverage: number }) => s + p.csatAverage, 0) / people.length) * 10) / 10
+    ? Math.round((people.reduce((s, p) => s + p.csatAverage, 0) / people.length) * 10) / 10
     : 0;
   const index = people.length
-    ? Math.round(people.reduce((s: number, p: { assessmentIndex: number }) => s + p.assessmentIndex, 0) / people.length)
+    ? Math.round(people.reduce((s, p) => s + p.assessmentIndex, 0) / people.length)
     : 0;
 
   return (
     <RoleGuard minRole="ADMIN">
-      <AppShell>
         <div className="space-y-5">
           <PageTitle title="Consultants" hint="Leaderboard plus profiles. CSAT is customer-only — no peer reviews." />
+          <ListSearch value={query} onChange={setQuery} placeholder="Search this 90-day pack…" />
+          {loading && !data ? <PageSkeleton /> : (
+          <>
           <div className="grid grid-cols-2 app:grid-cols-4 gap-2">
             <KpiTile label="Active" value={people.length} />
             <KpiTile label="Solved" value={resolved} />
@@ -37,7 +61,6 @@ export default function ConsultantsPage() {
             <h2 className="text-sm font-semibold tracking-tight">Solver leaderboard</h2>
             <LeaderboardTable rows={board?.consultantLeaderboard ?? []} />
           </section>
-          {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
           <div className="overflow-x-auto dash-card">
             <table className="w-full text-sm min-w-[720px]">
               <thead className="text-left text-xs text-muted-foreground bg-muted/40">
@@ -53,13 +76,7 @@ export default function ConsultantsPage() {
                 </tr>
               </thead>
               <tbody>
-                {people.map((p: {
-                  id: number; name: string; email: string; teams: string[];
-                  openCount: number; resolvedCount: number; csatAverage: number; csatCount: number;
-                  assessmentIndex: number;
-                  isAiConsultant?: boolean;
-                  lastLoginAt?: string | null;
-                }) => (
+                {people.map((p) => (
                   <tr key={p.id} className="border-t border-border/50 hover:bg-muted/30">
                     <td className="px-5 py-4">
                       <p className="font-medium tracking-tight">
@@ -82,8 +99,9 @@ export default function ConsultantsPage() {
               </tbody>
             </table>
           </div>
+          </>
+          )}
         </div>
-      </AppShell>
     </RoleGuard>
   );
 }

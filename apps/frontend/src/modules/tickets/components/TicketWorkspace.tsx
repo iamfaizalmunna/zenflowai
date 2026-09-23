@@ -8,6 +8,7 @@ import {
   HANDOFF_TICKET,
   GET_TICKET,
   MESSAGE_ADDED,
+  PROMOTE_TICKET_KB_DRAFT,
   RELATED_ARTICLES,
   SUGGEST_REPLY,
   TICKET_UPDATED,
@@ -64,6 +65,7 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
   const [uploadAttachment] = useMutation(UPLOAD_TICKET_ATTACHMENT, { onCompleted: () => refetch() });
   const [handoffTicket, { loading: handing }] = useMutation(HANDOFF_TICKET, { onCompleted: () => refetch() });
   const [updateTicket] = useMutation(UPDATE_TICKET, { onCompleted: () => refetch() });
+  const [promoteKb, { loading: promoting }] = useMutation(PROMOTE_TICKET_KB_DRAFT);
   const [fetchSuggest, { loading: suggesting }] = useLazyQuery(SUGGEST_REPLY);
   const [fetchSnippet] = useLazyQuery(ARTICLE_SNIPPET);
 
@@ -207,7 +209,7 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
 
   if (!isStaff) {
     return (
-      <div className="space-y-5 max-w-3xl">
+      <div className="space-y-5 max-w-3xl min-w-0">
         <header>
           <p className="text-xs font-mono text-slate-400">{ticket.ticketNumber}</p>
           <h1 className="text-2xl font-bold tracking-tight mt-1">{ticket.title}</h1>
@@ -243,27 +245,27 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
   }
 
   return (
-    <div className="grid gap-4 app:grid-cols-[240px_minmax(0,1fr)_260px] items-start">
-      <aside className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
-        <p className="text-xs font-mono text-slate-400">{ticket.ticketNumber}</p>
+    <div className="flex flex-col gap-3 min-w-0 app:grid app:grid-cols-[220px_minmax(0,1fr)_240px] app:items-start">
+      <aside className="rounded-xl border border-border bg-card p-4 space-y-3 order-1 min-w-0">
+        <p className="text-xs font-mono text-muted-foreground">{ticket.ticketNumber}</p>
         <h1 className="text-lg font-semibold leading-snug">{ticket.title}</h1>
-        <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{ticket.description}</p>
-        <p className="text-xs text-slate-500">Customer: {ticket.customer?.name}</p>
+        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{ticket.description}</p>
+        <p className="text-xs text-muted-foreground">Customer: {ticket.customer?.name}</p>
         {ticket.assignedTo && (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Agent: {ticket.assignedTo.name}
             {ticket.assignedTo.isAiConsultant ? ' · AI' : ''}
           </p>
         )}
-        {ticket.team && <p className="text-xs text-slate-500">Team: {ticket.team.name}</p>}
+        {ticket.team && <p className="text-xs text-muted-foreground">Team: {ticket.team.name}</p>}
         {slaBlock}
       </aside>
 
-      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/40 p-4 flex flex-col min-h-[70vh]">
+      <section className="rounded-xl border border-border bg-card p-4 flex flex-col min-h-[50vh] app:min-h-[70vh] min-w-0 order-2">
         {thread}
       </section>
 
-      <aside className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4">
+      <aside className="rounded-xl border border-border bg-card p-4 space-y-4 order-3 min-w-0">
         <div>
           <p className="text-xs font-medium text-slate-500 mb-2">Actions</p>
           <Select
@@ -284,6 +286,20 @@ export function TicketWorkspace({ id, role }: { id: number; role: string | undef
           disabled={suggesting}
         >
           {suggesting ? 'Loading…' : 'Suggest reply'}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          disabled={promoting}
+          onClick={() =>
+            void promoteKb({ variables: { ticketId: id } }).then((res) => {
+              const title = res.data?.promoteTicketToKbDraft?.title as string | undefined;
+              if (title) window.alert(`Saved internal draft (not public): ${title}`);
+            })
+          }
+        >
+          {promoting ? 'Saving…' : 'Save as help draft'}
         </Button>
         <div>
           <p className="text-xs font-medium text-slate-500 mb-2">Related articles</p>

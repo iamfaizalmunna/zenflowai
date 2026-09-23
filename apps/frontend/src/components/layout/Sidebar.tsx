@@ -15,6 +15,7 @@ import { NotificationBell } from '@/components/layout/NotificationBell';
 import { NAV_ICONS } from '@/components/layout/navIcons';
 import { useUiSound } from '@/hooks/useUiSound';
 import { useAppearance } from '@/hooks/useAppearance';
+import { prefetchAppRoute } from '@/lib/prefetchRoute';
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -28,7 +29,7 @@ export function Sidebar() {
   const dark = isDarkColorMode(prefs.colorMode, prefersDark);
 
   return (
-    <aside className="hidden app:flex w-60 flex-col h-full border-r border-border/60 bg-background/80 backdrop-blur-xl">
+    <aside className="hidden app:flex w-60 flex-col h-full border-r border-border bg-card">
       <div className="h-16 flex items-center justify-between px-4 border-b border-border/60">
         <ZenLogo size={32} />
         <NotificationBell />
@@ -42,6 +43,8 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onMouseEnter={() => prefetchAppRoute(item.href)}
+              onFocus={() => prefetchAppRoute(item.href)}
               onClick={() => void play('tap')}
               className={cn(
                 'relative flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors min-h-10',

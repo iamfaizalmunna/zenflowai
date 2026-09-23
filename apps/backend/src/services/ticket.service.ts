@@ -136,7 +136,7 @@ export async function createTicket(ctx: Context, raw: unknown) {
   if (routing.priorityOverride) priority = routing.priorityOverride;
 
   const sla = await calculateSlaDueDates(priority);
-  const ticketNumber = await generateTicketNumber();
+  const ticketNumber = await generateTicketNumber(prisma);
 
   const ticket = await prisma.ticket.create({
     data: {

@@ -24,6 +24,10 @@ describe('UI sound policy', () => {
 
   it('parses persisted mute flags', () => {
     assert.equal(parseSoundMuted('1'), true);
+    assert.equal(parseSoundMuted('true'), true);
+    assert.equal(parseSoundMuted(null), false);
     assert.equal(parseSoundMuted('0'), false);
+    assert.equal(shouldPlayUiSound({ muted: false, event: 'tap' }), true);
+    assert.equal(isImportantSoundControl('DIV', '', 'button'), true);
   });
 });

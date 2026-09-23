@@ -8,10 +8,13 @@ describe('PWA manifest contract', () => {
     assert.equal(PWA_MANIFEST.start_url, '/');
     assert.equal(PWA_MANIFEST.short_name, 'ZenFlow');
     assert.ok(PWA_MANIFEST.icons.length >= 1);
+    assert.equal(PWA_MANIFEST.background_color, '#2A2442');
   });
 
   it('treats standalone-like display modes as installed', () => {
     assert.equal(isStandaloneDisplay('standalone'), true);
+    assert.equal(isStandaloneDisplay('fullscreen'), true);
+    assert.equal(isStandaloneDisplay('minimal-ui'), true);
     assert.equal(isStandaloneDisplay('browser'), false);
   });
 });

@@ -15,5 +15,6 @@ describe('GraphQL client error policy', () => {
     assert.equal(shouldSurfaceGraphqlError('BAD_USER_INPUT'), false);
     assert.equal(shouldSurfaceGraphqlError('INTERNAL_SERVER_ERROR'), false);
     assert.equal(shouldSurfaceGraphqlError('UNAUTHORIZED'), false);
+    assert.equal(shouldSurfaceGraphqlError('GRAPHQL_VALIDATION_FAILED'), true);
   });
 });

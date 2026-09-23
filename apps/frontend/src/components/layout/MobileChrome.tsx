@@ -13,6 +13,7 @@ import { ZenLogo } from '@/components/brand/ZenLogo';
 import { NAV_ICONS } from '@/components/layout/navIcons';
 import { MoreSheet } from '@/components/layout/MoreSheet';
 import { useUiSound } from '@/hooks/useUiSound';
+import { prefetchAppRoute } from '@/lib/prefetchRoute';
 
 export function MobileChrome() {
   const pathname = usePathname();
@@ -25,7 +26,7 @@ export function MobileChrome() {
 
   return (
     <>
-      <header className="app:hidden sticky top-0 z-40 flex items-center justify-between gap-3 px-4 h-14 border-b border-border/60 bg-background/80 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
+      <header className="app:hidden sticky top-0 z-40 flex items-center justify-between gap-3 px-4 h-14 border-b border-border bg-background pt-[env(safe-area-inset-top)]">
         <ZenLogo size={28} className="[&>span]:text-base" />
         <div className="flex items-center gap-1">
           <NotificationBell />
@@ -35,7 +36,7 @@ export function MobileChrome() {
         </div>
       </header>
 
-      <nav className="app:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-background/88 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
+      <nav className="app:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background pb-[env(safe-area-inset-bottom)]">
         <ul
           className="grid px-1"
           style={{ gridTemplateColumns: `repeat(${primary.length + (overflow.length > 0 ? 1 : 0)}, minmax(0, 1fr))` }}
@@ -52,8 +53,8 @@ export function MobileChrome() {
                   setMoreOpen(true);
                 }}
                 className={cn(
-                  'w-full flex flex-col items-center gap-0.5 py-2.5 min-h-14 text-[10px]',
-                  moreOpen ? 'text-foreground font-medium' : 'text-muted-foreground',
+                  'w-full flex flex-col items-center gap-0.5 py-2 min-h-14 text-[11px]',
+                  moreOpen ? 'text-iris font-medium' : 'text-muted-foreground',
                 )}
               >
                 <MoreHorizontal className="w-5 h-5" />
@@ -90,10 +91,11 @@ function MobileTab({
     <li>
       <Link
         href={item.href}
+        onMouseEnter={() => prefetchAppRoute(item.href)}
         onClick={onTap}
         className={cn(
-          'flex flex-col items-center gap-0.5 py-2.5 min-h-14 text-[10px]',
-          active ? 'text-foreground font-medium' : 'text-muted-foreground',
+          'flex flex-col items-center gap-0.5 py-2 min-h-14 text-[11px]',
+          active ? 'text-iris font-medium' : 'text-muted-foreground',
         )}
       >
         <Icon className="w-5 h-5" />

@@ -5,6 +5,7 @@ import { getClientIp } from '../security/httpSecurity';
 import { prisma } from '../utils/prisma';
 import { auditAuth } from '../security/audit';
 import { readRefreshCookie } from '../utils/refreshCookie';
+import { readAuthContextCache, writeAuthContextCache } from '../security/authContextCache';
 
 interface JwtPayload {
   userId: number;
@@ -31,6 +32,10 @@ export async function buildContextFromAuthHeader(
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    const cached = readAuthContextCache(token);
+    if (cached && cached.userId === decoded.userId) {
+      return { ...cached, ip, userAgent, requestId, res, refreshCookie };
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
@@ -66,7 +71,7 @@ export async function buildContextFromAuthHeader(
       select: { permission: true, granted: true },
     });
 
-    return {
+    const ctx = {
       userId: decoded.userId,
       role: user.role,
       ip,
@@ -76,6 +81,12 @@ export async function buildContextFromAuthHeader(
       refreshCookie,
       permissionOverrides: overrides,
     };
+    writeAuthContextCache(token, {
+      userId: ctx.userId,
+      role: ctx.role,
+      permissionOverrides: overrides,
+    });
+    return ctx;
   } catch {
     return { userId: null, role: null, ip, userAgent, requestId, res, refreshCookie };
   }

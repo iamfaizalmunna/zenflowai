@@ -1,9 +1,9 @@
 'use client';
 
 import { useQuery } from '@apollo/client';
-import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { PageTitle } from '@/components/ui/Field';
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
 import { ChartCard } from '@/modules/analytics/components/ChartCard';
 import { KpiTile } from '@/modules/analytics/components/KpiTile';
 import { LeaderboardTable } from '@/modules/analytics/components/LeaderboardTable';
@@ -31,7 +31,6 @@ export default function AnalyticsPage() {
 
   return (
     <RoleGuard minRole="SUPERVISOR">
-      <AppShell>
         <div className="space-y-5">
           <div className="flex flex-col app:flex-row app:items-end justify-between gap-3">
             <PageTitle title="Analytics" hint="Leaderboard, CSAT notes, volume, and mix — find gaps, then coach." />
@@ -47,7 +46,8 @@ export default function AnalyticsPage() {
               ]}
             />
           </div>
-          {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
+          {loading && !snap ? <PageSkeleton /> : (
+          <>
           <div className="grid grid-cols-2 app:grid-cols-5 gap-2">
             {snap?.kpis?.map((kpi: { id: string; label: string; value: number }) => (
               <KpiTile key={kpi.id} label={kpi.label} value={kpi.value} />
@@ -70,8 +70,9 @@ export default function AnalyticsPage() {
             <p className="text-xs text-muted-foreground">Ratings and notes on resolved, closed, and still-open work.</p>
             <FeedbackList rows={feedback?.customerFeedback ?? []} />
           </section>
+          </>
+          )}
         </div>
-      </AppShell>
     </RoleGuard>
   );
 }

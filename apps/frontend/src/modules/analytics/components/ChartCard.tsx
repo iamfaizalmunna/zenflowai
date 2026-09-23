@@ -1,10 +1,19 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
-import { Infographic, type PlotPoint } from '@/components/ui/Infographic';
+import type { PlotPoint } from '@/components/ui/Infographic';
 import { Select } from '@/components/ui/Select';
 import { chartTotal, optionsForKind, type ChartKind, type ChartType } from '@/lib/analytics';
 import { useUiSound } from '@/hooks/useUiSound';
+
+const Infographic = dynamic(
+  () => import('@/components/ui/Infographic').then((mod) => mod.Infographic),
+  {
+    ssr: false,
+    loading: () => <div className="h-40 animate-pulse rounded-xl bg-muted/60" aria-hidden />,
+  },
+);
 
 export function ChartCard({
   title,

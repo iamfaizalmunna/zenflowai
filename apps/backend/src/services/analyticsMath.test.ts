@@ -8,6 +8,7 @@ import {
   csatBars,
   fillDayBuckets,
   fillWeekBuckets,
+  hoursBetween,
   parseChartType,
 } from './analyticsMath';
 import { diceCoefficient, isNearDuplicate } from './similarity';
@@ -17,6 +18,7 @@ describe('Phase 6 analytics math', () => {
   it('parses chart types and range days', () => {
     assert.equal(parseChartType('PIE'), 'PIE');
     assert.equal(parseChartType('nope'), 'LINE');
+    assert.equal(parseChartType(null), 'LINE');
     assert.equal(clampRangeDays(2), 7);
     assert.equal(clampRangeDays(400), 90);
   });
@@ -38,6 +40,7 @@ describe('Phase 6 analytics math', () => {
       new Date('2026-09-22T01:00:00Z'),
       new Date('2026-09-15T08:00:00Z'),
       new Date('2026-09-16T08:00:00Z'),
+      new Date('2020-01-01T00:00:00Z'),
     ]);
     assert.equal(weeks.length, 3);
     assert.equal(weeks[1].value, 2);
@@ -49,6 +52,13 @@ describe('Phase 6 analytics math', () => {
     assert.equal(kpis.find((k) => k.id === 'csat')?.value, 4.6);
     assert.equal(csatBars([5, 5, 1])[4].value, 2);
     assert.equal(average([]), 0);
+    assert.equal(hoursBetween(new Date('2026-09-22T00:00:00Z'), new Date('2026-09-22T02:30:00Z')), 2.5);
+    assert.equal(hoursBetween(new Date('2026-09-22T03:00:00Z'), new Date('2026-09-22T01:00:00Z')), 0);
+    assert.equal(clampRangeDays(Number.NaN), 30);
+    assert.equal(csatBars([5, 0, 9, 1])[0].value, 1);
+    const end = new Date('2026-09-22T12:00:00Z');
+    const days = fillDayBuckets(end, 2, [new Date('2020-01-01T00:00:00Z')]);
+    assert.equal(days.every((b) => b.value === 0), true);
   });
 });
 
@@ -57,12 +67,16 @@ describe('Phase 6 similarity (Natural-style dice)', () => {
     assert.ok(diceCoefficient('cannot login on safari', 'cannot login on safari') > 0.99);
     assert.equal(isNearDuplicate('hello world ticket', 'hello world ticket'), true);
     assert.equal(isNearDuplicate('billing refund please', 'outage on production cluster'), false);
+    assert.equal(isNearDuplicate('abc', 'xyz', 0), true);
+    assert.equal(diceCoefficient('a', 'a'), 1);
+    assert.equal(diceCoefficient('a', 'b'), 0);
   });
 });
 
 describe('Phase 6 consultant stats', () => {
   it('keeps profiles to agent and supervisor roles', () => {
     assert.equal(isConsultantRole('AGENT'), true);
+    assert.equal(isConsultantRole('SUPERVISOR'), true);
     assert.equal(isConsultantRole('ADMIN'), false);
   });
 
@@ -87,21 +101,23 @@ describe('Phase 6 consultant stats', () => {
           csatRating: 5,
         },
         {
-          assignedToId: 9,
-          status: 'RESOLVED',
-          createdAt: now,
-          firstRespondedAt: now,
-          resolvedAt: now,
-          csatRating: 1,
+          assignedToId: 4,
+          status: 'CLOSED',
+          createdAt: new Date('2026-09-18T00:00:00Z'),
+          firstRespondedAt: new Date('2026-09-18T01:00:00Z'),
+          resolvedAt: new Date('2026-09-18T04:00:00Z'),
+          csatRating: 4,
+          slaResponseBreached: true,
         },
       ],
       4,
     );
     assert.equal(stats.openCount, 1);
-    assert.equal(stats.resolvedCount, 1);
-    assert.equal(stats.csatAverage, 5);
-    assert.equal(stats.avgFirstResponseHours, 2);
-    assert.equal(stats.avgResolveHours, 24);
+    assert.equal(stats.resolvedCount, 2);
+    assert.equal(stats.closedCount, 1);
+    assert.equal(stats.csatAverage, 4.5);
+    assert.equal(stats.avgFirstResponseHours, 1.5);
+    assert.equal(stats.avgResolveHours, 14);
   });
 
   it('builds a spider assessment index and lists gaps', () => {
@@ -138,9 +154,18 @@ describe('Phase 6 consultant stats', () => {
     const ranked = rankLeaderboard([
       { id: 1, name: 'B', resolvedCount: 4, csatAverage: 5, assessmentIndex: 80, detractors: 0 },
       { id: 2, name: 'A', resolvedCount: 8, csatAverage: 3, assessmentIndex: 70, detractors: 2 },
+      { id: 3, name: 'C', resolvedCount: 8, csatAverage: 4, assessmentIndex: 70, detractors: 2 },
+      { id: 4, name: 'D', resolvedCount: 8, csatAverage: 4, assessmentIndex: 90, detractors: 2 },
+      { id: 5, name: 'E', resolvedCount: 8, csatAverage: 4, assessmentIndex: 90, detractors: 1 },
+      { id: 6, name: 'F', resolvedCount: 8, csatAverage: 4, assessmentIndex: 90, detractors: 1 },
     ]);
-    assert.equal(ranked[0]?.id, 2);
-    assert.equal(ranked[0]?.rank, 1);
-    assert.equal(ranked[1]?.rank, 2);
+    assert.equal(ranked[0]?.id, 5);
+    assert.equal(ranked.map((r) => r.id).includes(6), true);
+  });
+
+  it('uses the empty-pack defaults on the spider', () => {
+    const empty = consultantAssessment([], 4);
+    assert.equal(empty.axes.length, 6);
+    assert.ok(empty.index >= 0);
   });
 });

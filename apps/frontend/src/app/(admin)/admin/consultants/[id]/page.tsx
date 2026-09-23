@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useQuery } from '@apollo/client';
 import { useParams } from 'next/navigation';
-import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { PageTitle } from '@/components/ui/Field';
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
 import { ChartCard } from '@/modules/analytics/components/ChartCard';
 import { KpiTile } from '@/modules/analytics/components/KpiTile';
 import { CONSULTANT_PROFILE } from '@/modules/analytics/queries/analytics.queries';
@@ -30,12 +30,11 @@ export default function ConsultantProfilePage() {
 
   return (
     <RoleGuard minRole="ADMIN">
-      <AppShell>
         <div className="space-y-5">
           <Link href="/admin/consultants" className="text-sm text-muted-foreground hover:text-foreground">
             ← Directory
           </Link>
-          {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
+          {loading && !p ? <PageSkeleton /> : null}
           {p && (
             <>
               <div className="flex flex-col app:flex-row app:items-end justify-between gap-3">
@@ -123,7 +122,6 @@ export default function ConsultantProfilePage() {
             </>
           )}
         </div>
-      </AppShell>
     </RoleGuard>
   );
 }

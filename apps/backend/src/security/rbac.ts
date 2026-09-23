@@ -68,6 +68,7 @@ const AGENT_PERMS = new Set([
   'tag:read',
   'team:read',
   'knowledge:read:internal',
+  'knowledge:draft',
 ]);
 
 const SUPERVISOR_PERMS = new Set([

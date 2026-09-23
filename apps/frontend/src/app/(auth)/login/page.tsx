@@ -35,17 +35,18 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          autoFocus
+          autoComplete="email"
+          autoFocus={false}
         />
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="text-sm font-medium text-white/70">
               Password
             </label>
             <Link
               href="/forgot-password"
-              className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+              className="text-xs text-[#C4B5FD] hover:text-white transition-colors"
             >
               Forgot password?
             </Link>
@@ -69,33 +70,32 @@ export default function LoginPage() {
         </AuthButton>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-white/50">
         Don&apos;t have an account?{' '}
-        <Link href="/register" className="font-medium text-slate-900 dark:text-white hover:underline">
+        <Link href="/register" className="font-medium text-white hover:underline">
           Sign up
         </Link>
       </p>
 
-      {/* Dev-only demo credentials hint */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">
-          <p className="text-xs text-slate-400 mb-2 font-medium">Demo accounts</p>
-          <div className="space-y-0.5 text-xs text-slate-400 font-mono">
+        <div className="mt-6 border-t border-white/10 pt-5">
+          <p className="mb-2 text-xs font-medium text-white/40">Demo accounts</p>
+          <div className="space-y-0.5 font-mono text-xs text-white/55">
             {[
               ['superadmin@zenflowai.com', 'Super Admin'],
               ['admin@zenflowai.com',      'Admin'],
               ['supervisor@zenflowai.com', 'Supervisor'],
               ['agent@zenflowai.com',      'Agent'],
               ['customer@zenflowai.com',   'Customer'],
-            ].map(([email, role]) => (
+            ].map(([demoEmail, role]) => (
               <button
-                key={email}
+                key={demoEmail}
                 type="button"
-                onClick={() => { setEmail(email); setPassword('password123'); }}
-                className="w-full text-left px-2 py-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex justify-between"
+                onClick={() => { setEmail(demoEmail); setPassword('password123'); }}
+                className="flex w-full justify-between rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/10"
               >
-                <span>{email}</span>
-                <span className="text-slate-300">{role}</span>
+                <span>{demoEmail}</span>
+                <span className="text-white/35">{role}</span>
               </button>
             ))}
           </div>

@@ -2,20 +2,37 @@
 
 import { useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
-import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { ROUTING_RULES, SAVE_ROUTING } from '@/modules/admin/queries/admin.queries';
 import { Button, Input, PageTitle } from '@/components/ui/Field';
+import { ListSearch } from '@/components/ui/ListSearch';
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
 import { Select } from '@/components/ui/Select';
+import { filterByQuery } from '@/lib/listSearch';
+
+type RoutingRule = {
+  id: number;
+  type: string;
+  keyword?: string | null;
+  isActive: boolean;
+  targetTeamId: number;
+  targetTeam?: { name: string };
+  order: number;
+};
 
 export default function AdminRoutingPage() {
-  const { data, refetch } = useQuery(ROUTING_RULES);
+  const { data, loading, refetch } = useQuery(ROUTING_RULES);
   const [save, { error }] = useMutation(SAVE_ROUTING, { onCompleted: () => refetch() });
   const [form, setForm] = useState({ type: 'KEYWORD', keyword: '', targetTeamId: '', order: '100' });
+  const [query, setQuery] = useState('');
+  const rules = filterByQuery(
+    (data?.routingRules ?? []) as RoutingRule[],
+    query,
+    (rule) => `${rule.type} ${rule.keyword ?? ''} ${rule.targetTeam?.name ?? ''}`,
+  );
 
   return (
     <RoleGuard minRole="SUPERVISOR">
-      <AppShell>
         <div className="space-y-5 max-w-3xl">
           <PageTitle title="Routing rules" hint="Keyword, category, priority, then fallback." />
           <form
@@ -54,16 +71,10 @@ export default function AdminRoutingPage() {
             <Button type="submit">Add rule</Button>
           </form>
           {error && <p className="text-sm text-destructive">{error.message}</p>}
+          <ListSearch value={query} onChange={setQuery} placeholder="Search this pack…" />
+          {loading && !data ? <PageSkeleton /> : (
           <ul className="space-y-2 text-sm">
-            {data?.routingRules?.map((rule: {
-              id: number;
-              type: string;
-              keyword?: string | null;
-              isActive: boolean;
-              targetTeamId: number;
-              targetTeam?: { name: string };
-              order: number;
-            }) => (
+            {rules.map((rule) => (
               <li key={rule.id} className="rounded-2xl border border-border/70 bg-card/70 p-4 flex justify-between gap-3">
                 <span>#{rule.order} {rule.type} {rule.keyword ?? ''} → {rule.targetTeam?.name}</span>
                 <Button
@@ -87,8 +98,8 @@ export default function AdminRoutingPage() {
               </li>
             ))}
           </ul>
+          )}
         </div>
-      </AppShell>
     </RoleGuard>
   );
 }

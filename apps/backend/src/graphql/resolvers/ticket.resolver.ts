@@ -13,6 +13,7 @@ import {
 import { addMessage } from '../../services/message.service';
 import { handoffTicket } from '../../services/ai/consultTicket.service';
 import { listAttachments, uploadTicketAttachment } from '../../services/attachment.service';
+import { promoteTicketToKbDraft } from '../../services/kbDraft.service';
 
 function mapZod(err: unknown): never {
   if (err instanceof ZodError) {
@@ -81,6 +82,11 @@ export const ticketResolvers = {
     ) => {
       requirePermission(ctx.role, 'message:create', ctx.permissionOverrides);
       return uploadTicketAttachment(ctx, args);
+    },
+
+    promoteTicketToKbDraft: async (_: unknown, { ticketId }: { ticketId: number }, ctx: Context) => {
+      requirePermission(ctx.role, 'knowledge:draft', ctx.permissionOverrides);
+      return promoteTicketToKbDraft(ctx, ticketId);
     },
   },
 

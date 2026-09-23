@@ -13,6 +13,7 @@ import {
   fillWeekBuckets,
 } from './analyticsMath';
 import { consultantAssessment, consultantStats, isConsultantRole, rankLeaderboard } from './consultantStats';
+import { CONSULTANT_LIST_PACK_DAYS, CONSULTANT_PROFILE_PACK_DAYS, ticketPackSince } from './consultantPack';
 
 function toConsultantRows(
   tickets: Array<{
@@ -23,7 +24,7 @@ function toConsultantRows(
     resolvedAt: Date | null;
     slaResponseBreached: boolean;
     slaResolutionBreached: boolean;
-    csatSurvey: { rating: number; status: string } | null;
+    csatSurvey: { rating: number | null; status: string } | null;
   }>,
 ) {
   return tickets.map((t) => ({
@@ -84,7 +85,17 @@ export async function listConsultants(ctx: Context) {
     where: { role: { in: ['AGENT', 'SUPERVISOR'] } },
     include: {
       assignedTickets: {
-        include: { csatSurvey: { select: { rating: true, status: true } } },
+        where: { createdAt: { gte: ticketPackSince(CONSULTANT_LIST_PACK_DAYS) } },
+        select: {
+          assignedToId: true,
+          status: true,
+          createdAt: true,
+          firstRespondedAt: true,
+          resolvedAt: true,
+          slaResponseBreached: true,
+          slaResolutionBreached: true,
+          csatSurvey: { select: { rating: true, status: true } },
+        },
       },
       teamMembers: { include: { team: { select: { name: true } } } },
     },
@@ -114,7 +125,22 @@ export async function getConsultantProfile(ctx: Context, id: number) {
     where: { id },
     include: {
       assignedTickets: {
-        include: { csatSurvey: { select: { rating: true, status: true, comment: true } }, category: { select: { name: true } } },
+        where: { createdAt: { gte: ticketPackSince(CONSULTANT_PROFILE_PACK_DAYS) } },
+        select: {
+          id: true,
+          ticketNumber: true,
+          title: true,
+          assignedToId: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          firstRespondedAt: true,
+          resolvedAt: true,
+          slaResponseBreached: true,
+          slaResolutionBreached: true,
+          csatSurvey: { select: { rating: true, status: true, comment: true } },
+          category: { select: { name: true } },
+        },
         orderBy: { updatedAt: 'desc' },
       },
       teamMembers: { include: { team: { select: { name: true } } } },
@@ -180,7 +206,17 @@ export async function getLeaderboard(ctx: Context) {
     where: { role: { in: ['AGENT', 'SUPERVISOR'] } },
     include: {
       assignedTickets: {
-        include: { csatSurvey: { select: { rating: true, status: true } } },
+        where: { createdAt: { gte: ticketPackSince(CONSULTANT_LIST_PACK_DAYS) } },
+        select: {
+          assignedToId: true,
+          status: true,
+          createdAt: true,
+          firstRespondedAt: true,
+          resolvedAt: true,
+          slaResponseBreached: true,
+          slaResolutionBreached: true,
+          csatSurvey: { select: { rating: true, status: true } },
+        },
       },
       teamMembers: { include: { team: { select: { name: true } } } },
     },

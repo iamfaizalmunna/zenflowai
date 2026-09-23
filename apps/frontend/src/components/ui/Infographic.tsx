@@ -121,7 +121,7 @@ export function Infographic({ type, data }: { type: ChartType; data: PlotPoint[]
     );
   }
 
-  if (rows.length === 0 || (usesPolarChart(type) && slices.length === 0) || (type !== 'RADAR' && total === 0)) {
+  if (rows.length === 0 || (usesPolarChart(type) && slices.length === 0) || total === 0) {
     return <p className="text-sm text-muted-foreground py-16 text-center">No data in this range.</p>;
   }
 

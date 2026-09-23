@@ -1,6 +1,5 @@
 'use client';
 
-import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { TicketWorkspace } from '@/modules/tickets/components/TicketWorkspace';
 import { useAuthStore } from '@/store/auth.store';
@@ -13,9 +12,7 @@ export default function TicketDetailPage() {
 
   return (
     <RoleGuard minRole="CUSTOMER">
-      <AppShell>
         <TicketWorkspace id={id} role={role} />
-      </AppShell>
     </RoleGuard>
   );
 }

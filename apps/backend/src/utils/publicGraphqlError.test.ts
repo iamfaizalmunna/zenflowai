@@ -27,5 +27,15 @@ describe('public GraphQL errors', () => {
       extensions: { code: 'INTERNAL_SERVER_ERROR' },
     });
     assert.equal(internal.message, 'Unexpected failure in routing');
+
+    const missingTable = publicGraphqlError({
+      message: "The table `zenflowai.users` does not exist",
+    });
+    assert.match(missingTable.message, /database schema/i);
+
+    const unknownCol = publicGraphqlError({
+      message: 'Unknown column foo in field list',
+    });
+    assert.match(unknownCol.message, /database schema/i);
   });
 });

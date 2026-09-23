@@ -1,11 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
-import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { ADMIN_USERS, BAN_USER, CHANGE_ROLE, SET_USER_ACTIVE, UNBAN_USER } from '@/modules/admin/queries/admin.queries';
 import { Button, PageTitle } from '@/components/ui/Field';
+import { ListSearch } from '@/components/ui/ListSearch';
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
 import { Select } from '@/components/ui/Select';
+import { filterByQuery } from '@/lib/listSearch';
 import { cn } from '@/lib/utils';
 
 const ROLE_OPTIONS = [
@@ -15,19 +18,34 @@ const ROLE_OPTIONS = [
   { value: 'ADMIN', label: 'Admin' },
 ];
 
+type AdminUser = {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  isBanned: boolean;
+};
+
 export default function AdminUsersPage() {
+  const [query, setQuery] = useState('');
   const { data, loading, refetch } = useQuery(ADMIN_USERS);
   const [setActive] = useMutation(SET_USER_ACTIVE, { onCompleted: () => refetch() });
   const [ban] = useMutation(BAN_USER, { onCompleted: () => refetch() });
   const [unban] = useMutation(UNBAN_USER, { onCompleted: () => refetch() });
   const [changeRole] = useMutation(CHANGE_ROLE, { onCompleted: () => refetch() });
+  const users = filterByQuery(
+    (data?.users ?? []) as AdminUser[],
+    query,
+    (user) => `${user.name} ${user.email} ${user.role}`,
+  );
 
   return (
     <RoleGuard minRole="ADMIN">
-      <AppShell>
         <div className="space-y-5">
           <PageTitle title="Users" hint="Roles, access, and account status." />
-          {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
+          <ListSearch value={query} onChange={setQuery} placeholder="Search this pack…" />
+          {loading && !data ? <PageSkeleton /> : (
           <div className="overflow-x-auto rounded-3xl border border-border/70 bg-card/70 backdrop-blur-sm">
             <table className="w-full text-sm min-w-[720px]">
               <thead className="text-left text-xs uppercase tracking-wide text-muted-foreground bg-muted/40">
@@ -40,7 +58,7 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {data?.users?.map((u: { id: number; name: string; email: string; role: string; isActive: boolean; isBanned: boolean }) => (
+                {users.map((u) => (
                   <tr key={u.id} className="border-t border-border/60">
                     <td className="p-4 font-medium">{u.name}</td>
                     <td className="p-4 text-muted-foreground">{u.email}</td>
@@ -93,8 +111,8 @@ export default function AdminUsersPage() {
               </tbody>
             </table>
           </div>
+          )}
         </div>
-      </AppShell>
     </RoleGuard>
   );
 }

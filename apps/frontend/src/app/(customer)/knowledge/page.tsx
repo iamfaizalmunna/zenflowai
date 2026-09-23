@@ -3,32 +3,40 @@
 import { useState } from 'react';
 import { useQuery } from '@apollo/client';
 import Link from 'next/link';
-import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
-import { Input, PageTitle } from '@/components/ui/Field';
+import { PageTitle } from '@/components/ui/Field';
+import { ListSearch } from '@/components/ui/ListSearch';
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
 import { HelpAskBox } from '@/modules/tickets/components/HelpAskBox';
 import { KNOWLEDGE_ARTICLES } from '@/modules/tickets/queries/ticket.queries';
+import { filterByQuery } from '@/lib/listSearch';
+
+type HelpArticle = { id: number; title: string; body: string; category?: { name: string } };
 
 export default function HelpCenterPage() {
   const [search, setSearch] = useState('');
   const { data, loading } = useQuery(KNOWLEDGE_ARTICLES, {
-    variables: { search: search || undefined, internal: false },
+    variables: { internal: false },
   });
+  const articles = filterByQuery(
+    (data?.knowledgeArticles ?? []) as HelpArticle[],
+    search,
+    (article) => `${article.title} ${article.body} ${article.category?.name ?? ''}`,
+  );
 
   return (
     <RoleGuard minRole="CUSTOMER">
-      <AppShell>
         <div className="space-y-5 max-w-2xl">
           <PageTitle title="Help Center" hint="Search owned articles or ask a question." />
           <HelpAskBox />
-          <Input
+          <ListSearch
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search articles…"
+            onChange={setSearch}
+            placeholder="Search this pack…"
           />
-          {loading && <p className="text-sm text-muted-foreground">Searching…</p>}
+          {loading && !data ? <PageSkeleton /> : (
           <div className="space-y-2">
-            {data?.knowledgeArticles?.map((article: { id: number; title: string; body: string; category?: { name: string } }) => (
+            {articles.map((article) => (
               <Link key={article.id} href={`/knowledge/${article.id}`} className="block surface rounded-3xl border border-border/70 p-4 hover:border-iris/40">
                 <h2 className="font-medium text-sm">{article.title}</h2>
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{article.body}</p>
@@ -36,8 +44,8 @@ export default function HelpCenterPage() {
               </Link>
             ))}
           </div>
+          )}
         </div>
-      </AppShell>
     </RoleGuard>
   );
 }

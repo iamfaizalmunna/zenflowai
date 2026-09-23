@@ -23,6 +23,8 @@ describe('Phase 7 consult math', () => {
   it('rejects ungrounded model text', () => {
     assert.equal(isGrounded('The sky is green today.', ['SSO login loop']), false);
     assert.equal(isGrounded('Clear Safari cookies to break the login loop.', ['SSO login loop']), true);
+    assert.equal(isGrounded('   ', ['SSO']), false);
+    assert.equal(isGrounded('hello', []), false);
   });
 
   it('hashes chunks so ingest can skip duplicates', () => {
@@ -37,6 +39,11 @@ describe('Phase 7 consult math', () => {
   it('splits articles and builds a grounded prompt', () => {
     const parts = splitArticleBody('First paragraph about VPN.\n\nSecond paragraph about timeout.');
     assert.equal(parts.length, 2);
+    assert.deepEqual(splitArticleBody('   short   '), ['short']);
+    assert.deepEqual(splitArticleBody('A single block of text that is long enough to keep.'), [
+      'A single block of text that is long enough to keep.',
+    ]);
+    assert.deepEqual(splitArticleBody('   '), []);
     const prompt = buildGroundedPrompt('VPN drops', [{ title: 'VPN drops hourly', body: parts[0] }]);
     assert.match(prompt, /only from the sources/i);
     assert.match(prompt, /VPN drops hourly/);
@@ -44,6 +51,7 @@ describe('Phase 7 consult math', () => {
 
   it('uses Ollama only when grounded text is returned', () => {
     assert.equal(resolveEngine(null), 'RETRIEVAL');
+    assert.equal(resolveEngine('   '), 'RETRIEVAL');
     assert.equal(resolveEngine('Clear Safari cookies to break the login loop.'), 'OLLAMA');
     const reply = formatConsultReply({
       answer: 'Reset via Forgot password.',
@@ -52,11 +60,20 @@ describe('Phase 7 consult math', () => {
     });
     assert.match(reply, /knowledge base/);
     assert.match(reply, /How to reset your password/);
+    const local = formatConsultReply({
+      answer: 'From the model.',
+      citations: [],
+      engine: 'OLLAMA',
+    });
+    assert.match(local, /local model/);
+    assert.equal(local.includes('Sources:'), false);
   });
 
   it('scales confidence from retrieval score', () => {
     assert.equal(confidenceFromScore(0), 0);
     assert.equal(confidenceFromScore(8), 1);
+    assert.equal(confidenceFromScore(-4), 0);
+    assert.equal(confidenceFromScore(99), 1);
     assert.ok(confidenceFromScore(4) > 0.4);
   });
 });

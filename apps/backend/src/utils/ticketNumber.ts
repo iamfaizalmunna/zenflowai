@@ -1,13 +1,20 @@
-import { prisma } from './prisma';
 import { formatTicketNumber } from './ticketNumberFormat';
 
 export { formatTicketNumber };
 
-export async function generateTicketNumber(): Promise<string> {
-  const last = await prisma.ticket.findFirst({
+export interface TicketNumberStore {
+  ticket: {
+    findFirst: (args: {
+      orderBy: { id: 'desc' };
+      select: { id: true };
+    }) => Promise<{ id: number } | null>;
+  };
+}
+
+export async function generateTicketNumber(db: TicketNumberStore): Promise<string> {
+  const last = await db.ticket.findFirst({
     orderBy: { id: 'desc' },
     select: { id: true },
   });
-  const next = (last?.id ?? 0) + 1;
-  return formatTicketNumber(next);
+  return formatTicketNumber((last?.id ?? 0) + 1);
 }

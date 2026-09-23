@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { NAV_ICONS } from '@/components/layout/navIcons';
 import { isDarkColorMode, toggledColorMode } from '@/lib/appearance';
 import { useAppearance } from '@/hooks/useAppearance';
+import { prefetchAppRoute } from '@/lib/prefetchRoute';
 
 export function MoreSheet({
   open,
@@ -50,7 +51,7 @@ export function MoreSheet({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 28, opacity: 0 }}
             transition={{ type: 'spring', bounce: 0.12, duration: 0.42 }}
-            className="absolute bottom-0 inset-x-0 max-h-[88dvh] overflow-y-auto rounded-t-[2rem] border-t border-border/70 bg-background/92 backdrop-blur-2xl px-4 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[0_-30px_80px_hsl(var(--foreground)/0.12)]"
+            className="absolute bottom-0 inset-x-0 max-h-[88dvh] overflow-y-auto rounded-t-2xl border-t border-border bg-background px-4 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-lg"
           >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted-foreground/25" />
             <div className="flex items-center justify-between px-1 mb-4">
@@ -77,6 +78,7 @@ export function MoreSheet({
                   <Link
                     key={item.href}
                     href={item.href}
+                    onMouseEnter={() => prefetchAppRoute(item.href)}
                     onClick={() => {
                       onTap();
                       onClose();

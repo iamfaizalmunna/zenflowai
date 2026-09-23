@@ -42,5 +42,4 @@ export const statusColors: Record<string, string> = {
   IN_PROGRESS: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
   ON_HOLD: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
   RESOLVED: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
-  CLOSED: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-};
+  CLOSED: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' };

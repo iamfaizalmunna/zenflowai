@@ -149,6 +149,7 @@ export const ticketTypeDefs = gql`
     addMessage(input: AddMessageInput!): TicketMessage!
     handoffTicket(ticketId: Int!): Ticket!
     uploadTicketAttachment(ticketId: Int!, filename: String!, mimeType: String!, contentBase64: String!): TicketAttachment!
+    promoteTicketToKbDraft(ticketId: Int!): KnowledgeArticle!
   }
 
   extend type Subscription {

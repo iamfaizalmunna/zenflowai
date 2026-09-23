@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useQuery } from '@apollo/client';
-import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
 import { PageTitle } from '@/components/ui/Field';
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
 import { GET_TICKETS } from '@/modules/tickets/queries/ticket.queries';
 import { CSAT_SUMMARY } from '@/modules/admin/queries/admin.queries';
 import { ANALYTICS } from '@/modules/analytics/queries/analytics.queries';
@@ -29,7 +29,6 @@ export default function SupervisorHome() {
 
   return (
     <RoleGuard minRole="SUPERVISOR">
-      <AppShell>
         <div className="space-y-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <PageTitle title="SLA watch" hint="Open tickets due within 8 hours. Charts live on Analytics." />
@@ -49,7 +48,7 @@ export default function SupervisorHome() {
               </div>
             )}
           </div>
-          {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
+          {loading && !data ? <PageSkeleton /> : (
           <div className="space-y-2">
             {dueSoon.map((ticket: Parameters<typeof TicketCard>[0]['ticket']) => (
               <TicketCard key={ticket.id} ticket={ticket} href={`/tickets/${ticket.id}`} />
@@ -58,8 +57,8 @@ export default function SupervisorHome() {
               <p className="text-sm text-muted-foreground">Nothing due soon.</p>
             )}
           </div>
+          )}
         </div>
-      </AppShell>
     </RoleGuard>
   );
 }

@@ -2,8 +2,8 @@
 
 import { useQuery } from '@apollo/client';
 import { useParams } from 'next/navigation';
-import { AppShell } from '@/components/layout/AppShell';
 import { RoleGuard } from '@/modules/auth/components/RoleGuard';
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
 import { KNOWLEDGE_ARTICLE } from '@/modules/tickets/queries/ticket.queries';
 
 export default function KnowledgeArticlePage() {
@@ -13,8 +13,7 @@ export default function KnowledgeArticlePage() {
 
   return (
     <RoleGuard minRole="CUSTOMER">
-      <AppShell>
-        {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
+        {loading && !article ? <PageSkeleton /> : null}
         {article && (
           <article className="max-w-2xl space-y-3 surface rounded-3xl border border-border/70 p-6">
             <p className="text-xs text-muted-foreground">{article.category?.name}</p>
@@ -24,7 +23,6 @@ export default function KnowledgeArticlePage() {
             </pre>
           </article>
         )}
-      </AppShell>
     </RoleGuard>
   );
 }
