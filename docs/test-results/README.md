@@ -13,3 +13,5 @@ GitHub shows this Markdown. The **progress bars** need the HTML files opened in 
 | [v1](v1/index.html) | 2026-09-23 | 140/140 | 100% lines | ok (144 tickets, 40 KB, 4 SLA, 6 consultants) |
 
 v1 is a **phase-by-phase** sheet (not one table): Overview bars → Phases 1–9 → Journeys J01–J11 → live GraphQL steps → coverage → what stays out of LCOV.
+
+Journey / data / algorithm charts for each phase: [docs/phases](../phases/README.md) · HTML gallery [docs/phases/index.html](../phases/index.html) · app [http://localhost:3000/qa/phases](http://localhost:3000/qa/phases).
