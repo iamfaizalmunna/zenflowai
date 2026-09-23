@@ -70,7 +70,7 @@ export function MoreSheet({
             </div>
 
             <p className="px-1 mb-2 text-xs text-muted-foreground">Workspace</p>
-            <div className="rounded-3xl border border-border/60 bg-card/80 overflow-hidden mb-4">
+            <div className="surface-card overflow-hidden mb-4">
               {items.map((item) => {
                 const Icon = NAV_ICONS[item.icon];
                 const active = isNavActive(pathname, item.href);
@@ -99,7 +99,7 @@ export function MoreSheet({
             </div>
 
             <p className="px-1 mb-2 text-xs text-muted-foreground">Preferences</p>
-            <div className="rounded-3xl border border-border/60 bg-card/80 overflow-hidden mb-4">
+            <div className="surface-card overflow-hidden mb-4">
               <Link
                 href="/settings"
                 onClick={() => {
@@ -148,7 +148,7 @@ export function MoreSheet({
             <button
               type="button"
               onClick={() => void onLogout()}
-              className="flex w-full items-center justify-center gap-2 min-h-12 rounded-3xl border border-border/60 bg-card/80 text-sm font-medium text-destructive"
+              className="flex w-full items-center justify-center gap-2 min-h-10 rounded-2xl border border-border/60 bg-card text-sm font-medium text-destructive"
             >
               <LogOut className="w-4 h-4" />
               Sign out

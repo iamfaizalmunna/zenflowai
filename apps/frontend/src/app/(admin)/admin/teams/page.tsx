@@ -24,10 +24,10 @@ export default function AdminTeamsPage() {
 
   return (
     <RoleGuard minRole="ADMIN">
-        <div className="space-y-5 max-w-2xl">
+        <div className="page-stack">
           <PageTitle title="Teams" hint="Who receives routed tickets." />
           <form
-            className="flex flex-col app:flex-row gap-2"
+            className="surface-card flex min-w-0 flex-col gap-2 p-4 app:flex-row app:items-center"
             onSubmit={(e) => {
               e.preventDefault();
               if (!name.trim()) return;
@@ -35,14 +35,14 @@ export default function AdminTeamsPage() {
               setName('');
             }}
           >
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="New team name" className="flex-1" />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="New team name" className="w-auto min-w-0 flex-1" />
             <Button type="submit">Add</Button>
           </form>
           <ListSearch value={query} onChange={setQuery} placeholder="Search this pack…" />
           {loading && !data ? <PageSkeleton /> : (
-          <ul className="space-y-2">
+          <ul className="grid gap-3 app:grid-cols-2">
             {teams.map((team) => (
-              <li key={team.id} className="rounded-2xl border border-border/70 bg-card/70 p-4 text-sm">
+              <li key={team.id} className="surface-card p-4 text-sm">
                 <p className="font-medium">{team.name}{team.isDefault ? ' · default' : ''}</p>
                 <p className="text-xs text-muted-foreground mt-1">{team.members?.map((m) => m.user.name).join(', ') || 'No members'}</p>
               </li>

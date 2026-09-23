@@ -25,10 +25,10 @@ export default function AdminKnowledgePage() {
 
   return (
     <RoleGuard minRole="ADMIN">
-        <div className="space-y-5 max-w-3xl">
+        <div className="page-stack">
           <PageTitle title="Knowledge" hint="Drafts stay Internal and unpublished. Publish only after you review. Ticket saves never go public by themselves." />
           <form
-            className="space-y-3 rounded-xl border border-border bg-card p-4"
+            className="space-y-3 surface-card p-4"
             onSubmit={(e) => {
               e.preventDefault();
               save({ variables: { input: { title: form.title, body: form.body, isPublished: false } } });
@@ -43,7 +43,7 @@ export default function AdminKnowledgePage() {
           {loading && !data ? <PageSkeleton /> : (
           <ul className="space-y-2">
             {articles.map((a) => (
-              <li key={a.id} className="rounded-xl border border-border bg-card p-4 text-sm flex justify-between gap-3 items-center">
+              <li key={a.id} className="surface-card flex items-center justify-between gap-3 p-4 text-sm">
                 <span>{a.title} · {a.visibility} · {a.isPublished ? 'published' : 'draft'}</span>
                 <Button
                   type="button"

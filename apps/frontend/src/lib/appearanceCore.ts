@@ -140,10 +140,23 @@ export function hslToHex(h: number, s: number, l: number): string {
   return `#${to(r)}${to(g)}${to(b)}`.toUpperCase();
 }
 
-export function accentForeground(hex: string): '#FFFFFF' | '#111111' {
-  const white = contrastRatio(hex, '#FFFFFF') ?? 0;
-  const black = contrastRatio(hex, '#111111') ?? 0;
-  return white >= black ? '#FFFFFF' : '#111111';
+export function accentForeground(hex: string, shade = 0): '#FFFFFF' | '#111111' {
+  const fill = shadeHex(hex, shade) ?? normalizeHex(hex) ?? hex;
+  const luminance = relativeLuminance(fill) ?? 0;
+  return luminance > 0.4 ? '#111111' : '#FFFFFF';
+}
+
+export function primaryForegroundChannels(hex: string, shade = 0): string {
+  return accentForeground(hex, shade) === '#FFFFFF' ? '0 0% 100%' : '0 0% 7%';
+}
+
+/** Accent hue, lightness locked so text stays readable on the page background. */
+export function irisTextChannels(hex: string, dark: boolean): string {
+  const hsl = hexToHsl(hex);
+  if (!hsl) return dark ? '258 50% 78%' : '258 64% 38%';
+  const s = Math.min(72, Math.max(40, hsl.s));
+  const l = dark ? 76 : 38;
+  return `${Math.round(hsl.h)} ${Math.round(s)}% ${l}%`;
 }
 
 export function isReadableAccent(hex: string, shade = 0): boolean {
@@ -188,12 +201,11 @@ export function mergeAppearance(input: Partial<AppearancePrefs> | Record<string,
   const next: AppearancePrefs = { ...DEFAULT_APPEARANCE, ...raw };
   const hex = normalizeHex(next.accentHex) ?? DEFAULT_ACCENT_HEX;
   const shade = clampShade(next.shade);
-  const accent = isReadableAccent(hex, shade) ? hex : DEFAULT_ACCENT_HEX;
-  const safeShade = isReadableAccent(accent, shade) ? shade : 0;
+  const accent = isReadableAccent(hex, 0) ? hex : DEFAULT_ACCENT_HEX;
   return {
     colorMode: pick(next.colorMode, COLOR_MODES, 'SYSTEM'),
     accentHex: accent,
-    shade: safeShade,
+    shade,
     finish: pick(next.finish, FINISHES, 'GLOSSY'),
     fontFamily: pick(next.fontFamily, FONT_FAMILIES, 'OUTFIT'),
     fontSize: pick(next.fontSize, FONT_SIZES, 'M'),

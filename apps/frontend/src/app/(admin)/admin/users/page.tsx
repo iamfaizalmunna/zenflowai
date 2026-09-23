@@ -42,11 +42,11 @@ export default function AdminUsersPage() {
 
   return (
     <RoleGuard minRole="ADMIN">
-        <div className="space-y-5">
+        <div className="page-stack">
           <PageTitle title="Users" hint="Roles, access, and account status." />
           <ListSearch value={query} onChange={setQuery} placeholder="Search this pack…" />
           {loading && !data ? <PageSkeleton /> : (
-          <div className="overflow-x-auto rounded-3xl border border-border/70 bg-card/70 backdrop-blur-sm">
+          <div className="overflow-x-auto surface-card">
             <table className="w-full text-sm min-w-[720px]">
               <thead className="text-left text-xs uppercase tracking-wide text-muted-foreground bg-muted/40">
                 <tr>

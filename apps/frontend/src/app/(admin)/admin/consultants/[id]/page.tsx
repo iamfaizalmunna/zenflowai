@@ -30,7 +30,7 @@ export default function ConsultantProfilePage() {
 
   return (
     <RoleGuard minRole="ADMIN">
-        <div className="space-y-5">
+        <div className="page-stack">
           <Link href="/admin/consultants" className="text-sm text-muted-foreground hover:text-foreground">
             ← Directory
           </Link>

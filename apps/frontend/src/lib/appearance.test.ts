@@ -31,6 +31,8 @@ describe('apply appearance to document', () => {
     assert.equal(classes.has('dark'), true);
     assert.equal(root.style.colorScheme, 'dark');
     assert.ok(props.get('--iris'));
+    assert.ok(props.get('--iris-text'));
+    assert.equal(props.get('--primary-foreground'), '0 0% 100%');
   });
 
   it('follows OS dark preference and writes a light-on-dark foreground', () => {
@@ -69,7 +71,7 @@ describe('apply appearance to document', () => {
         root as unknown as HTMLElement,
       );
       assert.equal(classes.has('dark'), true);
-      assert.equal(props.get('--primary-foreground'), '258 32% 10%');
+      assert.equal(props.get('--primary-foreground'), '0 0% 7%');
       assert.equal(removed.includes('theme'), true);
     } finally {
       if (previous === undefined) {

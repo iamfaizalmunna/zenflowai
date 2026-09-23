@@ -45,7 +45,8 @@ export function Select({
         <SelectPrimitive.Content
           position="popper"
           sideOffset={8}
-          className="z-50 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl shadow-iris/10"
+          collisionPadding={12}
+          className="z-50 min-w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-1.5rem)] max-h-[min(24rem,var(--radix-select-content-available-height))] overflow-hidden rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl shadow-iris/10"
         >
           <SelectPrimitive.Viewport className="p-1.5">
             {options.map((option) => (

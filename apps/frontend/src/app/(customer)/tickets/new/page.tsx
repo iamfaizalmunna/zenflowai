@@ -44,10 +44,10 @@ export default function NewTicketPage() {
 
   return (
     <RoleGuard minRole="CUSTOMER">
-        <div className="max-w-xl space-y-5">
+        <div className="page-stack max-w-xl">
           <PageTitle title="Create ticket" hint="We’ll route this to the right team." />
           {error && <p className="text-sm text-destructive">{error.message}</p>}
-          <form onSubmit={submit} className="space-y-4 rounded-3xl border border-border/70 bg-card/70 p-5 app:p-6">
+          <form onSubmit={submit} className="space-y-4 surface-card p-5 app:p-6">
             <Field label="Title">
               <Input
                 required

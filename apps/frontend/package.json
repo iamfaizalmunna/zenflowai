@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test:ui": "playwright test --project=chromium",
+    "test:ui:install": "playwright install chromium"
   },
   "dependencies": {
     "@apollo/client": "^3.11.8",
@@ -42,6 +44,7 @@
     "zustand": "^5.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "^22.0.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { useAuthStore } from '@/store/auth.store';
 import { useUiSound } from '@/hooks/useUiSound';
@@ -49,6 +49,9 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
   });
   const [save] = useMutation(SAVE_APPEARANCE);
   const [localPatch, setLocalPatch] = useState<Partial<AppearancePrefs>>({});
+  const pendingSave = useRef<Partial<AppearancePrefs>>({});
+  const latestPrefs = useRef<AppearancePrefs>(PUBLIC_APPEARANCE);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useLayoutEffect(() => {
     if (typeof window !== 'undefined') localStorage.removeItem(LEGACY_APPEARANCE_KEY);
@@ -68,11 +71,16 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
       }),
     [signedIn, data?.myAppearance, localPatch],
   );
+  latestPrefs.current = prefs;
 
   useEffect(() => {
     applyAppearanceToDocument(prefs, document.documentElement);
     setMuted(prefs.soundsMuted);
   }, [prefs, setMuted]);
+
+  useEffect(() => () => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+  }, []);
 
   const update = useCallback(
     (patch: Partial<AppearancePrefs>) => {
@@ -82,17 +90,25 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
       setLocalPatch(nextPatch);
       localStorage.setItem(appearanceCacheKey(userId), JSON.stringify(nextPatch));
       applyAppearanceToDocument(next, document.documentElement);
+      latestPrefs.current = next;
       if (patch.soundsMuted !== undefined) setMuted(next.soundsMuted);
-      void save({
-        variables: { input: patch },
-        optimisticResponse: { saveAppearance: next },
-        update: (cache, result) => {
-          cache.writeQuery({
-            query: MY_APPEARANCE,
-            data: { myAppearance: result.data?.saveAppearance ?? next },
-          });
-        },
-      });
+      pendingSave.current = { ...pendingSave.current, ...patch };
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        const input = pendingSave.current;
+        pendingSave.current = {};
+        const saved = latestPrefs.current;
+        void save({
+          variables: { input },
+          optimisticResponse: { saveAppearance: saved },
+          update: (cache, result) => {
+            cache.writeQuery({
+              query: MY_APPEARANCE,
+              data: { myAppearance: result.data?.saveAppearance ?? saved },
+            });
+          },
+        });
+      }, 360);
     },
     [signedIn, userId, prefs, localPatch, save, setMuted],
   );

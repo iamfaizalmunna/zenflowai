@@ -8,10 +8,10 @@ export function KpiTile({
   hint?: string;
 }) {
   return (
-    <div className="dash-card px-3 py-2.5">
-      <p className="text-[12px] text-muted-foreground leading-none">{label}</p>
+    <div className="dash-card px-3 py-3">
+      <p className="type-meta">{label}</p>
       <p className="mt-1.5 text-xl font-semibold leading-none tabular-nums tracking-tight text-foreground">{value}</p>
-      {hint ? <p className="mt-1.5 text-[11px] text-muted-foreground leading-none">{hint}</p> : null}
+      {hint ? <p className="type-meta mt-1.5">{hint}</p> : null}
     </div>
   );
 }

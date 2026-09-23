@@ -26,14 +26,14 @@ export default function InternalGuidesPage() {
 
   return (
     <RoleGuard minRole="AGENT">
-        <div className="space-y-5 max-w-2xl">
+        <div className="page-stack">
           <PageTitle title="Internal guides" hint="Playbooks for agents. Not visible to customers." />
           <HelpAskBox />
           <ListSearch value={search} onChange={setSearch} placeholder="Search this pack…" />
           {loading && !data ? <PageSkeleton /> : articles.map((article) => (
-            <Link key={article.id} href={`/knowledge/${article.id}`} className="block surface rounded-3xl border border-border/70 p-4">
-              <h2 className="font-medium text-sm">{article.title}</h2>
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{article.body}</p>
+            <Link key={article.id} href={`/knowledge/${article.id}`} className="block min-w-0 surface-card p-4 transition-colors hover:border-iris/35">
+              <h2 className="text-[15px] font-semibold leading-snug tracking-tight break-words">{article.title}</h2>
+              <p className="type-meta mt-1.5 line-clamp-2 break-words">{article.body}</p>
             </Link>
           ))}
         </div>

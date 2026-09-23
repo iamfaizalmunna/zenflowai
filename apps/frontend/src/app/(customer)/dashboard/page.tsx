@@ -23,13 +23,10 @@ export default function CustomerDashboardPage() {
 
   return (
     <RoleGuard minRole="CUSTOMER">
-        <div className="space-y-6">
+        <div className="page-stack">
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="font-display text-2xl app:text-3xl tracking-tight">Welcome back, {user?.name?.split(' ')[0]}</h1>
-              <p className="text-muted-foreground mt-1 text-sm">Your recent support tickets.</p>
-            </div>
-            <Link href="/tickets/new" className="hidden app:inline-flex px-4 py-2.5 rounded-2xl bg-primary text-primary-foreground text-sm font-medium min-h-11 items-center">
+            <PageTitle title={`Welcome back, ${user?.name?.split(' ')[0] ?? ''}`} hint="Your recent support tickets." />
+            <Link href="/tickets/new" className="hidden min-h-10 items-center rounded-2xl bg-primary px-4 text-sm font-medium text-primary-foreground app:inline-flex">
               New ticket
             </Link>
           </div>
@@ -38,9 +35,9 @@ export default function CustomerDashboardPage() {
 
           <div className="grid grid-cols-3 gap-2 app:gap-3">
             {stats.map((stat) => (
-              <div key={stat.label} className="rounded-xl border border-border bg-card p-3 app:p-5">
-                <p className="text-[11px] app:text-sm text-muted-foreground">{stat.label}</p>
-                <p className={`text-xl app:text-3xl font-semibold mt-1 ${stat.color}`}>{stat.value}</p>
+              <div key={stat.label} className="surface-card p-3 app:p-5">
+                <p className="type-meta">{stat.label}</p>
+                <p className={`mt-1 text-xl font-semibold tabular-nums app:text-3xl ${stat.color}`}>{stat.value}</p>
               </div>
             ))}
           </div>

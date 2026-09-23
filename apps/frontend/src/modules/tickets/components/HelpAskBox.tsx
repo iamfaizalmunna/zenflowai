@@ -11,18 +11,18 @@ export function HelpAskBox() {
   const [ask, { data, loading }] = useLazyQuery(ASK_KB);
 
   return (
-    <div className="surface rounded-3xl border border-border/70 p-4 space-y-3">
-      <p className="font-medium text-sm">Ask the Help Center</p>
+    <div className="surface-card space-y-3 p-4">
+      <p className="text-sm font-medium">Ask the Help Center</p>
       <form
-        className="flex gap-2"
+        className="flex min-w-0 items-center gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           if (question.trim().length < 4) return;
           void ask({ variables: { question } });
         }}
       >
-        <Input value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ask…" />
-        <Button type="submit" variant="outline">{loading ? '…' : 'Ask'}</Button>
+        <Input className="w-auto min-w-0 flex-1" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ask…" />
+        <Button type="submit" className="shrink-0">{loading ? '…' : 'Ask'}</Button>
       </form>
       {data?.askKnowledgeBase && (
         <div className="text-sm space-y-1">
