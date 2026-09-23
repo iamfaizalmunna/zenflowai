@@ -1,8 +1,13 @@
 # ZenFlowAI — plan (as shipped)
 
-Local service-desk demo. **Phases 1–9 are complete.** There is no cloud host, email SaaS, or paid LLM in this repository.
+Architecture snapshot. **Phases 1–9 are complete.** No cloud host, email SaaS, or paid LLM.
 
-This file is the architecture snapshot. Journey, data, and algorithm charts for each slice live in **[docs/phases](docs/phases/README.md)**. The colorful one-page gallery is **[docs/phases/index.html](docs/phases/index.html)** (also [http://localhost:3000/qa/phases](http://localhost:3000/qa/phases)). Test bars: **[docs/test-results/v1](docs/test-results/v1/index.html)**.
+| Document | Open |
+|----------|------|
+| Product README | [README.md](README.md) |
+| Phase stories | [docs/phases](docs/phases/README.md) |
+| Phase charts | [docs/phases/index.html](docs/phases/index.html) · [http://localhost:3000/qa/phases](http://localhost:3000/qa/phases) |
+| Test bars | [docs/test-results/v1](docs/test-results/v1/index.html) · [http://localhost:3000/qa/v1](http://localhost:3000/qa/v1) |
 
 ---
 
@@ -40,19 +45,20 @@ Homes are `ROLE_HOME` in `apps/frontend/src/lib/constants.ts`.
 
 **Why this exists.** Ticket text is private. Checks run in one order so a new resolver cannot “just insert” a row. The JWT may carry a role; the database row is what the API uses (8-second cache per access token).
 
-```mermaid
-flowchart TD
-  R[Request] --> L1[Helmet]
-  L1 --> L2[Rate limit]
-  L2 --> L3[IP blocklist]
-  L3 --> L4[Bot detection]
-  L4 --> L5[JWT]
-  L5 --> L6[RBAC]
-  L6 --> L7[Data scope]
-  L7 --> L8[Zod]
-  L8 --> L9[Spam]
-  L9 --> L10[Audit on writes]
-```
+| Step | Check |
+|-----:|-------|
+| 1 | Helmet headers |
+| 2 | Rate limit |
+| 3 | IP blocklist |
+| 4 | Bot detection |
+| 5 | JWT |
+| 6 | RBAC |
+| 7 | Data scope |
+| 8 | Zod |
+| 9 | Spam |
+| 10 | Audit on writes |
+
+Drawn version: [gallery · Phase 1](docs/phases/index.html#p1).
 
 **Auth details.** Access JWT **15m** in `localStorage`. Refresh **7d** hashed in MySQL, cookie `zenflow_refresh` (HttpOnly, Path=/, SameSite=Lax; Secure only if `NODE_ENV=production`). Extra HTTP middleware (HPP, slow-down) sits with Helmet in `httpSecurity.ts`.
 
@@ -64,19 +70,17 @@ Full card: [docs/phases/01-auth.md](docs/phases/01-auth.md).
 
 **Why this exists.** Staff need a number, a team, and a clock before anyone types a reply. Routing prefers a keyword rule, then category, then priority, then fallback. If the team has an AI member, Nova is assigned first.
 
-```mermaid
-flowchart TD
-  C[createTicket] --> Z[Zod + spam]
-  Z --> M[matchRoutingRule]
-  M --> T[Team]
-  T --> A{AI teammate?}
-  A -->|yes| N[Nova]
-  A -->|no| H[Least-busy agent]
-  N --> S[SLA dates + #ZEN-XXXX]
-  H --> S
-  S --> Q[Notice + audit]
-  Q --> V[scheduleAiConsult]
-```
+| Step | What happens |
+|-----:|----------------|
+| 1 | `createTicket` — Zod, then spam |
+| 2 | `matchRoutingRule` — keyword, then category, then priority, then fallback |
+| 3 | Team chosen |
+| 4 | Assignee — Nova if the team has an AI member, else least-busy agent |
+| 5 | SLA dates + `#ZEN-XXXX` |
+| 6 | Notice + audit |
+| 7 | `scheduleAiConsult` if Nova is assigned |
+
+Drawn version: [gallery · Phase 2](docs/phases/index.html#p2).
 
 **Always true.** Resolvers: auth + `requirePermission` + service. Prisma only inside `services/`. Ticket format `#ZEN-XXXX` (minimum four digits).
 
@@ -157,21 +161,21 @@ Shared UI → `components/ui/`. Queries → `modules/*/queries/`. Zustand = auth
 
 ## 10. Phase index
 
-**Why this exists.** The phase list used to live only as a short table here and then disappeared from the README. Each phase now has its own file plus one HTML gallery.
+**Why this exists.** The phase list used to live only as a short table here and then disappeared from the README. Each phase now has its own file plus one HTML gallery. Same vertical list as the product README.
 
-| Phase | Title | On `main` | Charts |
-|------:|-------|-----------|--------|
-| 1 | Auth, RBAC, 10 layers | yes | [md](docs/phases/01-auth.md) · [html](docs/phases/index.html#p1) |
-| 2 | Tickets, routing, KB | [#1](https://github.com/iamfaizalmunna/zenflowai/pull/1) | [md](docs/phases/02-tickets.md) · [html](docs/phases/index.html#p2) |
-| 3 | Workspace, graphql-ws | yes | [md](docs/phases/03-workspace.md) · [html](docs/phases/index.html#p3) |
-| 4 | SLA cron, CSAT, admin | yes | [md](docs/phases/04-sla-csat.md) · [html](docs/phases/index.html#p4) |
-| 5 | Appearance, views | [#3](https://github.com/iamfaizalmunna/zenflowai/pull/3) | [md](docs/phases/05-appearance.md) · [html](docs/phases/index.html#p5) |
-| 6 | Analytics, consultants | [#2](https://github.com/iamfaizalmunna/zenflowai/pull/2) | [md](docs/phases/06-analytics.md) · [html](docs/phases/index.html#p6) |
-| 7 | Nova | [#5](https://github.com/iamfaizalmunna/zenflowai/pull/5) | [md](docs/phases/07-nova.md) · [html](docs/phases/index.html#p7) |
-| 8 | Cookie, migrations, files, bell | [#8](https://github.com/iamfaizalmunna/zenflowai/pull/8) | [md](docs/phases/08-hardening.md) · [html](docs/phases/index.html#p8) |
-| 9 | UI polish, speed, QA | [#10](https://github.com/iamfaizalmunna/zenflowai/pull/10) | [md](docs/phases/09-ui-qa.md) · [html](docs/phases/index.html#p9) |
+| | Phase | Story | Gallery | PR |
+|:--:|:------|:------|:--------|:---|
+| [![01](https://img.shields.io/badge/01-6366f1?style=flat-square)](docs/phases/01-auth.md) | Auth and security | [md](docs/phases/01-auth.md) | [html](docs/phases/index.html#p1) | on `main` |
+| [![02](https://img.shields.io/badge/02-0ea5e9?style=flat-square)](docs/phases/02-tickets.md) | Tickets and routing | [md](docs/phases/02-tickets.md) | [html](docs/phases/index.html#p2) | [#1](https://github.com/iamfaizalmunna/zenflowai/pull/1) |
+| [![03](https://img.shields.io/badge/03-8b5cf6?style=flat-square)](docs/phases/03-workspace.md) | Live workspace | [md](docs/phases/03-workspace.md) | [html](docs/phases/index.html#p3) | on `main` |
+| [![04](https://img.shields.io/badge/04-f59e0b?style=flat-square)](docs/phases/04-sla-csat.md) | SLA, CSAT, admin | [md](docs/phases/04-sla-csat.md) | [html](docs/phases/index.html#p4) | on `main` |
+| [![05](https://img.shields.io/badge/05-ec4899?style=flat-square)](docs/phases/05-appearance.md) | Appearance | [md](docs/phases/05-appearance.md) | [html](docs/phases/index.html#p5) | [#3](https://github.com/iamfaizalmunna/zenflowai/pull/3) |
+| [![06](https://img.shields.io/badge/06-14b8a6?style=flat-square)](docs/phases/06-analytics.md) | Analytics | [md](docs/phases/06-analytics.md) | [html](docs/phases/index.html#p6) | [#2](https://github.com/iamfaizalmunna/zenflowai/pull/2) |
+| [![07](https://img.shields.io/badge/07-a855f7?style=flat-square)](docs/phases/07-nova.md) | Nova | [md](docs/phases/07-nova.md) | [html](docs/phases/index.html#p7) | [#5](https://github.com/iamfaizalmunna/zenflowai/pull/5) |
+| [![08](https://img.shields.io/badge/08-64748b?style=flat-square)](docs/phases/08-hardening.md) | Hardening | [md](docs/phases/08-hardening.md) | [html](docs/phases/index.html#p8) | [#8](https://github.com/iamfaizalmunna/zenflowai/pull/8) |
+| [![09](https://img.shields.io/badge/09-10b981?style=flat-square)](docs/phases/09-ui-qa.md) | UI, speed, QA | [md](docs/phases/09-ui-qa.md) | [html](docs/phases/index.html#p9) | [#10](https://github.com/iamfaizalmunna/zenflowai/pull/10) |
 
-CI / Sonar: [#6](https://github.com/iamfaizalmunna/zenflowai/pull/6).
+CI / Sonar: [#6](https://github.com/iamfaizalmunna/zenflowai/pull/6). Docs pass: [#12](https://github.com/iamfaizalmunna/zenflowai/pull/12).
 
 ---
 
