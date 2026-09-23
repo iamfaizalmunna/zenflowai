@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ZenFlowAI · Phases 1–9</title>
+  <link rel="stylesheet" href="assets/phases.css" />
+  <link rel="stylesheet" href="/qa/phases/assets/phases.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="kicker">Completed work · 23 Sep 2026</p>
+      <h1>Phases 1–9</h1>
+      <p class="muted">Nine shipped slices. Each card is what the code does today — not a wish list. App: <a href="http://localhost:3000/qa/phases">localhost:3000/qa/phases</a>. Test bars: <a href="/qa/v1">/qa/v1</a>.</p>
+      <nav class="nav">
+        <a href="#strip">All phases</a>
+        <a href="#p1">1 Auth</a>
+        <a href="#p2">2 Tickets</a>
+        <a href="#p3">3 Live</a>
+        <a href="#p4">4 SLA</a>
+        <a href="#p5">5 Look</a>
+        <a href="#p6">6 Charts</a>
+        <a href="#p7">7 Nova</a>
+        <a href="#p8">8 Hardening</a>
+        <a href="#p9">9 UI &amp; QA</a>
+      </nav>
+    </header>
+
+    <div class="strip" id="strip">
+      <a class="p1" href="#p1"><strong>1</strong><span>Auth</span></a>
+      <a class="p2" href="#p2"><strong>2</strong><span>Tickets</span></a>
+      <a class="p3" href="#p3"><strong>3</strong><span>Live desk</span></a>
+      <a class="p4" href="#p4"><strong>4</strong><span>SLA / CSAT</span></a>
+      <a class="p5" href="#p5"><strong>5</strong><span>Appearance</span></a>
+      <a class="p6" href="#p6"><strong>6</strong><span>Analytics</span></a>
+      <a class="p7" href="#p7"><strong>7</strong><span>Nova</span></a>
+      <a class="p8" href="#p8"><strong>8</strong><span>Hardening</span></a>
+      <a class="p9" href="#p9"><strong>9</strong><span>UI &amp; QA</span></a>
+    </div>
+
+    <section class="phase" id="p1">
+      <h2>Phase 1 — Auth and security</h2>
+      <p class="why"><strong>Why.</strong> A support desk holds customer messages. The first slice locks the door: who is signed in, what that role may do, and a fixed order of checks so a later feature cannot skip the queue. Roles never go backwards: Customer → Agent → Supervisor → Admin → Super Admin.</p>
+      <ul class="points">
+        <li>Login issues a 15-minute access JWT and a 7-day <code>zenflow_refresh</code> cookie (HttpOnly, SameSite=Lax).</li>
+        <li>The role on the token is not trusted. The API reads the user row again (cached 8 seconds for the same token).</li>
+        <li>Each role has a home screen: customer <code>/dashboard</code>, agent <code>/queue</code>, supervisor <code>/supervisor</code>, admin <code>/admin/users</code>.</li>
+      </ul>
+      <div class="charts">
+        <div class="chart">
+          <h3>User journey</h3>
+          <pre class="mermaid">flowchart TD
+            A[Open /login] --> B[Email + password]
+            B --> C[Access JWT 15m]
+            C --> D[Refresh cookie 7d]
+            D --> E[Role from MySQL]
+            E --> F{Role}
+            F -->|CUSTOMER| G[/dashboard]
+            F -->|AGENT| H[/queue]
+            F -->|SUPERVISOR| I[/supervisor]
+            F -->|ADMIN+| J[/admin/users]
+          </pre>
+        </div>
+        <div class="chart">
+          <h3>Request checks (in order)</h3>
+          <pre class="mermaid">flowchart TD
+            R[HTTP request] --> L1[Helmet headers]
+            L1 --> L2[Rate limit]
+            L2 --> L3[IP blocklist]
+            L3 --> L4[Bot check]
+            L4 --> L5[JWT]
+            L5 --> L6[RBAC permission]
+            L6 --> L7[Own-data scope]
+            L7 --> L8[Zod input]
+            L8 --> L9[Spam score]
+            L9 --> L10[Audit on writes]
+            L10 --> OK[Resolver / service]
+          </pre>
+        </div>
+      </div>
+      <div class="uses">
+        <div><strong>Use case.</strong> A customer can open tickets, not the users admin page.</div>
+        <div><strong>Use case.</strong> A banned account fails on the next request after the 8-second identity cache expires.</div>
+      </div>
+      <p class="code">Code: <code>apps/backend/src/security/</code> · <code>apps/frontend/src/lib/constants.ts</code></p>
+    </section>
+
+    <section class="phase" id="p2">
+      <h2>Phase 2 — Tickets, routing, Help Center</h2>
+      <p class="why"><strong>Why.</strong> Without a ticket number and a team, staff cannot find work. This slice creates <code>#ZEN-XXXX</code>, picks a team by keyword / category / priority / fallback, stamps SLA clocks, and stores owned Help Center articles in git (not a paid crawler).</p>
+      <ul class="points">
+        <li>Create path: Zod → quota/cooldown → spam → routing → SLA dates → ticket row → notice → audit → Nova consult (if Nova is on the team).</li>
+        <li>Assignee: AI teammate first, else the least-busy agent on that team.</li>
+        <li>Help Center markdown lives in <code>apps/backend/kb/</code> and is seeded.</li>
+      </ul>
+      <div class="charts">
+        <div class="chart">
+          <h3>Customer journey</h3>
+          <pre class="mermaid">flowchart TD
+            A[Customer /tickets/new] --> B[Title + body]
+            B --> C[Spam check]
+            C -->|blocked| X[Error shown]
+            C -->|ok| D[Match routing rule]
+            D --> E[Team + assignee]
+            E --> F[SLA response + resolve due]
+            F --> G["#ZEN-0001 saved"]
+            G --> H[Bell: created]
+          </pre>
+        </div>
+        <div class="chart">
+          <h3>Routing algorithm</h3>
+          <pre class="mermaid">flowchart TD
+            Q[Active rules by order] --> K{KEYWORD in title/body?}
+            K -->|yes| M[That rule]
+            K -->|no| C{CATEGORY match?}
+            C -->|yes| M
+            C -->|no| P{PRIORITY match?}
+            P -->|yes| M
+            P -->|no| F[FALLBACK rule]
+            F --> T[Team]
+            M --> T
+            T --> A{AI member on team?}
+            A -->|yes| N[Assign Nova]
+            A -->|no| L[Least-busy AGENT/SUPERVISOR]
+          </pre>
+        </div>
+      </div>
+      <div class="uses">
+        <div><strong>Use case.</strong> “VPN drops” hits a keyword rule and lands on the network team.</div>
+        <div><strong>Use case.</strong> No rule matches → default team, still a valid ticket.</div>
+      </div>
+      <p class="code">Code: <code>ticket.service.ts</code> · <code>routingMatch.ts</code> · <code>utils/ticketNumber.ts</code></p>
+    </section>
+
+    <section class="phase" id="p3">
+      <h2>Phase 3 — Live workspace</h2>
+      <p class="why"><strong>Why.</strong> Refreshing the page to see a reply is slow. This slice keeps one ticket open in a three-column workspace and pushes new messages over GraphQL WebSocket (<code>graphql-ws</code>, not Socket.io). Related Help Center hits and canned replies sit beside the thread so an agent does not hunt.</p>
+      <ul class="points">
+        <li>Subscriptions: <code>messageAdded</code>, <code>ticketUpdated</code>, <code>ticketCreated</code>.</li>
+        <li>Related articles ranked by keyword + category.</li>
+        <li>Suggest-reply uses category templates and a Help Center snippet.</li>
+      </ul>
+      <div class="charts">
+        <div class="chart">
+          <h3>Agent journey</h3>
+          <pre class="mermaid">flowchart LR
+            Q[/queue] --> T[Open ticket]
+            T --> W[3-column workspace]
+            W --> R[Reply]
+            R --> S[graphql-ws push]
+            S --> C[Customer sees it live]
+          </pre>
+        </div>
+        <div class="chart">
+          <h3>What sits on the desk</h3>
+          <pre class="mermaid">flowchart TD
+            W[Ticket workspace] --> TH[Thread]
+            W --> RA[Related articles]
+            W --> SR[Suggest reply]
+            W --> SLA[SLA countdown]
+          </pre>
+        </div>
+      </div>
+      <div class="uses">
+        <div><strong>Use case.</strong> Two staff on the same ticket see a new message without reload.</div>
+        <div><strong>Use case.</strong> SLA countdown shows overdue vs hours vs days.</div>
+      </div>
+      <p class="code">Code: <code>TicketWorkspace.tsx</code> · <code>relatedRank</code> · <code>suggestReply</code></p>
+    </section>
+
+    <section class="phase" id="p4">
+      <h2>Phase 4 — SLA sweep, CSAT, admin</h2>
+      <p class="why"><strong>Why.</strong> A desk that never warns on late work will miss promises. A clock job walks open tickets, marks warning (2 hours left) and breach, and auto-closes resolved tickets after 48 hours. When a ticket is resolved, a 7-day CSAT window (score 1–5) opens. Admins edit users, teams, routing, and SLA policy on screen — not in SQL.</p>
+      <ul class="points">
+        <li>Cron default: every 2 minutes (<code>*/2 * * * *</code>), skippable with <code>DISABLE_CRON=1</code>.</li>
+        <li>Admin screens: users, teams, routing, SLA, knowledge.</li>
+        <li>Rule-based Q&amp;A: low score answers “I do not know” and still cites sources.</li>
+      </ul>
+      <div class="charts">
+        <div class="chart">
+          <h3>SLA clock</h3>
+          <pre class="mermaid">flowchart TD
+            C[node-cron] --> S[Open tickets]
+            S --> W{Due in 2h?}
+            W -->|yes| WARN[Warning]
+            W -->|no| B{Past due?}
+            B -->|yes| BR[Breach]
+            B -->|no| OK[Leave]
+            R[RESOLVED 48h ago] --> AC[Auto-close]
+          </pre>
+        </div>
+        <div class="chart">
+          <h3>CSAT window</h3>
+          <pre class="mermaid">flowchart LR
+            V[Status = RESOLVED] --> O[Open CSAT 7 days]
+            O --> N{Customer rates 1-5?}
+            N -->|yes| D[Stored]
+            N -->|expired| X[Window closes]
+          </pre>
+        </div>
+      </div>
+      <div class="uses">
+        <div><strong>Use case.</strong> Supervisor sees a ticket in warning before it breaches.</div>
+        <div><strong>Use case.</strong> Customer rates 4; the score is clamped if someone posts 9.</div>
+      </div>
+      <p class="code">Code: <code>jobs/slaCron.ts</code> · <code>slaSweep.ts</code> · <code>csatRules.ts</code> · <code>app/(admin)/</code></p>
+    </section>
+
+    <section class="phase" id="p5">
+      <h2>Phase 5 — Appearance</h2>
+      <p class="why"><strong>Why.</strong> Shared “dark mode for the whole company” fights over a demo laptop. Appearance is stored per signed-in user. Login and register stay on the default light theme so a public page never inherits yesterday’s dark tokens.</p>
+      <ul class="points">
+        <li>Settings at <code>/settings</code> for any signed-in role.</li>
+        <li>Tokens: hex, contrast, font stack — validated on both UI and API.</li>
+        <li>Ticket list views (filters the user prefers) sit with the same user record.</li>
+      </ul>
+      <div class="charts">
+        <div class="chart">
+          <h3>Who sees which theme</h3>
+          <pre class="mermaid">flowchart TD
+            P[Page] --> A{Signed in?}
+            A -->|no /login /register| L[Default light]
+            A -->|yes| U[That user's Appearance]
+            U --> D[Apply CSS tokens]
+          </pre>
+        </div>
+        <div class="chart">
+          <h3>Save path</h3>
+          <pre class="mermaid">flowchart LR
+            S[/settings] --> Z[Zod tokens]
+            Z --> DB[(User prefs)]
+            DB --> UI[Next paint]
+          </pre>
+        </div>
+      </div>
+      <div class="uses">
+        <div><strong>Use case.</strong> Admin sets dark; customer on the same browser still sees light until that customer signs in.</div>
+      </div>
+      <p class="code">Code: <code>lib/appearance.ts</code> · <code>appearanceTokens.ts</code> · <code>app/settings</code></p>
+    </section>
+
+    <section class="phase" id="p6">
+      <h2>Phase 6 — Analytics and consultants</h2>
+      <p class="why"><strong>Why.</strong> Supervisors need volume and CSAT without exporting a spreadsheet. Admins need a consultant board. Charts read a 30-day analytics pack; consultant lists use 90 days of assigned tickets (112 days on a profile) so the page does not scan the whole history on every tab click.</p>
+      <ul class="points">
+        <li><code>/analytics</code> — Supervisor and above.</li>
+        <li><code>/admin/consultants</code> — Admin and above.</li>
+        <li>Leaderboard ties break with a stable sort (localeCompare + id).</li>
+      </ul>
+      <div class="charts">
+        <div class="chart">
+          <h3>Who can open what</h3>
+          <pre class="mermaid">flowchart TD
+            U[Signed-in user] --> R{Role}
+            R -->|SUPERVISOR+| A[/analytics]
+            R -->|ADMIN+| C[/admin/consultants]
+            R -->|CUSTOMER| X[Blocked]
+          </pre>
+        </div>
+        <div class="chart">
+          <h3>Data window</h3>
+          <pre class="mermaid">flowchart LR
+            T[Tickets] --> P90[List pack 90 days]
+            T --> P112[Profile pack 112 days]
+            P90 --> L[Leaderboard]
+            P112 --> D[Consultant detail]
+          </pre>
+        </div>
+      </div>
+      <div class="uses">
+        <div><strong>Use case.</strong> Supervisor opens analytics; a customer cannot.</div>
+        <div><strong>Use case.</strong> Admin searches the loaded consultant pack in the browser — no extra GraphQL round-trip for each letter.</div>
+      </div>
+      <p class="code">Code: <code>analytics.service.ts</code> · <code>consultantPack.ts</code> · <code>app/(admin)/analytics</code></p>
+    </section>
+
+    <section class="phase" id="p7">
+      <h2>Phase 7 — Nova and owned Help Center</h2>
+      <p class="why"><strong>Why.</strong> First reply should not wait on a person if the answer is already in the Help Center. Nova is a seeded AI user. It retrieves owned markdown. If a local Ollama process is healthy it writes a grounded answer; otherwise it extracts from the articles. Below 0.45 confidence, or with zero hits, it hands the ticket to a human. Staff may save a reply as an <em>internal unpublished</em> draft. Admin publishes. Nothing goes public by itself.</p>
+      <ul class="points">
+        <li>Handoff threshold: <code>0.45</code> in <code>consultMath.ts</code>.</li>
+        <li>Ollama is optional. Retrieval still works if the model is down.</li>
+        <li>Draft body is tagged “Internal until an admin publishes.”</li>
+      </ul>
+      <div class="charts">
+        <div class="chart">
+          <h3>Nova first reply</h3>
+          <pre class="mermaid">flowchart TD
+            T[Ticket assigned to Nova] --> K[Retrieve KB]
+            K --> O{Ollama warm?}
+            O -->|yes| M[Local model + sources]
+            O -->|no| E[Extractive answer]
+            M --> C{confidence and hits}
+            E --> C
+            C -->|low or 0 hits| H[Handoff to person]
+            C -->|ok| R[Reply in thread]
+          </pre>
+        </div>
+        <div class="chart">
+          <h3>Help draft</h3>
+          <pre class="mermaid">flowchart LR
+            A[Staff reply] --> D[Save as help draft]
+            D --> I[Internal + unpublished]
+            I --> P[Admin publishes]
+            P --> HC[Help Center]
+          </pre>
+        </div>
+      </div>
+      <div class="uses">
+        <div><strong>Use case.</strong> “Still need a person” on the thread forces handoff.</div>
+        <div><strong>Use case.</strong> Ollama missing → same ticket still gets a KB extract, never a paid cloud LLM.</div>
+      </div>
+      <p class="code">Code: <code>consultTicket.service.ts</code> · <code>consultMath.ts</code> · <code>kbDraft.ts</code> · <code>apps/backend/kb/</code></p>
+    </section>
+
+    <section class="phase" id="p8">
+      <h2>Phase 8 — Cookie, migrations, files, bell</h2>
+      <p class="why"><strong>Why.</strong> Demo databases that were “pushed” once drifted. Refresh tokens in JSON were easy to steal from frontend storage. This slice commits Prisma migrations, puts the refresh token in an HttpOnly cookie, stores attachments on local disk (gitignored), and writes in-app notices for create / assign / reply / SLA.</p>
+      <ul class="points">
+        <li>Cookie name: <code>zenflow_refresh</code>. Secure flag only when <code>NODE_ENV=production</code>.</li>
+        <li>Uploads: path jail, size cap, no <code>..</code> traversal.</li>
+        <li>Public GraphQL errors hide Prisma schema text.</li>
+      </ul>
+      <div class="charts">
+        <div class="chart">
+          <h3>Session refresh</h3>
+          <pre class="mermaid">flowchart TD
+            A[Access JWT expired] --> C[Browser sends cookie]
+            C --> R[refreshToken mutation]
+            R --> N[New 15m JWT]
+            N --> Q[Retry GraphQL]
+          </pre>
+        </div>
+        <div class="chart">
+          <h3>Attachment</h3>
+          <pre class="mermaid">flowchart LR
+            U[uploadTicketAttachment] --> V[MIME + size]
+            V --> J[Path under UPLOAD_DIR]
+            J --> D[Local file]
+          </pre>
+        </div>
+      </div>
+      <div class="uses">
+        <div><strong>Use case.</strong> Old demo DB: apply <code>prisma migrate resolve --applied 20260922150000_init</code> once, then migrate.</div>
+      </div>
+      <p class="code">Code: <code>refreshCookie.ts</code> · <code>uploadPath.ts</code> · <code>notify.service.ts</code> · <code>prisma/migrations</code></p>
+    </section>
+
+    <section class="phase" id="p9">
+      <h2>Phase 9 — UI polish, speed, QA report</h2>
+      <p class="why"><strong>Why.</strong> Admin tabs felt empty while Next.js compiled each client page, then auth hit MySQL twice. This slice does not add roles. It makes the same screens paint sooner (Turbopack, skeletons, 8s identity cache, 90-day packs, in-browser list search) and publishes a phase-by-phase test sheet so coverage is visible without a terminal.</p>
+      <ul class="points">
+        <li>140 Prisma-free unit tests, 100% c8 lines on that pack. Live e2e when GraphQL is up.</li>
+        <li>PWA chrome at 1024px and below. Login splash three scenes, skip if already seen or reduced motion.</li>
+        <li>New-ticket Help Center search still waits for 4 characters before GraphQL.</li>
+      </ul>
+      <div class="charts">
+        <div class="chart">
+          <h3>Admin tab (after)</h3>
+          <pre class="mermaid">flowchart TD
+            C[Click SLA] --> SK[Skeleton in loading.tsx]
+            SK --> TP[Turbopack module]
+            TP --> G[GraphQL]
+            G --> AC[Auth identity cache 8s]
+            AC --> PK[90-day pack]
+            PK --> LS[filterByQuery in browser]
+          </pre>
+        </div>
+        <div class="chart">
+          <h3>Journeys J01–J11</h3>
+          <pre class="mermaid">flowchart TD
+            J1[J01 splash first visit] --> J2[J02 skip if seen]
+            J2 --> J3[J03 skip reduced motion]
+            J3 --> J4[J04-J08 role homes]
+            J4 --> J9[J09 skeleton not empty pane]
+            J9 --> J10[J10 pack search]
+            J10 --> J11[J11 4-char KB search]
+          </pre>
+        </div>
+      </div>
+      <div class="uses">
+        <div><strong>Use case.</strong> First login shows splash once; second visit goes straight to the form.</div>
+        <div><strong>Use case.</strong> Open <a href="http://localhost:3000/qa/v1">/qa/v1</a> for progress bars per phase.</div>
+      </div>
+      <p class="code">Code: <code>lib/splash.ts</code> · <code>lib/listSearch.ts</code> · <code>lib/journeys.test.ts</code> · <code>public/qa/v1</code></p>
+    </section>
+
+    <footer>
+      Markdown copies: <a href="/qa/phases">this gallery</a> is the HTML view.
+      GitHub: <code>docs/phases/README.md</code>
+      · architecture: <code>PLAN.md</code>
+      · test bars: <a href="/qa/v1">/qa/v1</a>
+      · file copy: <a href="../test-results/v1/index.html">docs/test-results/v1</a>
+    </footer>
+  </div>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "strict" });
+  </script>
+</body>
+</html>
